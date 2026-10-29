@@ -43,6 +43,28 @@ class WorkspacePolicy
         return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
     }
 
+    /** Membuat kelompok: mentor (admin tidak membuatkan kelompok untuk mentor). */
+    public function createGroup(User $user): bool
+    {
+        return $user->isMentor() && $user->mentor !== null;
+    }
+
+    /** Ganti nama, warna, dan tandai selesai: mentor pemilik atau admin; hanya kelompok yang masih aktif. */
+    public function manageGroup(User $user, Workspace $workspace): bool
+    {
+        if ($workspace->type !== 'group' || $workspace->is_archived) {
+            return false;
+        }
+
+        return $this->isWorkspaceAdmin($user) || $workspace->mentor_user_id === $user->id;
+    }
+
+    /** Tambah anggota kelompok: mentor pemilik saja. */
+    public function addGroupMembers(User $user, Workspace $workspace): bool
+    {
+        return $workspace->type === 'group' && ! $workspace->is_archived && $workspace->mentor_user_id === $user->id;
+    }
+
     public function archive(User $user, Workspace $workspace): bool
     {
         return $this->isWorkspaceAdmin($user);

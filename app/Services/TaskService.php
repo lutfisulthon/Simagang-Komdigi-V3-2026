@@ -238,12 +238,6 @@ class TaskService
 
     private function labelTeamId(Workspace $workspace): ?int
     {
-        if ($workspace->team_id) {
-            return $workspace->team_id;
-        }
-
-        $intern = $workspace->intern_id ? Intern::with('mentor')->find($workspace->intern_id) : null;
-
-        return $intern?->team_id ?? $intern?->mentor?->team_id;
+        return $workspace->labelTeamId();
     }
 }

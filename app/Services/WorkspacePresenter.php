@@ -6,6 +6,7 @@ use App\Enums\TaskStatus;
 use App\Models\Channel;
 use App\Models\Intern;
 use App\Models\Sprint;
+use App\Models\Team;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskTemplate;
@@ -111,6 +112,32 @@ class WorkspacePresenter
         return self::COLORS[$workspaceId % count(self::COLORS)];
     }
 
+    /** Roster: anak bimbingan beserta kelompok aktifnya (null bila belum berkelompok). */
+    public function roster($interns): array
+    {
+        $groups = app(GroupService::class)->activeGroupsOf($interns->pluck('user_id')->filter()->all());
+
+        return $interns->map(fn (Intern $i) => [
+            'id' => $i->id,
+            'user_id' => $i->user_id,
+            'name' => $i->name,
+            'avatar_url' => $this->avatar($i->photo_path),
+            'end_date' => $i->end_date ? \Illuminate\Support\Carbon::parse($i->end_date)->toDateString() : null,
+            'group' => $groups->has($i->user_id) ? $this->groupMini($groups[$i->user_id]) : null,
+        ])->values()->all();
+    }
+
+    /** Kelompok ringkas: {id, name, color, url}. */
+    public function groupMini(Workspace $group): array
+    {
+        return [
+            'id' => $group->id,
+            'name' => $group->name,
+            'color' => $group->color ?: $this->color($group->id),
+            'url' => route('workspace.show', $group),
+        ];
+    }
+
     /** Workspace ringkas untuk widget dan tautan: {id, name, type, color, url}. */
     public function workspaceMini(Workspace $workspace): array
     {
@@ -118,7 +145,7 @@ class WorkspacePresenter
             'id' => $workspace->id,
             'name' => $workspace->name,
             'type' => 'group',
-            'color' => $this->color($workspace->id),
+            'color' => $workspace->color ?: $this->color($workspace->id),
             'url' => route('workspace.show', $workspace),
         ];
     }
@@ -143,7 +170,9 @@ class WorkspacePresenter
         $workspace->loadMissing(['team', 'intern.team', 'intern.mentor.team']);
 
         // Space Intern tidak punya team_id sendiri: pakai tim intern, lalu tim mentornya.
-        $team = $workspace->team ?? $workspace->intern?->team ?? $workspace->intern?->mentor?->team;
+        $team = $workspace->type === 'group'
+            ? Team::find($workspace->labelTeamId())
+            : ($workspace->team ?? $workspace->intern?->team ?? $workspace->intern?->mentor?->team);
 
         $members = DB::table('workspace_members')
             ->join('users', 'users.id', '=', 'workspace_members.user_id')
@@ -165,9 +194,11 @@ class WorkspacePresenter
         // Pratinjau avatar: satu mentor lalu intern (maks. 3), baru mentor lain bila masih ada tempat.
         $preview = $mentorMinis->take(1)->concat($internMinis->take(3))->concat($mentorMinis->slice(1))->take(4)->values();
 
-        $endDate = $workspace->type === 'intern'
-            ? $workspace->intern?->end_date
-            : Intern::where('team_id', $workspace->team_id)->where('is_active', true)->max('end_date');
+        $endDate = match ($workspace->type) {
+            'intern' => $workspace->intern?->end_date,
+            'group' => Intern::whereIn('user_id', $members->where('role', 'member')->pluck('id'))->where('is_active', true)->max('end_date'),
+            default => Intern::where('team_id', $workspace->team_id)->where('is_active', true)->max('end_date'),
+        };
 
         $channelIds = Channel::where('workspace_id', $workspace->id)->where('is_archived', false)->pluck('id')->all();
         $muted = DB::table('channel_members')->where('user_id', $viewer->id)->whereIn('channel_id', $channelIds)->where('is_muted', true)->pluck('channel_id')->all();
@@ -180,13 +211,17 @@ class WorkspacePresenter
             'is_personal' => $workspace->type === 'intern',
             'name' => $workspace->name,
             'slug' => $workspace->slug,
-            'color' => $this->color($workspace->id),
-            'description' => $workspace->type === 'intern' ? 'Space pribadi intern dan mentor pembimbing.' : null,
+            'color' => $workspace->color ?: $this->color($workspace->id),
+            'description' => match ($workspace->type) {
+                'intern' => 'Space pribadi intern dan mentor pembimbing.',
+                'group' => $workspace->description,
+                default => null,
+            },
             'team' => $team ? ['id' => $team->id, 'name' => $team->name] : null,
             'mentor' => $mentor ? $this->user($users[$mentor->id] ?? null) : ['id' => 0, 'name' => '-', 'role' => 'mentor', 'avatar_url' => null],
             'status' => $workspace->is_archived ? 'finished' : 'active',
             'created_at' => $this->iso($workspace->created_at),
-            'finished_at' => $workspace->is_archived ? $this->iso($workspace->updated_at) : null,
+            'finished_at' => $workspace->is_archived ? $this->iso($workspace->finished_at ?? $workspace->updated_at) : null,
             'end_date' => $endDate ? \Illuminate\Support\Carbon::parse($endDate)->toDateString() : null,
             'is_archived' => $workspace->is_archived,
             'is_read_only' => $workspace->is_archived,
@@ -198,8 +233,12 @@ class WorkspacePresenter
             'interns_count' => $internMinis->count(),
             'mentors' => $mentorMinis->all(),
             'members_preview' => $preview->all(),
-            // Pengelolaan kelompok manual belum ada: workspace dibuat otomatis oleh sistem.
-            'can' => ['rename' => false, 'add_members' => false, 'finish' => false],
+            // Hanya kelompok buatan mentor yang bisa dikelola; workspace tim dan Space dibuat otomatis oleh sistem.
+            'can' => [
+                'rename' => Gate::forUser($viewer)->allows('manageGroup', $workspace),
+                'add_members' => Gate::forUser($viewer)->allows('addGroupMembers', $workspace),
+                'finish' => Gate::forUser($viewer)->allows('manageGroup', $workspace),
+            ],
             'url' => route('workspace.show', $workspace),
         ];
     }

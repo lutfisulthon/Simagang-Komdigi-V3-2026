@@ -37,6 +37,13 @@ class WorkspaceArchiveExpiredCommand extends Command
                 }
             });
 
+        // Kelompok buatan mentor selesai bila semua anggotanya sudah selesai magang.
+        $groups = app(\App\Services\GroupService::class);
+        foreach ($groups->expired() as $group) {
+            $groups->finish($group);
+            $archived++;
+        }
+
         $this->info("Diarsipkan: {$archived}");
 
         if ($failed) {

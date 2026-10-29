@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Workspace;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\AnnouncementNotification;
+use App\Notifications\GroupJoinedNotification;
 use App\Notifications\InternJoinedTeamNotification;
 use App\Notifications\InternWithoutMentorNotification;
 use App\Notifications\MessageMentionNotification;
@@ -49,6 +50,7 @@ class NotificationController extends Controller
             DeadlineExtendedNotification::class,
         ],
         'sprint' => [SprintLeaderNotification::class, SprintToDivideNotification::class],
+        'group' => [GroupJoinedNotification::class],
         'mention' => [MessageMentionNotification::class, TaskCommentMentionNotification::class],
         'announcement' => [AnnouncementNotification::class],
         'intern' => [InternJoinedTeamNotification::class, InternWithoutMentorNotification::class],
@@ -69,6 +71,7 @@ class NotificationController extends Controller
         SprintLeaderNotification::class => 'sprint_leader',
         SprintToDivideNotification::class => 'sprint_to_divide',
         DeadlineExtendedNotification::class => 'deadline_extended',
+        GroupJoinedNotification::class => 'group_joined',
     ];
 
     private ?string $fallbackWorkspaceUrl = null;
@@ -297,6 +300,7 @@ class NotificationController extends Controller
                 "Anda ketua {$d['sprint_name']}",
                 trim(($d['workspace_name'] ?? '') . (isset($d['end_date']) ? ' · deadline ' . $this->shortDate($d['end_date']) : '') . (isset($d['task_count']) ? " · {$d['task_count']} tugas" : ''), ' ·') ?: null,
             ] : ['', null],
+            'group_joined' => isset($d['workspace_name']) ? ["Dimasukkan ke {$d['workspace_name']}", $actor ? "Oleh {$actor}" : null] : ['', null],
             'sprint_to_divide' => isset($d['task_count']) ? ["{$d['task_count']} tugas menunggu Anda bagi", implode(', ', $d['task_titles'] ?? []) ?: null] : ['', null],
             default => ['', null],
         };
@@ -316,6 +320,10 @@ class NotificationController extends Controller
             }
 
             return route('workspace.tasks.show', $d['task_id']);
+        }
+
+        if (($d['kind'] ?? null) === 'group_joined' && isset($d['workspace_id'])) {
+            return route('workspace.show', $d['workspace_id']);
         }
 
         if (isset($d['sprint_id'], $d['workspace_id'])) {

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Workspace\AttachmentController;
 use App\Http\Controllers\Workspace\ChannelController;
 use App\Http\Controllers\Workspace\DashboardController;
+use App\Http\Controllers\Workspace\GroupController;
 use App\Http\Controllers\Workspace\InsightController;
 use App\Http\Controllers\Workspace\LabelController;
 use App\Http\Controllers\Workspace\MessageController;
@@ -22,6 +23,12 @@ Route::middleware('auth')->prefix('workspace')->name('workspace.')->group(functi
     // Halaman: daftar kelompok dan detail kelompok
     Route::get('/', [WorkspacePageController::class, 'index'])->name('index');
     Route::get('{workspace}', [WorkspacePageController::class, 'show'])->whereNumber('workspace')->name('show');
+
+    // Kelompok buatan mentor
+    Route::get('groups/roster', [GroupController::class, 'roster'])->name('groups.roster');
+    Route::post('groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::patch('groups/{group}', [GroupController::class, 'update'])->whereNumber('group')->name('groups.update');
+    Route::post('groups/{group}/members', [GroupController::class, 'addMembers'])->whereNumber('group')->name('groups.members');
 
     // Ringkasan untuk dashboard (intern / mentor / admin)
     Route::get('dashboard', [DashboardController::class, 'summary'])->name('dashboard');

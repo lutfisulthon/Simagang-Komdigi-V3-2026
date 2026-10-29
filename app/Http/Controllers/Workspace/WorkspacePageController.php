@@ -13,6 +13,7 @@ use App\Models\TaskLabel;
 use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\Workspace;
+use App\Services\GroupService;
 use App\Services\WorkspaceDeadlineService;
 use App\Services\WorkspacePresenter;
 use Illuminate\Contracts\View\View;
@@ -31,7 +32,7 @@ class WorkspacePageController extends Controller
     private const DONE_LIMIT = 8;
     private const DONE_REPORT_LIMIT = 200;
 
-    public function __construct(private WorkspacePresenter $presenter, private WorkspaceDeadlineService $deadlines)
+    public function __construct(private WorkspacePresenter $presenter, private WorkspaceDeadlineService $deadlines, private GroupService $groups)
     {
     }
 
@@ -41,6 +42,7 @@ class WorkspacePageController extends Controller
         $this->authorize('viewAny', Workspace::class);
 
         $user = $request->user();
+        $gate = Gate::forUser($user);
         $isAdmin = $user->isSuperAdmin() || $user->isAdminFull();
 
         $base = Workspace::query()->when(! $isAdmin, fn ($q) => $q->whereHas(
@@ -115,14 +117,14 @@ class WorkspacePageController extends Controller
             'counts' => $counts,
             'sort' => $sort,
             'attention' => $attention,
-            'ungrouped' => [],
+            'ungrouped' => $this->ungrouped($user),
             'teams' => $isAdmin ? Team::orderBy('name')->get(['id', 'name'])->toArray() : [],
             'mentors' => $isAdmin
                 ? Mentor::whereNotNull('user_id')->orderBy('name')->get(['user_id', 'name'])
                     ->map(fn ($m) => ['id' => $m->user_id, 'name' => $m->name])->all()
                 : [],
             'can' => [
-                'create_group' => false,
+                'create_group' => $gate->allows('createGroup', Workspace::class),
                 'manage_templates' => Gate::forUser($user)->allows('viewAny', TaskTemplate::class),
             ],
         ]);
@@ -166,7 +168,7 @@ class WorkspacePageController extends Controller
             'tab' => $tab,
             'members' => $this->presenter->members($workspace),
             'activities' => $this->recentActivities($workspace),
-            'candidates' => [],
+            'candidates' => $gate->allows('addGroupMembers', $workspace) ? $this->ungrouped($user) : [],
             'assignableInterns' => $this->assignableInterns($workspace),
             'labels' => $teamId
                 ? TaskLabel::where('team_id', $teamId)->orderBy('name')->get(['id', 'name', 'color'])->toArray()
@@ -186,6 +188,18 @@ class WorkspacePageController extends Controller
                 'manage_sprints' => $canSprints,
             ],
         ]);
+    }
+
+    /** Roster anak bimbingan mentor yang belum punya kelompok (banner "Masukkan" dan "Tambah anggota"). */
+    private function ungrouped($user): array
+    {
+        if (! $user->isMentor()) {
+            return [];
+        }
+
+        $roster = $this->presenter->roster($this->groups->interns($user));
+
+        return array_values(array_filter($roster, fn ($i) => $i['group'] === null));
     }
 
     /** Aktivitas workspace berhalaman (20 per muat), terbaru dulu; lanjutan lewat ?before={id}. */
@@ -292,12 +306,6 @@ class WorkspacePageController extends Controller
 
     private function labelTeamId(Workspace $workspace): ?int
     {
-        if ($workspace->team_id) {
-            return $workspace->team_id;
-        }
-
-        $intern = $workspace->intern_id ? Intern::with('mentor')->find($workspace->intern_id) : null;
-
-        return $intern?->team_id ?? $intern?->mentor?->team_id;
+        return $workspace->labelTeamId();
     }
 }

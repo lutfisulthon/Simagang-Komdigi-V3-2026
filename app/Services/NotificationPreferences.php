@@ -26,6 +26,7 @@ class NotificationPreferences
         ['type' => 'deadline_extended', 'group' => 'Tugas', 'label' => 'Deadline diperpanjang', 'description' => 'Saat mentor memperpanjang deadline tugas Anda.', 'roles' => ['intern']],
         ['type' => 'sprint_leader', 'group' => 'Sprint', 'label' => 'Ditunjuk jadi ketua sprint', 'description' => 'Saat Anda ditunjuk menjadi ketua tim sebuah sprint.', 'roles' => ['intern']],
         ['type' => 'sprint_to_divide', 'group' => 'Sprint', 'label' => 'Tugas menunggu dibagi', 'description' => 'Pengingat bagi ketua sprint bila masih ada tugas belum dibagi.', 'roles' => ['intern']],
+        ['type' => 'group_joined', 'group' => 'Kelompok', 'label' => 'Dimasukkan ke kelompok', 'description' => 'Saat mentor memasukkan Anda ke sebuah kelompok.', 'roles' => ['intern']],
         ['type' => 'mentioned', 'group' => 'Percakapan', 'label' => 'Disebut (mention)', 'description' => 'Saat seseorang menyebut Anda di chat atau komentar.', 'roles' => ['intern', 'mentor', 'admin']],
         ['type' => 'announcement', 'group' => 'Pengumuman', 'label' => 'Pengumuman baru', 'description' => 'Saat ada pengumuman di #pengumuman.', 'roles' => ['intern', 'mentor', 'admin']],
         ['type' => 'intern_joined', 'group' => 'Anak bimbingan', 'label' => 'Intern baru bergabung', 'description' => 'Saat anak bimbingan baru masuk tim.', 'roles' => ['mentor', 'admin']],
