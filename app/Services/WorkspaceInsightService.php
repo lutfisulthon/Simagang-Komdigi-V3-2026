@@ -23,7 +23,7 @@ class WorkspaceInsightService
 {
     private const TASK_RELATIONS = ['assignees', 'labels', 'checklistItems', 'workspace'];
 
-    public function __construct(private WorkspacePresenter $presenter, private ChannelUnreadService $unread)
+    public function __construct(private WorkspacePresenter $presenter, private ChannelUnreadService $unread, private GroupService $groups)
     {
     }
 
@@ -311,7 +311,11 @@ class WorkspaceInsightService
             ->get()
             ->keyBy('intern_id');
 
-        $spaces = Workspace::where('type', 'intern')->when($internIds, fn ($q) => $q->whereIn('intern_id', $internIds))->get()->keyBy('intern_id');
+        // Tautan ke kelompok aktif intern; yang belum berkelompok ke Space pribadinya.
+        $spaces = $this->groups->homeWorkspaces(
+            Intern::whereIn('id', $internIds ?: $rows->keys()->all())->get(),
+            activeOnly: false
+        );
 
         $interns = collect($internIds ?: $rows->keys()->all())->mapWithKeys(function ($id) use ($rows, $spaces) {
             $r = $rows[$id] ?? null;
@@ -413,7 +417,7 @@ class WorkspaceInsightService
         $stats['late'] = $tasks->filter(fn (Task $t) => $t->status !== TaskStatus::Done && $t->overdue_at !== null)->count();
         $stats['avg_score'] = $scores->isEmpty() ? null : round($scores->avg(), 1);
 
-        $space = Workspace::where('type', 'intern')->where('intern_id', $intern->id)->first();
+        $space = $this->groups->homeWorkspaces([$intern], activeOnly: false)->first();
 
         return [
             'data' => $tasks->map(fn (Task $t) => $this->cardWithWorkspace($t, $viewer) + ['score' => $t->score])->values()->all(),

@@ -33,6 +33,9 @@ class NotificationPreferences
         ['type' => 'intern_without_mentor', 'group' => 'Anak bimbingan', 'label' => 'Intern tanpa mentor', 'description' => 'Saat ada intern aktif yang belum punya mentor.', 'roles' => ['admin']],
     ];
 
+    /** Jenis yang juga dikirim lewat email (selain in-app); lainnya hanya in-app. */
+    public const EMAIL_TYPES = ['sprint_leader', 'sprint_to_divide', 'deadline_extended', 'group_joined'];
+
     public function roleOf(User $user): string
     {
         return match (true) {
@@ -65,10 +68,25 @@ class NotificationPreferences
             ->exists();
     }
 
-    /** @return array<int, array{type: string, group: string, label: string, description: string, in_app: bool, email: null}> */
+    /** Apakah email jenis ini boleh dikirim ke user? Hanya jenis EMAIL_TYPES; tanpa pilihan tersimpan = ya. */
+    public function allowsEmail(object $notifiable, string $type): bool
+    {
+        if (! $notifiable instanceof User || ! in_array($type, self::EMAIL_TYPES, true)) {
+            return false;
+        }
+
+        return ! DB::table('notification_preferences')
+            ->where('user_id', $notifiable->id)
+            ->where('type', $type)
+            ->where('email', false)
+            ->exists();
+    }
+
+    /** @return array<int, array{type: string, group: string, label: string, description: string, in_app: bool, email: ?bool}> */
     public function typesFor(User $user): array
     {
         $stored = DB::table('notification_preferences')->where('user_id', $user->id)->pluck('in_app', 'type');
+        $storedEmail = DB::table('notification_preferences')->where('user_id', $user->id)->pluck('email', 'type');
 
         return array_map(fn ($c) => [
             'type' => $c['type'],
@@ -76,7 +94,7 @@ class NotificationPreferences
             'label' => $c['label'],
             'description' => $c['description'],
             'in_app' => (bool) ($stored[$c['type']] ?? true),
-            'email' => null,
+            'email' => in_array($c['type'], self::EMAIL_TYPES, true) ? (bool) ($storedEmail[$c['type']] ?? true) : null,
         ], $this->catalogFor($user));
     }
 
@@ -94,7 +112,7 @@ class NotificationPreferences
         foreach ($types as $type => $choice) {
             if (! in_array($type, $allowed, true)) {
                 $errors["types.{$type}"] = 'Jenis notifikasi tidak dikenal.';
-            } elseif (! empty($choice['email'])) {
+            } elseif (! empty($choice['email']) && ! in_array($type, self::EMAIL_TYPES, true)) {
                 $errors["types.{$type}.email"] = 'Jenis ini tidak dikirim lewat email.';
             }
         }
@@ -104,10 +122,19 @@ class NotificationPreferences
         }
 
         foreach ($types as $type => $choice) {
+            $values = [];
+
             if (array_key_exists('in_app', $choice)) {
+                $values['in_app'] = (bool) $choice['in_app'];
+            }
+            if (array_key_exists('email', $choice) && $choice['email'] !== null && in_array($type, self::EMAIL_TYPES, true)) {
+                $values['email'] = (bool) $choice['email'];
+            }
+
+            if ($values) {
                 DB::table('notification_preferences')->updateOrInsert(
                     ['user_id' => $user->id, 'type' => $type],
-                    ['in_app' => (bool) $choice['in_app'], 'updated_at' => now(), 'created_at' => now()]
+                    $values + ['updated_at' => now(), 'created_at' => now()]
                 );
             }
         }

@@ -10,6 +10,7 @@ use App\Models\TaskLabel;
 use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\Workspace;
+use App\Services\GroupService;
 use App\Services\TaskNotifier;
 use App\Services\TaskService;
 use App\Services\WorkspacePresenter;
@@ -27,6 +28,7 @@ class TaskTemplateController extends Controller
         private WorkspacePresenter $presenter,
         private TaskService $tasks,
         private TaskNotifier $notifier,
+        private GroupService $groups,
     ) {
     }
 
@@ -107,8 +109,9 @@ class TaskTemplateController extends Controller
     }
 
     /**
-     * Tugaskan template ke banyak intern sekaligus: satu tugas per intern, dibuat di Space Intern
-     * masing-masing. Intern tanpa Space aktif membuat seluruh permintaan ditolak (422).
+     * Tugaskan template ke banyak intern sekaligus: satu tugas per intern, dibuat di kelompok aktif
+     * masing-masing (atau Space pribadinya bila belum berkelompok). Intern tanpa keduanya membuat
+     * seluruh permintaan ditolak (422).
      */
     public function assign(Request $request, TaskTemplate $template): JsonResponse
     {
@@ -122,16 +125,17 @@ class TaskTemplateController extends Controller
         ]);
 
         $user = $request->user();
-        $spaces = Workspace::where('type', 'intern')->whereIn('intern_id', $data['assignee_ids'])->get()->keyBy('intern_id');
+        $interns = Intern::whereIn('id', $data['assignee_ids'])->get();
+        $spaces = $this->groups->homeWorkspaces($interns);
 
-        $missing = collect($data['assignee_ids'])->filter(fn ($id) => ! isset($spaces[$id]) || $spaces[$id]->is_archived);
+        $missing = collect($data['assignee_ids'])->filter(fn ($id) => ! isset($spaces[$id]));
         if ($missing->isNotEmpty()) {
-            $names = Intern::whereIn('id', $missing)->pluck('name')->implode(', ');
+            $names = $interns->whereIn('id', $missing)->pluck('name')->implode(', ');
 
-            throw ValidationException::withMessages(['assignee_ids' => "Intern berikut belum punya Space aktif: {$names}."]);
+            throw ValidationException::withMessages(['assignee_ids' => "Intern berikut belum punya kelompok atau Space aktif: {$names}."]);
         }
 
-        foreach ($spaces as $space) {
+        foreach ($spaces->unique('id') as $space) {
             $this->authorize('create', [Task::class, $space]);
         }
 
@@ -199,13 +203,17 @@ class TaskTemplateController extends Controller
             ->whereHas('user')
             ->orderBy('name')
             ->get()
-            ->map(function (Intern $intern) {
-                $space = Workspace::where('type', 'intern')->where('intern_id', $intern->id)->where('is_archived', false)->first();
+            ->pipe(function ($interns) {
+                $homes = $this->groups->homeWorkspaces($interns);
 
-                return $space ? $this->presenter->intern($intern) + [
-                    'team' => $intern->team ? ['id' => $intern->team->id, 'name' => $intern->team->name] : null,
-                    'group' => ['id' => $space->id, 'name' => $space->name, 'url' => route('workspace.show', $space)],
-                ] : null;
+                return $interns->map(function (Intern $intern) use ($homes) {
+                    $space = $homes[$intern->id] ?? null;
+
+                    return $space ? $this->presenter->intern($intern) + [
+                        'team' => $intern->team ? ['id' => $intern->team->id, 'name' => $intern->team->name] : null,
+                        'group' => ['id' => $space->id, 'name' => $space->name, 'url' => route('workspace.show', $space)],
+                    ] : null;
+                });
             })
             ->filter()
             ->values()

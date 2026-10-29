@@ -61,6 +61,29 @@ class GroupService
     }
 
     /**
+     * Workspace utama tiap intern: kelompok aktifnya bila ada, kalau tidak Space pribadinya.
+     * `$activeOnly` mengabaikan Space yang sudah diarsipkan.
+     *
+     * @param  iterable<int, Intern>  $interns
+     * @return Collection<int, Workspace> intern_id => Workspace (intern tanpa workspace tidak ikut)
+     */
+    public function homeWorkspaces(iterable $interns, bool $activeOnly = true): Collection
+    {
+        $interns = collect($interns);
+        $groups = $this->activeGroupsOf($interns->pluck('user_id')->filter()->all());
+        $spaces = Workspace::where('type', 'intern')
+            ->whereIn('intern_id', $interns->pluck('id'))
+            ->when($activeOnly, fn ($q) => $q->where('is_archived', false))
+            ->get()->keyBy('intern_id');
+
+        return $interns->mapWithKeys(function (Intern $i) use ($groups, $spaces) {
+            $home = $groups[$i->user_id] ?? $spaces[$i->id] ?? null;
+
+            return $home ? [$i->id => $home] : [];
+        });
+    }
+
+    /**
      * Buat kelompok: workspace, anggota, channel kelompok, dan DM mentor dengan tiap anggota.
      *
      * @param  array{name: string, color?: ?string, description?: ?string}  $data

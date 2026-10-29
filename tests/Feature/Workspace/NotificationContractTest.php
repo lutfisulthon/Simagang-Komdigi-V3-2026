@@ -167,7 +167,9 @@ class NotificationContractTest extends TestCase
         $intern = collect($this->actingAs($this->ahmad->user)->getJson('/notifications/preferences')->assertOk()->json('data.types'));
         $this->assertNotNull($intern->firstWhere('type', 'task_assigned'));
         $this->assertNull($intern->firstWhere('type', 'intern_joined'));
-        $this->assertTrue($intern->every(fn ($t) => $t['in_app'] === true && $t['email'] === null));
+        $this->assertTrue($intern->every(fn ($t) => $t['in_app'] === true));
+        // Email hanya untuk jenis yang dikirim lewat email (default aktif); lainnya null.
+        $this->assertTrue($intern->every(fn ($t) => in_array($t['type'], \App\Services\NotificationPreferences::EMAIL_TYPES, true) ? $t['email'] === true : $t['email'] === null));
 
         $mentor = collect($this->actingAs($this->rudy->user)->getJson('/notifications/preferences')->json('data.types'));
         $this->assertNotNull($mentor->firstWhere('type', 'task_in_review'));

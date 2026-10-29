@@ -4,12 +4,14 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 
-class DeadlineExtendedNotification extends Notification
+class DeadlineExtendedNotification extends Notification implements ShouldQueue
 {
-    use \App\Notifications\Concerns\RespectsPreferences;
+    use \App\Notifications\Concerns\RespectsPreferencesAndEmail;
 
     public function preferenceType(): string
     {
@@ -35,5 +37,22 @@ class DeadlineExtendedNotification extends Notification
             'reason' => $this->reason,
             'message' => "Deadline {$this->task->code} diperpanjang",
         ];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $format = fn (Carbon $date) => $date->copy()->locale('id')->translatedFormat('j F Y H:i');
+
+        $mail = (new MailMessage)
+            ->subject("Deadline {$this->task->code} diperpanjang")
+            ->greeting('Halo, ' . $notifiable->name)
+            ->line("{$this->actor->name} memperpanjang deadline tugas {$this->task->code} \"{$this->task->title}\".")
+            ->line('Deadline lama: ' . $format($this->from) . '. Deadline baru: ' . $format($this->task->due_at) . '.');
+
+        if ($this->reason) {
+            $mail->line("Alasan: {$this->reason}");
+        }
+
+        return $mail->action('Lihat tugas', route('workspace.tasks.show', $this->task));
     }
 }
