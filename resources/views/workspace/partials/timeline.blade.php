@@ -145,7 +145,7 @@
                         <div class="ws-tl__track"></div>
                     </div>
 
-                    {{-- Garis hari ini (di atas batang) --}}
+                    {{-- Garis hari ini (di bawah kolom nama tugas yang sticky) --}}
                     <div class="ws-tl__today-wrap" :style="{ left: 'var(--tl-left)', width: totalW + 'px' }" aria-hidden="true">
                         <div class="ws-tl__today" :style="{ left: todayX + 'px' }"></div>
                     </div>

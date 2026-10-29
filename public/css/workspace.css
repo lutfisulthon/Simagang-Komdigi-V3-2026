@@ -3135,7 +3135,8 @@ a.ws-chip.ws-chip--late[aria-current="true"],
 .ws-tl__sprint--planned { background: #fff; border: 1.5px dashed #93c5fd; color: #1d4ed8; }
 .ws-tl__sprint--completed { background: #e2e8f0; color: #475569; }
 
-.ws-tl__today-wrap { position: absolute; top: 0; bottom: 0; z-index: 3; pointer-events: none; }
+/* z-index 0: di bawah baris (z-index 1) supaya kolom nama tugas yang sticky menutupi garis saat digulir ke kanan. */
+.ws-tl__today-wrap { position: absolute; top: 0; bottom: 0; z-index: 0; pointer-events: none; }
 .ws-tl__today { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #f97316; }
 
 .ws-avatar-filter { display: inline-flex; gap: 2px; }
