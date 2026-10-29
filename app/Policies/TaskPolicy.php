@@ -13,6 +13,9 @@ class TaskPolicy
 {
     use ChecksWorkspaceAccess;
 
+    /** @var array<string, bool> */
+    private array $leaderCache = [];
+
     public function view(User $user, Task $task): bool
     {
         return $this->canViewWorkspace($user, $task->workspace);
@@ -119,6 +122,37 @@ class TaskPolicy
         return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
     }
 
+    /**
+     * Membagi tugas ke anggota: mentor/admin, atau intern yang menjadi ketua sprint tugas itu
+     * (selama sprint belum selesai). Tugas di Space pribadi tidak dibagi.
+     */
+    public function assign(User $user, Task $task): bool
+    {
+        $workspace = $task->workspace;
+
+        if ($workspace->is_archived || $workspace->type === 'intern') {
+            return false;
+        }
+
+        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+            return true;
+        }
+
+        return $this->isSprintLeader($user, $task) && $this->canWrite($user, $workspace);
+    }
+
+    /** Perpanjang deadline: mentor/admin, selama tugas belum Selesai. */
+    public function extendDeadline(User $user, Task $task): bool
+    {
+        $workspace = $task->workspace;
+
+        if ($workspace->is_archived || $task->status === TaskStatus::Done) {
+            return false;
+        }
+
+        return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
+    }
+
     /** Mencentang checklist: admin, mentor workspace, atau intern yang di-assign. */
     public function updateChecklist(User $user, Task $task): bool
     {
@@ -154,6 +188,23 @@ class TaskPolicy
         }
 
         return $this->canUseWorkspace($user) && $this->isMember($user, $workspace);
+    }
+
+    private function isSprintLeader(User $user, Task $task): bool
+    {
+        $internId = optional($user->intern)->id;
+
+        if (! $internId || $task->sprint_id === null) {
+            return false;
+        }
+
+        $key = $internId . ':' . $task->sprint_id;
+
+        return $this->leaderCache[$key] ??= DB::table('sprints')
+            ->where('id', $task->sprint_id)
+            ->where('leader_intern_id', $internId)
+            ->whereIn('status', ['planned', 'active'])
+            ->exists();
     }
 
     private function isAssignee(User $user, Task $task): bool

@@ -30,6 +30,19 @@ class WorkspacePolicy
         return $this->isWorkspaceAdmin($user);
     }
 
+    /**
+     * Atur sprint, backlog, dan otomasi: admin atau mentor workspace tim. Space pribadi intern
+     * tidak memakai sprint (satu orang, tanpa pembagian tugas).
+     */
+    public function manageSprints(User $user, Workspace $workspace): bool
+    {
+        if ($workspace->is_archived || $workspace->type === 'intern') {
+            return false;
+        }
+
+        return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
+    }
+
     public function archive(User $user, Workspace $workspace): bool
     {
         return $this->isWorkspaceAdmin($user);

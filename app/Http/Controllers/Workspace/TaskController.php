@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Workspace;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
 use App\Models\TaskComment;
 use App\Models\TaskTemplate;
 use App\Models\Workspace;
 use App\Services\AttachmentService;
+use App\Services\SprintService;
 use App\Services\TaskNotifier;
 use App\Services\TaskService;
 use App\Services\WorkspacePresenter;
@@ -35,6 +37,7 @@ class TaskController extends Controller
         private TaskNotifier $notifier,
         private WorkspacePresenter $presenter,
         private AttachmentService $attachments,
+        private SprintService $sprints,
     ) {
     }
 
@@ -224,7 +227,10 @@ class TaskController extends Controller
             'due_at' => array_filter(['required', 'date', $request->filled('start_at') ? 'after_or_equal:start_at' : null]),
             'template_id' => ['nullable', 'integer', 'exists:task_templates,id'],
             'separate_copies' => ['nullable', 'boolean'],
+            'sprint_id' => ['nullable', 'integer'],
         ]);
+
+        $data['sprint_id'] = $this->resolveSprint($workspace, $data['sprint_id'] ?? null);
 
         $user = $request->user();
         $template = null;
@@ -271,6 +277,22 @@ class TaskController extends Controller
         ], 201);
     }
 
+    /** Sprint tujuan harus milik workspace ini dan belum selesai; null = backlog. */
+    private function resolveSprint(Workspace $workspace, mixed $sprintId): ?int
+    {
+        if ($sprintId === null || $sprintId === '') {
+            return null;
+        }
+
+        $sprint = $workspace->sprints()->whereKey((int) $sprintId)->first();
+
+        if (! $sprint || $sprint->status === Sprint::COMPLETED) {
+            throw ValidationException::withMessages(['sprint_id' => 'Pilih sprint yang belum selesai.']);
+        }
+
+        return $sprint->id;
+    }
+
     /** Tautkan lampiran yatim ke tugas dan catat aktivitasnya. */
     private function claimAttachments(Task $task, array $ids, $user): void
     {
@@ -289,7 +311,7 @@ class TaskController extends Controller
         $this->authorize('update', $task);
 
         $rules = $this->payloadRules();
-        $rules['assignee_ids'] = ['sometimes', 'array', 'min:1'];
+        $rules['assignee_ids'] = ['sometimes', 'array'];
         $data = $request->validate($rules + [
             'title' => ['sometimes', 'required', 'string', 'max:150'],
             'due_at' => ['sometimes', 'required', 'date'],
@@ -481,6 +503,105 @@ class TaskController extends Controller
         return $this->detail($task->fresh(), $request);
     }
 
+    /**
+     * Backlog: pindahkan tugas ke sprint/backlog dan simpan urutannya.
+     * `rank_order` = urutan lengkap bagian tujuan setelah dipindah.
+     */
+    public function plan(Request $request, Task $task): JsonResponse
+    {
+        $workspace = $task->workspace;
+        $this->authorize('manageSprints', $workspace);
+
+        $data = $request->validate([
+            'sprint_id' => ['present', 'nullable', 'integer'],
+            'rank_order' => ['nullable', 'array', 'max:500'],
+            'rank_order.*' => ['integer'],
+        ]);
+
+        $target = $this->resolveSprint($workspace, $data['sprint_id']);
+
+        DB::transaction(function () use ($task, $workspace, $target, $data) {
+            $this->sprints->lock($workspace);
+
+            if ($task->sprint_id !== $target) {
+                $task->forceFill(['sprint_id' => $target, 'rank' => $this->sprints->nextRank($workspace->id, $target)])->save();
+            }
+
+            $this->sprints->applyOrder($workspace, $target, $data['rank_order'] ?? [$task->id]);
+        });
+
+        return response()->json(['data' => $this->card($task->fresh(), $request)]);
+    }
+
+    /**
+     * Bagi tugas ke anggota (boleh beberapa, boleh kosong): mentor/admin atau ketua sprint tugas ini.
+     * Perubahan dicatat sebagai `assigned` / `unassigned` per intern.
+     */
+    public function assignees(Request $request, Task $task): JsonResponse
+    {
+        $this->authorize('assign', $task);
+
+        $data = $request->validate([
+            'assignee_ids' => ['present', 'array'],
+            'assignee_ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $requested = array_map('intval', $data['assignee_ids']);
+        $allowed = $requested ? $this->tasks->allowedAssigneeIds($task->workspace, $requested) : [];
+
+        if (count($allowed) !== count($requested)) {
+            throw ValidationException::withMessages(['assignee_ids' => 'Ada intern yang bukan anggota workspace ini.']);
+        }
+
+        $diff = $task->assignees()->sync($allowed);
+        $names = \App\Models\Intern::whereIn('id', array_merge($diff['attached'], $diff['detached']))->pluck('name', 'id');
+
+        foreach ($diff['attached'] as $id) {
+            $this->tasks->record($task, $request->user(), 'assigned', ['assignee' => $names[$id] ?? null, 'assignee_id' => $id]);
+        }
+        foreach ($diff['detached'] as $id) {
+            $this->tasks->record($task, $request->user(), 'unassigned', ['assignee' => $names[$id] ?? null, 'assignee_id' => $id]);
+        }
+
+        if ($diff['attached']) {
+            $task->load(self::RELATIONS);
+            $this->notifier->assigned($task, $diff['attached'], $request->user());
+        }
+
+        return $this->detail($task->fresh(), $request);
+    }
+
+    /** Perpanjang deadline: membuka kunci kirim hasil dan menghapus penanda terlambat. */
+    public function extendDeadline(Request $request, Task $task): JsonResponse
+    {
+        $this->authorize('extendDeadline', $task);
+
+        $data = $request->validate([
+            'due_at' => ['required', 'date'],
+            'reason' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        $from = $task->due_at;
+        $to = Carbon::parse($data['due_at']);
+        $reason = isset($data['reason']) && trim($data['reason']) !== '' ? trim($data['reason']) : null;
+
+        if ($to->lte($from) || $to->lte(now())) {
+            throw ValidationException::withMessages(['due_at' => 'Deadline baru harus setelah deadline lama dan setelah sekarang.']);
+        }
+
+        $task->forceFill(['due_at' => $to, 'overdue_at' => null, 'reminded_at' => null])->save();
+
+        $this->tasks->record($task, $request->user(), 'deadline_extended', [
+            'from' => $from->toIso8601String(),
+            'to' => $to->toIso8601String(),
+            'reason' => $reason,
+        ]);
+
+        $this->notifier->deadlineExtended($task, $request->user(), $from, $reason);
+
+        return $this->detail($task->fresh(), $request);
+    }
+
     public function destroy(Request $request, Task $task): JsonResponse
     {
         $this->authorize('delete', $task);
@@ -527,8 +648,13 @@ class TaskController extends Controller
             return [$user->intern->id];
         }
 
+        // Tugas di tim boleh belum dibagi (backlog, ketua sprint yang membagi); Space pribadi wajib punya assignee.
         if (! $requested) {
-            throw ValidationException::withMessages(['assignee_ids' => 'Pilih minimal satu intern.']);
+            if ($workspace->type === 'intern') {
+                throw ValidationException::withMessages(['assignee_ids' => 'Pilih minimal satu intern.']);
+            }
+
+            return [];
         }
 
         $allowed = $this->tasks->allowedAssigneeIds($workspace, $requested);

@@ -6,6 +6,10 @@ use App\Models\Intern;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\User;
+use App\Models\Sprint;
+use App\Notifications\DeadlineExtendedNotification;
+use App\Notifications\SprintLeaderNotification;
+use App\Notifications\SprintToDivideNotification;
 use App\Notifications\TaskAssignedNotification;
 use App\Notifications\TaskCommentedNotification;
 use App\Notifications\TaskCommentMentionNotification;
@@ -24,6 +28,39 @@ class TaskNotifier
     public function assigned(Task $task, array $internIds, User $actor): void
     {
         $this->send($this->internUsers($internIds)->reject(fn (User $u) => $u->id === $actor->id), new TaskAssignedNotification($task, $actor));
+    }
+
+    /** Intern ditunjuk menjadi ketua sprint. */
+    public function sprintLeader(Sprint $sprint, User $actor): void
+    {
+        $leader = $sprint->leader?->user;
+
+        if ($leader && $leader->id !== $actor->id) {
+            $this->send(collect([$leader]), new SprintLeaderNotification($sprint, $actor, $sprint->tasks()->count()));
+        }
+    }
+
+    /**
+     * Ketua diingatkan ada tugas sprint yang belum dibagi.
+     *
+     * @param  array<int, string>  $titles
+     */
+    public function sprintToDivide(Sprint $sprint, int $count, array $titles): void
+    {
+        $leader = $sprint->leader?->user;
+
+        if ($leader && $count > 0) {
+            $this->send(collect([$leader]), new SprintToDivideNotification($sprint, $count, $titles));
+        }
+    }
+
+    /** Deadline tugas diperpanjang: semua assignee diberi tahu. */
+    public function deadlineExtended(Task $task, User $actor, \Illuminate\Support\Carbon $from, ?string $reason): void
+    {
+        $this->send(
+            $this->assigneeUsers($task)->reject(fn (User $u) => $u->id === $actor->id),
+            new DeadlineExtendedNotification($task, $actor, $from, $reason)
+        );
     }
 
     /** Tugas masuk Review: beri tahu mentor/admin pembuat tugas. */

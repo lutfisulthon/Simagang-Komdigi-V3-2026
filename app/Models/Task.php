@@ -14,6 +14,7 @@ class Task extends Model
 
     protected $fillable = [
         'workspace_id',
+        'sprint_id',
         'number',
         'title',
         'description',
@@ -26,6 +27,7 @@ class Task extends Model
         'overdue_at',
         'reminded_at',
         'position',
+        'rank',
         'score',
         'feedback',
         'result_link',
@@ -53,6 +55,11 @@ class Task extends Model
     public function workspace()
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    public function sprint()
+    {
+        return $this->belongsTo(Sprint::class);
     }
 
     public function creator()

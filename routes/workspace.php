@@ -7,6 +7,7 @@ use App\Http\Controllers\Workspace\InsightController;
 use App\Http\Controllers\Workspace\LabelController;
 use App\Http\Controllers\Workspace\MessageController;
 use App\Http\Controllers\Workspace\NotificationController;
+use App\Http\Controllers\Workspace\SprintController;
 use App\Http\Controllers\Workspace\TaskCommentController;
 use App\Http\Controllers\Workspace\TaskController;
 use App\Http\Controllers\Workspace\TaskTemplateController;
@@ -56,12 +57,24 @@ Route::middleware('auth')->prefix('workspace')->name('workspace.')->group(functi
     Route::get('{workspace}/tasks', [TaskController::class, 'index'])->whereNumber('workspace')->name('tasks.index');
     Route::post('{workspace}/tasks', [TaskController::class, 'store'])->whereNumber('workspace')->name('tasks.store');
 
+    // Sprint dan backlog
+    Route::post('{workspace}/sprints', [SprintController::class, 'store'])->whereNumber('workspace')->name('sprints.store');
+    Route::prefix('sprints/{sprint}')->whereNumber('sprint')->group(function () {
+        Route::patch('/', [SprintController::class, 'update'])->name('sprints.update');
+        Route::delete('/', [SprintController::class, 'destroy'])->name('sprints.destroy');
+        Route::post('start', [SprintController::class, 'start'])->name('sprints.start');
+        Route::post('complete', [SprintController::class, 'complete'])->name('sprints.complete');
+    });
+
     Route::prefix('tasks/{task}')->whereNumber('task')->group(function () {
         Route::get('/', [WorkspacePageController::class, 'task'])->name('tasks.show');
         Route::put('/', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::patch('status', [TaskController::class, 'updateStatus'])->name('tasks.status');
         Route::patch('review', [TaskController::class, 'review'])->name('tasks.review');
+        Route::patch('sprint', [TaskController::class, 'plan'])->name('tasks.plan');
+        Route::patch('assignees', [TaskController::class, 'assignees'])->name('tasks.assignees');
+        Route::patch('deadline', [TaskController::class, 'extendDeadline'])->name('tasks.deadline');
         Route::patch('checklist/{item}', [TaskController::class, 'toggleChecklistItem'])->whereNumber('item')->name('tasks.checklist');
         Route::post('template', [TaskTemplateController::class, 'storeFromTask'])->name('tasks.save-template');
 

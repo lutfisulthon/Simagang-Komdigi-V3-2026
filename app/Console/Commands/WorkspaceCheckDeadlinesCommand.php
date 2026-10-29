@@ -3,9 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Enums\TaskStatus;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Notifications\TaskDueSoonNotification;
 use App\Notifications\TaskOverdueNotification;
+use App\Services\SprintService;
+use App\Services\TaskNotifier;
 use App\Services\TaskService;
 use Illuminate\Console\Command;
 
@@ -13,15 +16,17 @@ class WorkspaceCheckDeadlinesCommand extends Command
 {
     protected $signature = 'workspace:check-deadlines';
 
-    protected $description = 'Tandai tugas Terlambat dan kirim pengingat H-1 deadline (masing-masing sekali per tugas)';
+    protected $description = 'Tandai tugas Terlambat, kirim pengingat H-1 deadline (sekali per tugas), dan ingatkan ketua sprint membagi tugas (H+1)';
 
-    public function handle(TaskService $tasks): int
+    public function handle(TaskService $tasks, SprintService $sprints, TaskNotifier $notifier): int
     {
         $overdue = $this->markOverdue($tasks);
         $reminded = $this->sendReminders();
+        $leaders = $this->remindLeaders($sprints, $notifier);
 
         $this->info("Ditandai terlambat: {$overdue}");
         $this->info("Pengingat H-1 terkirim: {$reminded}");
+        $this->info("Pengingat ketua sprint terkirim: {$leaders}");
 
         return self::SUCCESS;
     }
@@ -69,6 +74,33 @@ class WorkspaceCheckDeadlinesCommand extends Command
 
                     $this->notifyAll($task->assignees->pluck('user')->filter()->unique('id'), new TaskDueSoonNotification($task));
 
+                    $count++;
+                }
+            });
+
+        return $count;
+    }
+
+    /** Sprint berjalan yang masih punya tugas belum dibagi: ingatkan ketua, paling cepat 24 jam sejak pengingat terakhir. */
+    private function remindLeaders(SprintService $sprints, TaskNotifier $notifier): int
+    {
+        $count = 0;
+
+        Sprint::query()
+            ->where('status', Sprint::ACTIVE)
+            ->where(fn ($q) => $q->whereNull('divide_reminded_at')->orWhere('divide_reminded_at', '<=', now()->subDay()))
+            ->whereHas('workspace', fn ($q) => $q->where('is_archived', false))
+            ->with('leader.user')
+            ->chunkById(100, function ($batch) use ($sprints, $notifier, &$count) {
+                foreach ($batch as $sprint) {
+                    $undivided = $sprints->undivided($sprint);
+
+                    if ($undivided->isEmpty()) {
+                        continue;
+                    }
+
+                    $notifier->sprintToDivide($sprint, $undivided->count(), $undivided->pluck('title')->take(5)->all());
+                    $sprint->forceFill(['divide_reminded_at' => now()])->save();
                     $count++;
                 }
             });

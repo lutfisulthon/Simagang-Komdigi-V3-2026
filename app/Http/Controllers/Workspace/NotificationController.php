@@ -8,6 +8,9 @@ use App\Notifications\AnnouncementNotification;
 use App\Notifications\InternJoinedTeamNotification;
 use App\Notifications\InternWithoutMentorNotification;
 use App\Notifications\MessageMentionNotification;
+use App\Notifications\DeadlineExtendedNotification;
+use App\Notifications\SprintLeaderNotification;
+use App\Notifications\SprintToDivideNotification;
 use App\Notifications\TaskAssignedNotification;
 use App\Notifications\TaskCommentedNotification;
 use App\Notifications\TaskCommentMentionNotification;
@@ -43,7 +46,9 @@ class NotificationController extends Controller
             TaskCommentedNotification::class,
             TaskDueSoonNotification::class,
             TaskOverdueNotification::class,
+            DeadlineExtendedNotification::class,
         ],
+        'sprint' => [SprintLeaderNotification::class, SprintToDivideNotification::class],
         'mention' => [MessageMentionNotification::class, TaskCommentMentionNotification::class],
         'announcement' => [AnnouncementNotification::class],
         'intern' => [InternJoinedTeamNotification::class, InternWithoutMentorNotification::class],
@@ -61,6 +66,9 @@ class NotificationController extends Controller
         TaskDueSoonNotification::class => 'task_due_soon',
         TaskOverdueNotification::class => 'task_overdue',
         AnnouncementNotification::class => 'announcement',
+        SprintLeaderNotification::class => 'sprint_leader',
+        SprintToDivideNotification::class => 'sprint_to_divide',
+        DeadlineExtendedNotification::class => 'deadline_extended',
     ];
 
     private ?string $fallbackWorkspaceUrl = null;
@@ -284,6 +292,12 @@ class NotificationController extends Controller
             'announcement' => ['Pengumuman baru', ($actor ? "{$actor}: " : '') . ($d['excerpt'] ?? '')],
             'intern_joined' => isset($d['intern_name']) ? ["Intern baru: {$d['intern_name']}", isset($d['team_name']) ? "Masuk tim {$d['team_name']}" : null] : ['', null],
             'intern_without_mentor' => isset($d['intern_name']) ? ['Intern belum punya mentor', $d['intern_name']] : ['', null],
+            'deadline_extended' => $task ? ["Deadline {$code} diperpanjang", trim((isset($d['due_at']) ? 'Sampai ' . $this->shortDate($d['due_at']) : '') . (! empty($d['reason']) ? ' · ' . Str::limit($d['reason'], 80) : ''), ' ·') ?: $title] : ['', null],
+            'sprint_leader' => isset($d['sprint_name']) ? [
+                "Anda ketua {$d['sprint_name']}",
+                trim(($d['workspace_name'] ?? '') . (isset($d['end_date']) ? ' · deadline ' . $this->shortDate($d['end_date']) : '') . (isset($d['task_count']) ? " · {$d['task_count']} tugas" : ''), ' ·') ?: null,
+            ] : ['', null],
+            'sprint_to_divide' => isset($d['task_count']) ? ["{$d['task_count']} tugas menunggu Anda bagi", implode(', ', $d['task_titles'] ?? []) ?: null] : ['', null],
             default => ['', null],
         };
     }
@@ -302,6 +316,10 @@ class NotificationController extends Controller
             }
 
             return route('workspace.tasks.show', $d['task_id']);
+        }
+
+        if (isset($d['sprint_id'], $d['workspace_id'])) {
+            return route('workspace.show', $d['workspace_id']) . '?tab=board';
         }
 
         if (isset($d['channel_id'])) {

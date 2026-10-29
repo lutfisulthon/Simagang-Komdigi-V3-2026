@@ -131,7 +131,14 @@ class WorkspacePageController extends Controller
         $gate = Gate::forUser($user);
         $isManager = $user->isSuperAdmin() || $user->isAdminFull() || $user->isMentor();
 
-        $tab = in_array($request->query('tab'), ['board', 'list', 'channel', 'activity'], true) ? $request->query('tab') : 'board';
+        $canSprints = $gate->allows('manageSprints', $workspace);
+
+        // Backlog hanya untuk staf di workspace tim (Space pribadi dan intern tidak memakainya).
+        $tabs = ['board', 'list', 'channel', 'activity'];
+        if (! $user->isIntern() && $workspace->type !== 'intern') {
+            array_unshift($tabs, 'backlog');
+        }
+        $tab = in_array($request->query('tab'), $tabs, true) ? $request->query('tab') : 'board';
 
         $teamId = $this->labelTeamId($workspace);
 
@@ -146,6 +153,7 @@ class WorkspacePageController extends Controller
                 ? TaskLabel::where('team_id', $teamId)->orderBy('name')->get(['id', 'name', 'color'])->toArray()
                 : [],
             'initialTasks' => $this->initialTasks($workspace, $user),
+            'sprints' => $workspace->sprints()->with('leader')->get()->map(fn ($s) => $this->presenter->sprint($s))->all(),
             'channels' => $this->presenter->channels($workspace, $user),
             'templates' => $isManager && $teamId
                 ? TaskTemplate::with(['team', 'creator'])->where(fn ($q) => $q->where('team_id', $teamId)->orWhereNull('team_id'))
@@ -156,6 +164,7 @@ class WorkspacePageController extends Controller
                 'manage_channels' => false,
                 'create_template' => $gate->allows('create', TaskTemplate::class),
                 'manage_labels' => $isManager && ! $workspace->is_archived,
+                'manage_sprints' => $canSprints,
             ],
         ]);
     }

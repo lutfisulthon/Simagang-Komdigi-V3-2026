@@ -26,8 +26,13 @@ class TaskService
                 ->where('status', TaskStatus::Todo->value)
                 ->max('position') + 1;
 
+            $sprintId = $data['sprint_id'] ?? null;
+            $rank = (int) Task::where('workspace_id', $workspace->id)->where('sprint_id', $sprintId)->max('rank') + 1;
+
             $task = Task::create([
                 'workspace_id' => $workspace->id,
+                'sprint_id' => $sprintId,
+                'rank' => $rank,
                 'number' => $number,
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,

@@ -31,7 +31,7 @@
         $canAutomate = ($can['manage_sprints'] ?? false) && ! $workspace['is_read_only'];
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
-            'backlog' => $isIntern ? null : ['Backlog', 'fa-layer-group', null, false],
+            'backlog' => $isIntern || ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
             'timeline' => ['Timeline', 'fa-chart-gantt', null, false],

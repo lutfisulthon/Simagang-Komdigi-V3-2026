@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\TaskStatus;
 use App\Models\Channel;
 use App\Models\Intern;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskTemplate;
@@ -116,6 +117,21 @@ class WorkspacePresenter
         ];
     }
 
+    public function sprint(Sprint $sprint): array
+    {
+        return [
+            'id' => $sprint->id,
+            'workspace_id' => $sprint->workspace_id,
+            'name' => $sprint->name,
+            'goal' => $sprint->goal,
+            'status' => $sprint->status,
+            'start_date' => $sprint->start_date?->toDateString(),
+            'end_date' => $sprint->end_date?->toDateString(),
+            'leader' => $sprint->leader ? $this->intern($sprint->leader) : null,
+            'completed_at' => $this->iso($sprint->completed_at),
+        ];
+    }
+
     public function workspace(Workspace $workspace, User $viewer): array
     {
         $workspace->loadMissing(['team', 'intern.team', 'intern.mentor.team']);
@@ -169,6 +185,7 @@ class WorkspacePresenter
             'is_archived' => $workspace->is_archived,
             'is_read_only' => $workspace->is_archived,
             'stats' => $this->stats($workspace),
+            'active_sprint' => $this->activeSprint($workspace),
             'unread_messages' => (int) $unread,
             'members_count' => $minis->count(),
             'interns_count' => $internMinis->count(),
@@ -178,6 +195,13 @@ class WorkspacePresenter
             'can' => ['rename' => false, 'add_members' => false, 'finish' => false],
             'url' => route('workspace.show', $workspace),
         ];
+    }
+
+    private function activeSprint(Workspace $workspace): ?array
+    {
+        $sprint = $workspace->sprints()->with('leader')->where('status', Sprint::ACTIVE)->first();
+
+        return $sprint ? $this->sprint($sprint) : null;
     }
 
     /** @return array<int, array> anggota aktif workspace sebagai UserMini */
@@ -204,6 +228,8 @@ class WorkspacePresenter
         return [
             'id' => $task->id,
             'workspace_id' => $task->workspace_id,
+            'sprint_id' => $task->sprint_id,
+            'rank' => (int) $task->rank,
             'code' => $task->code,
             'title' => $task->title,
             'status' => $task->status->value,
@@ -226,6 +252,8 @@ class WorkspacePresenter
                 'move' => $gate->allows('updateStatus', [$task, TaskStatus::InProgress]) || $gate->allows('updateStatus', [$task, TaskStatus::Review]),
                 'review' => $gate->allows('review', $task),
                 'delete' => $gate->allows('delete', $task),
+                'assign' => $gate->allows('assign', $task),
+                'extend_deadline' => $gate->allows('extendDeadline', $task),
             ],
         ];
     }

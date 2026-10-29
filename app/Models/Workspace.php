@@ -50,6 +50,11 @@ class Workspace extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function sprints()
+    {
+        return $this->hasMany(Sprint::class)->orderBy('id');
+    }
+
     public function channels()
     {
         return $this->hasMany(Channel::class);
