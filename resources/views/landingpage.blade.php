@@ -1151,11 +1151,11 @@
             transform: translateX(-125%);
         }
         .v4-card:hover .v4-photo::after { transform: translateX(125%); transition: transform 1.1s ease; }
-        .v4-silhouette {
-            position: absolute; left: 50%; bottom: -3%; width: 76%; height: auto; transform: translateX(-50%);
+        .v4-photo__img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%;
             transition: transform .7s cubic-bezier(.22, 1, .36, 1), filter .4s ease;
         }
-        .v4-card:hover .v4-silhouette { transform: translateX(-50%) translateY(-7px) scale(1.04); filter: brightness(1.14); }
+        .v4-card:hover .v4-photo__img { transform: scale(1.04); filter: brightness(1.08); }
 
         /* Logo kampus: bergerak pelan + cincin "splash" berwarna emas (Undipa) / merah (Unhas) saat kartu di-hover */
         .v4-logo {
@@ -1202,9 +1202,6 @@
         .v4-ig:focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }
 
         .v4-info { padding: 12px 4px 2px; text-align: left; }
-        .v4-role { display: inline-block; padding: 4px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-        .v4-role--front { color: #facc15; background: rgba(250, 204, 21, .1); border: 1px solid rgba(250, 204, 21, .35); }
-        .v4-role--back { color: #fb7185; background: rgba(244, 63, 94, .1); border: 1px solid rgba(244, 63, 94, .38); }
         .v4-name { margin: 8px 0 4px; font-size: 1.08rem; font-weight: 700; line-height: 1.25; color: #fff; }
         .v4-name::after { content: ''; display: block; width: 0; height: 2px; margin-top: 5px; border-radius: 2px; background: rgba(var(--accent), .95); transition: width .45s cubic-bezier(.22, 1, .36, 1); }
         .v4-card:hover .v4-name::after { width: 56px; }
@@ -1217,7 +1214,7 @@
             .v4-grid { grid-template-columns: minmax(0, 300px); gap: 18px; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .v4-card, .v4-silhouette, .v4-photo::after, .v4-logo { animation: none !important; transition: none !important; }
+            .v4-card, .v4-photo__img, .v4-photo::after, .v4-logo { animation: none !important; transition: none !important; }
             .v4-card:hover .v4-logo::before, .v4-card:hover .v4-logo::after, .v4-card:hover .v4-logo__img,
             .v4-card:focus-within .v4-logo::before, .v4-card:focus-within .v4-logo::after, .v4-card:focus-within .v4-logo__img { animation: none !important; }
             .v4-card:hover .v4-logo::before { opacity: .55; }
@@ -1952,9 +1949,9 @@
         <!-- ── TAB PANEL: SIMAGANG V4 (ACTIVE) ── -->
         @php
             $simagangV4 = [
-                ['name' => 'Indra Pranata', 'role' => 'Frontend', 'campus' => 'Universitas Dipa Makassar', 'logo' => 'partners/undipa.png',
+                ['name' => 'Indra Pranata', 'photo' => 'profiles/indra.jpg', 'campus' => 'Universitas Dipa Makassar', 'logo' => 'partners/undipa.png',
                  'logo_style' => 'round', 'theme' => 'gold', 'instagram' => 'indrapranata369'],
-                ['name' => 'Aan Syawaluddin Adi Putra', 'role' => 'Backend', 'campus' => 'Universitas Hasanuddin', 'logo' => 'partners/logo_unhas.png',
+                ['name' => 'Aan Syawaluddin Adi Putra', 'photo' => 'profiles/aan.jpg', 'campus' => 'Universitas Hasanuddin', 'logo' => 'partners/logo_unhas.png',
                  'logo_style' => 'plain', 'theme' => 'red', 'instagram' => 'aansyawaluddinn'],
             ];
         @endphp
@@ -1964,15 +1961,7 @@
                     @php($igUrl = 'https://www.instagram.com/' . $m['instagram'])
                     <article class="v4-card v4-card--{{ $m['theme'] }}">
                         <div class="v4-photo">
-                            <svg class="v4-silhouette" viewBox="0 0 200 220" aria-hidden="true" focusable="false">
-                                <defs>
-                                    <linearGradient id="v4sil-{{ $loop->index }}" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0" stop-color="#6b7f9e"/><stop offset="1" stop-color="#3b4a63"/>
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="100" cy="62" r="44" fill="url(#v4sil-{{ $loop->index }})"/>
-                                <path d="M14 220 C14 150 52 116 100 116 C148 116 186 150 186 220 Z" fill="url(#v4sil-{{ $loop->index }})"/>
-                            </svg>
+                            <img class="v4-photo__img" src="{{ asset('storage/' . $m['photo']) }}" alt="Foto {{ $m['name'] }}" loading="lazy">
 
                             <span class="v4-logo v4-logo--{{ $m['logo_style'] }}">
                                 <img class="v4-logo__img" src="{{ asset('storage/' . $m['logo']) }}" alt="Logo {{ $m['campus'] }}" loading="lazy">
@@ -1986,7 +1975,6 @@
                             </button>
                         </div>
                         <div class="v4-info">
-                            <span class="v4-role {{ $m['role'] === 'Frontend' ? 'v4-role--front' : 'v4-role--back' }}">{{ $m['role'] }}</span>
                             <h3 class="v4-name">{{ $m['name'] }}</h3>
                             <p class="v4-campus v4-campus--{{ $m['theme'] }}">{{ $m['campus'] }}</p>
                             <p class="v4-program">Maganghub batch 2 | 2026</p>
