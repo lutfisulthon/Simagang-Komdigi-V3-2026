@@ -4,11 +4,12 @@ namespace App\Notifications;
 
 use App\Enums\TaskStatus;
 use App\Models\Task;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class TaskReviewedNotification extends Notification
+class TaskReviewedNotification extends Notification implements ShouldQueue
 {
-    use \App\Notifications\Concerns\RespectsPreferences;
+    use \App\Notifications\Concerns\RespectsPreferencesAndEmail;
 
     public function preferenceType(): string
     {

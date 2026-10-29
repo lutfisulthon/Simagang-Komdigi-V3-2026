@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use App\Models\Message;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class MessageMentionNotification extends Notification
+class MessageMentionNotification extends Notification implements ShouldQueue
 {
-    use \App\Notifications\Concerns\RespectsPreferences;
+    use \App\Notifications\Concerns\RespectsPreferencesAndEmail;
 
     public function preferenceType(): string
     {

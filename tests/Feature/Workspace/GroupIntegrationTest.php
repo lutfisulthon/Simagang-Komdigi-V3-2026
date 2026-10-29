@@ -143,14 +143,14 @@ class GroupIntegrationTest extends TestCase
         foreach (['sprint_leader', 'sprint_to_divide', 'deadline_extended', 'group_joined'] as $type) {
             $this->assertTrue($types->firstWhere('type', $type)['email'], "{$type} default aktif");
         }
-        $this->assertNull($types->firstWhere('type', 'task_assigned')['email']);
+        $this->assertNull($types->firstWhere('type', 'announcement')['email']);
 
         $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['sprint_leader' => ['email' => false]]])
             ->assertOk()->assertJsonPath('data.types.' . $types->search(fn ($t) => $t['type'] === 'sprint_leader') . '.email', false);
 
         // in_app tidak ikut berubah, dan jenis lain tetap menolak email
         $this->assertTrue(collect($this->actingAs($this->ahmad->user)->getJson('/notifications/preferences')->json('data.types'))->firstWhere('type', 'sprint_leader')['in_app']);
-        $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['task_assigned' => ['email' => true]]])->assertUnprocessable();
+        $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['announcement' => ['email' => true]]])->assertUnprocessable();
     }
 
     public function test_ketua_sprint_menerima_email_dan_notifikasi_in_app(): void
@@ -229,13 +229,5 @@ class GroupIntegrationTest extends TestCase
 
         $this->assertSame(1, $this->notificationCount($this->ahmad->user->fresh(), GroupJoinedNotification::class));
         $this->assertCount(0, $this->sentMails());
-    }
-
-    public function test_email_tidak_dikirim_untuk_jenis_in_app_saja(): void
-    {
-        $this->postTask($this->rudy->user, $this->wsGta, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
-
-        $this->assertSame(1, $this->notificationCount($this->ahmad->user, TaskAssignedNotification::class));
-        $this->assertCount(0, $this->mailsTo($this->ahmad->user->email));
     }
 }

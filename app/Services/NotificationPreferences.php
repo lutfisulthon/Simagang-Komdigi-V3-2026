@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Pengaturan notifikasi in-app per user. Email belum dikirim, jadi `email` selalu null. */
+/** Pengaturan notifikasi per user: in-app untuk semua jenis, email untuk jenis di EMAIL_TYPES (lainnya `email` null). */
 class NotificationPreferences
 {
     /**
@@ -28,13 +28,18 @@ class NotificationPreferences
         ['type' => 'sprint_to_divide', 'group' => 'Sprint', 'label' => 'Tugas menunggu dibagi', 'description' => 'Pengingat bagi ketua sprint bila masih ada tugas belum dibagi.', 'roles' => ['intern']],
         ['type' => 'group_joined', 'group' => 'Kelompok', 'label' => 'Dimasukkan ke kelompok', 'description' => 'Saat mentor memasukkan Anda ke sebuah kelompok.', 'roles' => ['intern']],
         ['type' => 'mentioned', 'group' => 'Percakapan', 'label' => 'Disebut (mention)', 'description' => 'Saat seseorang menyebut Anda di chat atau komentar.', 'roles' => ['intern', 'mentor', 'admin']],
+        ['type' => 'chat_unread', 'group' => 'Percakapan', 'label' => 'Chat belum dibaca', 'description' => 'Email ringkasan bila ada 5 pesan atau lebih belum dibaca, atau pesan belum dibaca selama 5 jam.', 'roles' => ['intern', 'mentor', 'admin']],
         ['type' => 'announcement', 'group' => 'Pengumuman', 'label' => 'Pengumuman baru', 'description' => 'Saat ada pengumuman di #pengumuman.', 'roles' => ['intern', 'mentor', 'admin']],
         ['type' => 'intern_joined', 'group' => 'Anak bimbingan', 'label' => 'Intern baru bergabung', 'description' => 'Saat anak bimbingan baru masuk tim.', 'roles' => ['mentor', 'admin']],
         ['type' => 'intern_without_mentor', 'group' => 'Anak bimbingan', 'label' => 'Intern tanpa mentor', 'description' => 'Saat ada intern aktif yang belum punya mentor.', 'roles' => ['admin']],
     ];
 
     /** Jenis yang juga dikirim lewat email (selain in-app); lainnya hanya in-app. */
-    public const EMAIL_TYPES = ['sprint_leader', 'sprint_to_divide', 'deadline_extended', 'group_joined'];
+    public const EMAIL_TYPES = [
+        'task_assigned', 'task_in_review', 'task_approved', 'task_revision', 'task_due_soon', 'task_overdue',
+        'task_commented', 'deadline_extended', 'sprint_leader', 'sprint_to_divide', 'group_joined',
+        'mentioned', 'chat_unread',
+    ];
 
     public function roleOf(User $user): string
     {
@@ -100,7 +105,7 @@ class NotificationPreferences
 
     /**
      * Simpan pilihan. Jenis yang bukan milik role ini ditolak, dan `email: true` ditolak
-     * karena belum ada jenis yang dikirim lewat email.
+     * untuk jenis yang tidak dikirim lewat email.
      *
      * @param  array<string, array{in_app?: bool, email?: bool|null}>  $types
      */

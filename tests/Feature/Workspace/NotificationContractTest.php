@@ -206,8 +206,8 @@ class NotificationContractTest extends TestCase
 
     public function test_pengaturan_menolak_email_jenis_asing_dan_jenis_role_lain(): void
     {
-        $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['task_assigned' => ['in_app' => true, 'email' => true]]])
-            ->assertUnprocessable()->assertJsonValidationErrors('types.task_assigned.email');
+        $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['announcement' => ['in_app' => true, 'email' => true]]])
+            ->assertUnprocessable()->assertJsonValidationErrors('types.announcement.email');
 
         $this->actingAs($this->ahmad->user)->putJson('/notifications/preferences', ['types' => ['intern_joined' => ['in_app' => false]]])
             ->assertUnprocessable()->assertJsonValidationErrors('types.intern_joined');

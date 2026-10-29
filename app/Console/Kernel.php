@@ -19,6 +19,10 @@ class Kernel extends ConsoleKernel
             ->hourly()
             ->timezone('Asia/Makassar');
 
+        $schedule->command('workspace:notify-unread-chat')
+            ->everyFifteenMinutes()
+            ->timezone('Asia/Makassar');
+
         $schedule->command('workspace:archive-expired')
             ->dailyAt('00:10')
             ->timezone('Asia/Makassar');
