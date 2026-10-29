@@ -14,7 +14,7 @@
     const meMini = { id: me.id, name: me.name, role: me.role, avatar_url: null };
 
     const CARD_KEYS = ['id', 'workspace_id', 'code', 'title', 'status', 'priority', 'position', 'start_at', 'due_at',
-        'completed_at', 'is_late', 'labels', 'assignees', 'checklist', 'comments_count', 'attachments_count', 'url', 'can'];
+        'completed_at', 'is_late', 'sprint_id', 'rank', 'labels', 'assignees', 'checklist', 'comments_count', 'attachments_count', 'url', 'can'];
 
     const tasks = new Map();   // id → TaskDetail (atau TaskCard bila detail belum diambil, _full = false)
     let context = { interns: [], labels: [], workspace: null }; // di-seed halaman: 'task-context'
@@ -27,7 +27,7 @@
 
     function toCard(task) {
         const card = {};
-        CARD_KEYS.forEach((k) => { card[k] = clone(task[k]); });
+        CARD_KEYS.forEach((k) => { card[k] = task[k] === undefined ? null : clone(task[k]); });
         return card;
     }
 
@@ -78,9 +78,7 @@
             if (!p.title || !p.title.trim()) errors.title = ['Judul wajib diisi.'];
             else if (p.title.length > 150) errors.title = ['Judul maksimal 150 karakter.'];
         }
-        if (!partial || 'assignee_ids' in p) {
-            if (!p.assignee_ids || !p.assignee_ids.length) errors.assignee_ids = ['Pilih minimal satu intern.'];
-        }
+        // Assignee opsional: tugas di backlog boleh belum di-assign (assign dilakukan di board).
         if (!partial || 'due_at' in p) {
             if (!p.due_at) errors.due_at = ['Deadline wajib diisi.'];
             else if (p.start_at && new Date(p.start_at) > new Date(p.due_at)) errors.due_at = ['Deadline harus setelah tanggal mulai.'];
@@ -194,7 +192,8 @@
         if (!isStaff && me.role !== 'intern') throw forbidden();
         validateTask(p, false);
         // separate_copies: satu tugas per assignee (assign massal); selain itu satu tugas bersama.
-        const groups = p.separate_copies && p.assignee_ids.length > 1 ? p.assignee_ids.map((id) => [id]) : [p.assignee_ids];
+        const ids = p.assignee_ids || [];
+        const groups = p.separate_copies && ids.length > 1 ? ids.map((id) => [id]) : [ids];
         return { data: groups.map((ids) => createOne(workspaceId, Object.assign({}, p, { assignee_ids: ids }))) };
     });
 
@@ -204,6 +203,7 @@
         const id = workspaceId * 100 + n;
         const task = {
             id, workspace_id: workspaceId, code: 'T-' + n, status: 'todo', position: -1, completed_at: null,
+            sprint_id: p.sprint_id || null, rank: Math.max(0, ...[...tasks.values()].map((t) => t.rank || 0)) + 1,
             is_late: false, labels: [], assignees: [], comments_count: 0, url: (WS.config.baseUrl || '') + '/workspace/tasks/' + id,
             creator: meMini, workspace: context.workspace, checklist_items: [], attachments: [], result_links: [],
             score: null, feedback: null, feedback_html: null, comments: [], activities: [], description: '', description_html: '',
@@ -211,12 +211,61 @@
         };
         applyPayload(task, p);
         const mine = task.assignees.some((a) => a.user_id === me.id);
-        task.can = { update: true, move: isStaff || mine, review: isStaff, delete: isStaff, comment: true };
+        task.can = { update: true, move: isStaff || mine, review: isStaff, delete: isStaff, comment: true, assign: isStaff, extend_deadline: isStaff };
         activity(task, 'created');
         task.assignees.forEach((a) => activity(task, 'assigned', { assignee: a.name }));
         tasks.set(id, task);
         return toCard(task);
     }
+
+    // Backlog: pindah sprint + urutan bagian tujuan. Hanya mentor/admin.
+    define('tasks.plan', async (id, p) => {
+        await delay(250);
+        if (!isStaff) throw forbidden('Hanya mentor yang dapat mengatur backlog.');
+        const task = tasks.get(id);
+        if (!task) throw new WS.HttpError(404, 'Tugas tidak ditemukan.');
+        task.sprint_id = p.sprint_id || null;
+        (p.rank_order || []).forEach((tid, i) => { const t = tasks.get(tid); if (t) t.rank = i + 1; });
+        return { data: toCard(task) };
+    });
+
+    // Bagi tugas: mentor/admin atau ketua sprint (can.assign). Boleh lebih dari satu orang.
+    define('tasks.assign', async (id, p) => {
+        await delay(300);
+        const task = await ensure(id);
+        if (!task.can.assign) throw forbidden('Hanya mentor atau ketua sprint yang dapat membagi tugas ini.');
+        const before = task.assignees.map((a) => a.name);
+        applyPayload(task, { assignee_ids: p.assignee_ids || [] });
+        task.assignees.filter((a) => !before.includes(a.name)).forEach((a) => activity(task, 'assigned', { assignee: a.name }));
+        before.filter((n) => !task.assignees.some((a) => a.name === n)).forEach((n) => activity(task, 'unassigned', { assignee: n }));
+        const mine = task.assignees.some((a) => a.user_id === me.id);
+        task.can.move = !!task.can.review || mine;
+        return { data: clone(task) };
+    });
+
+    // Perpanjang deadline (mentor/admin). Deadline baru harus setelah deadline lama dan di masa depan.
+    define('tasks.extendDeadline', async (id, p) => {
+        await delay(350);
+        const task = await ensure(id);
+        if (!task.can.extend_deadline) throw forbidden('Hanya mentor yang dapat memperpanjang deadline.');
+        const errors = {};
+        if (!p.due_at) errors.due_at = ['Deadline baru wajib diisi.'];
+        else if (new Date(p.due_at) <= new Date(task.due_at)) errors.due_at = ['Deadline baru harus setelah deadline sekarang.'];
+        else if (new Date(p.due_at) <= new Date()) errors.due_at = ['Deadline baru harus di masa depan.'];
+        if (p.reason && p.reason.length > 200) errors.reason = ['Alasan maksimal 200 karakter.'];
+        if (Object.keys(errors).length) throw invalid(errors);
+        const from = task.due_at;
+        applyPayload(task, { due_at: p.due_at });
+        activity(task, 'deadline_extended', { from, to: p.due_at, reason: (p.reason || '').trim() || null });
+        return { data: clone(task) };
+    });
+
+    // Dipakai mock-sprints.js: buat tugas langsung di sprint (form "Buat sprint").
+    WS.mock.createTask = (workspaceId, p) => createOne(workspaceId, p);
+
+    // Dipakai mock-sprints.js saat sprint diselesaikan / dihapus.
+    WS.mock.setSprint = (ids, sprintId) => ids.forEach((tid) => { const t = tasks.get(tid); if (t) t.sprint_id = sprintId; });
+    WS.mock.tasksOfSprint = (sprintId) => [...tasks.values()].filter((t) => (t.sprint_id || null) === sprintId).map(toCard);
 
     define('tasks.update', async (id, p) => {
         await delay(350);

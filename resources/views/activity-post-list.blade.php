@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('layouts.partials.theme-head')
     <title>{{ $type === 'youtube' ? 'Video YouTube' : 'Artikel' }} - Simagang</title>
 
     <script src="https://cdn.tailwindcss.com"></script>

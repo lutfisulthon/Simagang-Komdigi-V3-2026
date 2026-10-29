@@ -62,11 +62,16 @@
         </div>
 
         {{-- Aksi status --}}
-        <div class="ws-tile !bg-white flex flex-wrap items-center gap-2 mb-5" x-show="primaryActions.length || statusOptions.length || waitingNote">
+        <div class="ws-tile !bg-white flex flex-wrap items-center gap-2 mb-5" x-show="primaryActions.length || statusOptions.length || waitingNote || task.can.extend_deadline">
             <template x-for="action in primaryActions" :key="action.target">
                 <button type="button" class="ws-btn ws-btn--sm" :class="action.style === 'primary' ? 'ws-btn--primary' : 'ws-btn--soft'"
                         :disabled="moving" x-on:click="moveTo(action.target)">
                     <i class="fas" :class="action.icon"></i><span x-text="action.label"></span>
+                </button>
+            </template>
+            <template x-if="task.can.extend_deadline">
+                <button type="button" class="ws-btn ws-btn--sm ws-btn--ghost" x-on:click="$dispatch('ws-open-deadline', { task })">
+                    <i class="fas fa-calendar-plus text-amber-600"></i><span>Perpanjang deadline</span>
                 </button>
             </template>
             <template x-if="isStaff && statusOptions.length">

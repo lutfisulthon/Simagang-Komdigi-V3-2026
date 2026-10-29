@@ -749,7 +749,14 @@
                                                 @else
                                                     <form method="POST"
                                                         action="{{ route('mentor.logbook.approve', $l) }}"
-                                                        onsubmit="return confirm('Setujui logbook ini?')">
+                                                        data-confirm-title="Setujui logbook ini?"
+                                                        data-confirm-message="Status logbook akan ditandai Disetujui. Setelah disetujui, status tidak dapat diubah lagi dari halaman ini."
+                                                        data-confirm-subject="{{ $l->intern->name }} · {{ \Carbon\Carbon::parse($l->date)->translatedFormat('d M Y') }}"
+                                                        data-confirm-note="{{ \Illuminate\Support\Str::limit($l->activity, 160) }}"
+                                                        data-confirm-ok="Ya, setujui"
+                                                        data-confirm-busy="Menyetujui…"
+                                                        data-confirm-tone="success"
+                                                        data-confirm-icon="fa-thumbs-up">
                                                         @csrf
                                                         @method('PUT')
                                                         <input type="hidden" name="status" value="approved">
@@ -839,7 +846,14 @@
                                         <form method="POST"
                                             action="{{ route('mentor.logbook.approve', $l) }}"
                                             style="flex:1; margin:0;"
-                                            onsubmit="return confirm('Setujui logbook ini?')">
+                                            data-confirm-title="Setujui logbook ini?"
+                                            data-confirm-message="Status logbook akan ditandai Disetujui. Setelah disetujui, status tidak dapat diubah lagi dari halaman ini."
+                                            data-confirm-subject="{{ $l->intern->name }} · {{ \Carbon\Carbon::parse($l->date)->translatedFormat('d M Y') }}"
+                                            data-confirm-note="{{ \Illuminate\Support\Str::limit($l->activity, 160) }}"
+                                            data-confirm-ok="Ya, setujui"
+                                            data-confirm-busy="Menyetujui…"
+                                            data-confirm-tone="success"
+                                            data-confirm-icon="fa-thumbs-up">
                                             @csrf
                                             @method('PUT')
                                             <input type="hidden" name="status" value="approved">

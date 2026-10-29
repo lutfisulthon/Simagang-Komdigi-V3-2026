@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('layouts.partials.theme-head', ['splash' => true])
     @php
         // Workspace: aktif untuk admin (super_admin/admin_full), mentor, dan intern bila route-nya terdaftar.
         // $wsMock = true selama routes/workspace-preview.php dimuat (APP_ENV=local, sebelum backend siap).
@@ -24,6 +25,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @include('layouts.partials.workspace-head')
+    {{-- Dialog konfirmasi: aktif untuk form ber-atribut data-confirm-* (lihat public/js/confirm-dialog.js) --}}
+    <link rel="stylesheet" href="{{ asset('css/confirm-dialog.css') }}?v={{ @filemtime(public_path('css/confirm-dialog.css')) }}">
+    <script defer src="{{ asset('js/confirm-dialog.js') }}?v={{ @filemtime(public_path('js/confirm-dialog.js')) }}"></script>
     @stack('styles')
     <style>
         @font-face {
@@ -95,6 +99,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-50">
+    <x-splash-screen />
     <div class="flex h-screen overflow-hidden">
 
         <!-- ===========================
@@ -560,6 +565,7 @@ Aktivitas Terbaru
                         <img src="{{ url('storage/vendor/logo_komdigi.png') }}" alt="Logo" class="object-contain" style="width: 60px; height: 60px"/>
                     </div>
                     <div class="flex items-center gap-1">
+                    <x-theme-menu />
                     @if ($wsEnabled)
                         <x-workspace.notification-bell />
                     @endif

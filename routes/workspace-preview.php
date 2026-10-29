@@ -40,7 +40,11 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             $text = mb_strtolower($ws['name'] . ' ' . implode(' ', array_column($ws['_members'], 'name')));
             return $q === '' || str_contains($text, $q);
         });
-        $sorted = array_map($data['strip'], ($data['sortGroups'])(array_values($filtered)));
+        // Urutan: deadline tugas terdekat (default) atau terbaru; ?attention=1 hanya kelompok yang perlu perhatian.
+        $sort = request('sort') === 'newest' ? 'newest' : 'deadline';
+        $attention = request()->boolean('attention');
+        if ($attention) $filtered = array_filter($filtered, $data['needsAttention']);
+        $sorted = array_map($data['strip'], ($data['sortGroups'])(array_values($filtered), $sort));
         $perPage = 9;
         $page = max(1, (int) request('page', 1));
         $groups = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -55,7 +59,10 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'counts' => [
                 'active' => count(array_filter($visible, fn ($ws) => $ws['status'] === 'active')),
                 'finished' => count(array_filter($visible, fn ($ws) => $ws['status'] === 'finished')),
+                'attention' => count(array_filter($visible, $data['needsAttention'])),
             ],
+            'sort' => $sort,
+            'attention' => $attention,
             'ungrouped' => $data['role'] === 'mentor' ? array_values(array_filter(($data['roster'])(), fn ($i) => ! $i['group'])) : [],
             'teams' => $data['role'] === 'admin' ? $data['teams'] : [],
             'mentors' => $data['role'] === 'admin' ? $data['mentors'] : [],
@@ -220,9 +227,34 @@ Route::middleware('auth')->group(function () use ($fixtures) {
         // Mentor/admin: tugas menunggu review & tugas terlambat per intern di workspace yang dibimbing.
         $review = [];
         $late = [];
+        $upcoming = [];
+        $groupProgress = [];
+        $workload = [];
+        $weekAhead = now()->addDays(7)->toIso8601String();
         foreach ($visible as $ws) {
             if ($ws['is_read_only']) continue;
-            foreach (($data['tasks'])($ws) as $card) {
+            $cards = ($data['tasks'])($ws);
+            // Grafik mini dashboard: progres kelompok + beban tugas aktif per anak bimbingan.
+            $groupProgress[] = [
+                'workspace' => $wsMini($ws),
+                'total' => count($cards),
+                'done' => count(array_filter($cards, fn ($c) => $c['status'] === 'done')),
+                'overdue' => count(array_filter($cards, fn ($c) => $c['is_late'] && $c['status'] !== 'done')),
+            ];
+            foreach ($cards as $card) {
+                if ($card['status'] === 'done') continue;
+                foreach ($card['assignees'] as $a) {
+                    $workload[$a['id']] ??= ['intern' => $a, 'workspace' => $wsMini($ws), 'counts' => ['todo' => 0, 'in_progress' => 0, 'review' => 0, 'revision' => 0], 'overdue' => 0];
+                    $workload[$a['id']]['counts'][$card['status']]++;
+                    if ($card['is_late']) $workload[$a['id']]['overdue']++;
+                }
+            }
+            foreach ($cards as $card) {
+                // Deadline mendatang: belum dikirim, belum lewat, jatuh tempo ≤ 7 hari lagi.
+                if (in_array($card['status'], ['todo', 'in_progress', 'revision'], true) && ! $card['is_late']
+                    && strtotime($card['due_at']) >= time() && $card['due_at'] <= $weekAhead) {
+                    $upcoming[] = $card + ['workspace' => $wsMini($ws)];
+                }
                 if ($card['status'] === 'review') {
                     $review[] = $card + ['workspace' => $wsMini($ws), 'submitted_at' => now()->subHours(1 + ($card['id'] % 47))->toIso8601String()];
                 }
@@ -237,6 +269,11 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             }
         }
         usort($review, fn ($a, $b) => strcmp($a['submitted_at'], $b['submitted_at'])); // terlama menunggu dulu
+        usort($upcoming, $byDue);
+        // Kelompok yang paling perlu perhatian dulu: banyak terlambat, lalu progres terendah.
+        usort($groupProgress, fn ($a, $b) => [$b['overdue'], $a['total'] ? $a['done'] / $a['total'] : 0] <=> [$a['overdue'], $b['total'] ? $b['done'] / $b['total'] : 0]);
+        $workload = array_values($workload);
+        usort($workload, fn ($a, $b) => array_sum($b['counts']) <=> array_sum($a['counts']));
         $late = array_values($late);
         usort($late, fn ($a, $b) => $b['late_count'] <=> $a['late_count']);
 
@@ -249,6 +286,9 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'role' => $data['role'],
             'to_review' => ['data' => array_slice($review, 0, 6), 'total' => count($review)],
             'late_by_intern' => $late,
+            'upcoming_deadlines' => ['data' => array_slice($upcoming, 0, 6), 'total' => count($upcoming)],
+            'group_progress' => array_slice($groupProgress, 0, 6),
+            'workload' => array_slice($workload, 0, 8),
             'ungrouped_interns' => $ungrouped,
             'groups_url' => route('workspace.index'),
         ]);
@@ -422,9 +462,12 @@ Route::middleware('auth')->group(function () use ($fixtures) {
         $ws = $data['workspaces'][$workspace] ?? abort(404);
         abort_unless(($data['canView'])($ws), 403, 'Anda tidak memiliki akses ke workspace ini.');
 
-        $tab = in_array(request('tab'), ['board', 'list', 'channel', 'activity'], true) ? request('tab') : 'board';
         $isStaff = in_array($data['role'], ['admin', 'mentor'], true);
         $readOnly = $ws['is_read_only'];
+        $allowedTabs = $isStaff
+            ? array_values(array_filter(['backlog', 'board', 'list', 'timeline', 'deadline', 'laporan', $readOnly ? null : 'otomasi', 'channel', 'activity']))
+            : ['board', 'list', 'timeline', 'deadline', 'laporan', 'channel', 'activity'];
+        $tab = in_array(request('tab'), $allowedTabs, true) ? request('tab') : 'board';
         // Calon anggota baru: anak bimbingan mentor yang belum punya kelompok.
         $candidates = $ws['can']['add_members']
             ? array_values(array_map(fn ($i) => array_diff_key($i, ['_key' => 1]), array_filter(($data['roster'])(), fn ($i) => ! $i['group'])))
@@ -441,9 +484,11 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             // Template tim workspace ini (untuk "Pakai template" di form tugas). Intern: kosong.
             'templates' => array_values(array_filter(($data['templates'])(), fn ($t) => $t['team']['id'] === ($ws['team']['id'] ?? null))),
             'tab' => $tab,
+            'sprints' => ($data['sprints'])($ws),
             'candidates' => $candidates,
             'can' => [
                 'create_task' => ! $readOnly && $isStaff,
+                'manage_sprints' => ! $readOnly && $isStaff,
                 'manage_channels' => false,
                 'create_template' => ! $readOnly && $isStaff,
                 'manage_labels' => ! $readOnly && $isStaff,
@@ -490,12 +535,15 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'task_commented' => ['Tugas', 'Komentar baru di tugas', 'Komentar di tugas yang Anda buat atau kerjakan.', false],
             'mentioned' => ['Diskusi', 'Mention', 'Saat seseorang menyebut Anda di channel atau komentar.', false],
             'announcement' => ['Diskusi', 'Pengumuman baru', 'Pesan baru di #pengumuman.', false],
+            'sprint_leader' => ['Sprint', 'Ditunjuk jadi ketua sprint', 'Saat mentor menunjuk Anda sebagai ketua sebuah sprint.', true],
+            'sprint_to_divide' => ['Sprint', 'Tugas menunggu dibagi', 'Saat sprint yang Anda pimpin dimulai dan ada tugas yang belum dibagi.', true],
+            'deadline_extended' => ['Tugas', 'Deadline diperpanjang', 'Saat mentor memperpanjang deadline tugas Anda.', true],
             'intern_joined' => ['Kelompok', 'Anak bimbingan baru', 'Saat admin menetapkan anak magang baru kepada Anda (belum masuk kelompok).', false],
             'group_joined' => ['Kelompok', 'Masuk kelompok', 'Saat mentor memasukkan Anda ke sebuah kelompok.', false],
             'intern_without_mentor' => ['Kelompok', 'Intern aktif tanpa mentor', 'Saat ada intern aktif yang belum punya mentor.', false],
         ];
         $byRole = [
-            'intern' => ['task_assigned', 'task_approved', 'task_revision', 'task_due_soon', 'task_overdue', 'task_commented', 'mentioned', 'announcement', 'group_joined'],
+            'intern' => ['task_assigned', 'task_approved', 'task_revision', 'task_due_soon', 'task_overdue', 'task_commented', 'mentioned', 'announcement', 'group_joined', 'sprint_leader', 'sprint_to_divide', 'deadline_extended'],
             'mentor' => ['task_in_review', 'task_overdue', 'task_commented', 'mentioned', 'announcement', 'intern_joined'],
             'admin' => ['mentioned', 'announcement', 'intern_joined', 'intern_without_mentor'],
         ];
@@ -505,7 +553,7 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'label' => $catalog[$type][1],
             'description' => $catalog[$type][2],
             'in_app' => true,
-            'email' => $catalog[$type][3] ? in_array($type, ['task_assigned', 'task_revision'], true) : null,
+            'email' => $catalog[$type][3] ? in_array($type, ['task_assigned', 'task_revision', 'sprint_leader', 'sprint_to_divide', 'deadline_extended'], true) : null,
         ], $byRole[$data['role']]);
 
         return response()->json(['data' => ['types' => $types, 'muted_channels' => []]]);

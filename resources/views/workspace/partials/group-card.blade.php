@@ -15,6 +15,16 @@
     $extra = max(0, $internCount - $interns->count());
     $date = fn ($iso) => \Illuminate\Support\Carbon::parse($iso)->locale('id');
     $initials = collect(preg_split('/\s+/', trim($ws['name'])))->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
+
+    // Deadline per tugas (kontrak #20): tugas terdekat yang belum lewat + jumlah tugas lewat deadline.
+    $dl = $ws['deadline'] ?? null;
+    $next = $dl['next'] ?? null;
+    if ($next) {
+        $nextDue = \Illuminate\Support\Carbon::parse($next['due_at'])->locale('id');
+        $nextDays = (int) now()->startOfDay()->diffInDays($nextDue->copy()->startOfDay(), false);
+        $nextState = $nextDays <= 3 ? 'soon' : 'normal';
+        $nextText = $nextDays <= 0 ? 'hari ini ' . $nextDue->format('H.i') : ($nextDays === 1 ? 'besok' : $nextDays . ' hari lagi');
+    }
 @endphp
 
 <a href="{{ $ws['url'] }}" class="ws-card group {{ $finished ? 'ws-card--finished' : '' }}">
@@ -54,7 +64,7 @@
                 <div class="ws-progress__bar" style="width: {{ $percent }}%"></div>
             </div>
         </div>
-        @if ($s['review'] || $s['revision'] || $s['late'])
+        @if ($s['review'] || $s['revision'] || (! $dl && $s['late']))
             <div class="mt-3 flex flex-wrap gap-1.5">
                 @if ($s['review'])
                     <span class="ws-badge ws-status--review">{{ $s['review'] }} menunggu review</span>
@@ -62,8 +72,23 @@
                 @if ($s['revision'])
                     <span class="ws-badge ws-status--revision">{{ $s['revision'] }} revisi</span>
                 @endif
-                @if ($s['late'])
+                @if (! $dl && $s['late'])
                     <span class="ws-badge ws-badge--late"><i class="fas fa-hourglass-end text-[10px]"></i>{{ $s['late'] }} belum diselesaikan</span>
+                @endif
+            </div>
+        @endif
+        @if ($dl)
+            <div class="ws-card__deadline">
+                @if ($dl['overdue_count'])
+                    <span class="ws-badge ws-badge--late"><i class="fas fa-hourglass-end text-[10px]"></i>{{ $dl['overdue_count'] }} lewat deadline</span>
+                @endif
+                @if ($next)
+                    <span class="ws-due ws-due--{{ $nextState }}" title="{{ $next['title'] }} · {{ $nextDue->translatedFormat('j M Y, H.i') }}">
+                        <i class="far fa-clock" aria-hidden="true"></i>
+                        <span>Terdekat <span class="ws-mono">{{ $next['code'] }}</span> · {{ $nextText }}</span>
+                    </span>
+                @elseif (! $dl['overdue_count'])
+                    <span class="ws-due"><i class="far fa-circle-check" aria-hidden="true"></i>Tidak ada deadline tersisa</span>
                 @endif
             </div>
         @endif

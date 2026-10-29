@@ -32,6 +32,7 @@
 
     const notificationsByRole = {
         intern: [
+            { type: 'sprint_leader', title: 'Anda ketua Sprint 2 · Tim Redesign Website', body: 'Bagi tugas sprint ke anggota lewat Board.', url: url.workspace(101), actor: 'Herman', ago: 4 },
             { type: 'task_assigned', title: 'Tugas baru: T-4 Rancang wireframe halaman profil', body: 'Dari Herman · deadline 28 Okt', url: url.task(101, 4), actor: 'Herman', ago: 6 },
             { type: 'task_revision', title: 'T-3 perlu revisi', body: '"Tambahkan validasi di form login, lalu kirim ulang."', url: url.task(101, 3), actor: 'Herman', ago: 42 },
             { type: 'mentioned', title: 'Herman menyebut Anda di #tim-redesign-website', body: 'tolong cek PR terakhir ya', url: url.channel(1011), actor: 'Herman', ago: 180, read: true },

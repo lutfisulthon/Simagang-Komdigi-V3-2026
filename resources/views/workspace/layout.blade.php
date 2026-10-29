@@ -14,7 +14,7 @@
 
 {{-- prepend: harus dimuat sebelum script halaman, dan sebelum Alpine (deferred) start. --}}
 @prepend('scripts')
-    @foreach (['workspace.js', 'tasks.js', 'task-detail.js', 'task-form.js', 'channels.js', 'templates.js'] as $wsPageScript)
+    @foreach (['workspace.js', 'tasks.js', 'backlog.js', 'deadlines.js', 'timeline.js', 'reports.js', 'automations.js', 'task-detail.js', 'task-form.js', 'channels.js', 'templates.js'] as $wsPageScript)
         <script src="{{ asset('js/workspace/' . $wsPageScript) }}?v={{ @filemtime(public_path('js/workspace/' . $wsPageScript)) }}"></script>
     @endforeach
 @endprepend

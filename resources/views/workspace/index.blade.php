@@ -4,8 +4,10 @@
     Variabel:
       $noGroup    bool                      intern belum dimasukkan mentor ke kelompok
       $mentor     UserMini|null             mentor intern (untuk keterangan $noGroup)
-      $groups     LengthAwarePaginator|null Workspace[] type=group; aktif (terbaru) dulu, lalu selesai magang
-      $counts     ['active' => int, 'finished' => int]
+      $groups     LengthAwarePaginator|null Workspace[] type=group; aktif dulu (urut $sort), lalu selesai magang
+      $counts     ['active' => int, 'finished' => int, 'attention' => int]
+      $sort       'deadline'|'newest'       urutan kelompok aktif (default deadline tugas terdekat)
+      $attention  bool                      hanya kelompok yang perlu perhatian (lewat deadline / jatuh tempo ≤ 3 hari)
       $ungrouped  Roster[]                  mentor: anak bimbingan yang belum punya kelompok
       $teams      {id,name}[]               admin: filter unit kerja
       $mentors    {id,name}[]               admin: filter mentor
@@ -23,6 +25,9 @@
         $filtering = request()->filled('q') || request()->filled('team') || request()->filled('mentor');
         $showFilter = $viewerIsAdmin || $total > 9 || $filtering;
         $firstFinished = $noGroup ? null : collect($groups->items())->search(fn ($g) => $g['status'] === 'finished');
+        $sort = $sort ?? 'deadline';
+        $attention = $attention ?? false;
+        $showSort = ! $noGroup && ($counts['active'] > 1 || $attention);
     @endphp
 
     <x-workspace.hero class="ws-anim-1 mb-6"
@@ -117,6 +122,22 @@
             </form>
         @endif
 
+        {{-- Urutan kelompok aktif + saring yang perlu perhatian (tugas lewat deadline / jatuh tempo ≤ 3 hari) --}}
+        @if ($showSort)
+            <nav class="ws-anim-2 ws-sortbar mb-5" aria-label="Urutan dan filter kelompok">
+                <span class="ws-sortbar__label">Urutkan</span>
+                <a href="{{ request()->fullUrlWithQuery(['sort' => 'deadline', 'page' => null]) }}" class="ws-chip ws-chip--plain !py-1 !text-xs"
+                   @if ($sort === 'deadline') aria-current="true" @endif>Deadline terdekat</a>
+                <a href="{{ request()->fullUrlWithQuery(['sort' => 'newest', 'page' => null]) }}" class="ws-chip ws-chip--plain !py-1 !text-xs"
+                   @if ($sort === 'newest') aria-current="true" @endif>Terbaru</a>
+                <a href="{{ request()->fullUrlWithQuery(['attention' => $attention ? null : 1, 'page' => null]) }}"
+                   class="ws-chip ws-chip--plain ws-chip--late !py-1 !text-xs sm:ml-auto" @if ($attention) aria-current="true" @endif>
+                    <i class="fas fa-triangle-exclamation text-[11px]" aria-hidden="true"></i> Perlu perhatian
+                    <span class="ws-dl-count">{{ $counts['attention'] ?? 0 }}</span>
+                </a>
+            </nav>
+        @endif
+
         @if ($groups->total())
             <div class="ws-anim-3 grid gap-3 sm:gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($groups->items() as $i => $group)
@@ -132,7 +153,12 @@
             @include('workspace.partials.pagination', ['paginator' => $groups, 'label' => 'kelompok'])
         @else
             <div class="ws-panel ws-anim-3">
-                @if ($filtering)
+                @if ($attention)
+                    <x-workspace.empty-state icon="fa-circle-check" title="Tidak ada kelompok yang perlu perhatian"
+                                             description="Tidak ada tugas yang lewat deadline atau jatuh tempo dalam 3 hari ke depan.">
+                        <a href="{{ request()->fullUrlWithQuery(['attention' => null, 'page' => null]) }}" class="ws-btn ws-btn--soft ws-btn--sm">Tampilkan semua kelompok</a>
+                    </x-workspace.empty-state>
+                @elseif ($filtering)
                     <x-workspace.empty-state icon="fa-magnifying-glass" title="Tidak ada kelompok yang cocok" description="Ubah kata kunci atau filter." />
                 @elseif ($can['create_group'] ?? false)
                     <x-workspace.empty-state icon="fa-users" title="Belum ada kelompok"

@@ -2,7 +2,7 @@
 
 Dokumen ini adalah acuan bersama antara frontend (Blade + Alpine) dan backend (controller, policy, resource) untuk modul Workspace di [PRD-Workspace-Mentor-Intern.md](../../PRD-Workspace-Mentor-Intern.md). Frontend dibangun lebih dulu dengan data contoh. Backend cukup memenuhi bentuk data di sini agar UI langsung berfungsi.
 
-> Status: **draf v1.0 (model Kelompok, 27 Okt 2026)**. Bagian bertanda *usulan* belum ada di PRD dan perlu disepakati.
+> Status: **draf v1.4 (Timeline, Laporan, Otomasi, 29 Okt 2026; Deadline v1.3; Ketua sprint v1.2; Sprint & Backlog v1.1; model Kelompok v1.0)**. Bagian bertanda *usulan* belum ada di PRD dan perlu disepakati.
 >
 > **Perubahan besar v1.0 — Kelompok menggantikan "Workspace tim" + "Space intern".** Satu-satunya wadah kerja adalah
 > *kelompok* yang dibuat mentor dari anak bimbingannya. Aturan:
@@ -14,6 +14,30 @@ Dokumen ini adalah acuan bersama antara frontend (Blade + Alpine) dan backend (c
 > - Hanya mentor/admin yang membuat tugas (to-do pribadi intern di space privat dihapus).
 >
 > Lihat §7 #18 untuk daftar perubahan PRD/backend.
+>
+> **v1.1 — Sprint & Backlog (gaya Jira).** Tab baru **Backlog** di setiap kelompok: sprint berjalan, sprint terencana,
+> lalu Backlog (tugas tanpa sprint). Mentor menyusun tugas ke sprint (seret / menu "Pindah ke"), membuat, memulai, dan
+> menyelesaikan sprint. **Board hanya menampilkan sprint berjalan**, dan **assign dilakukan di board** (tombol avatar di
+> kartu). Anak magang: Backlog hanya baca. Deadline tetap per tugas. Lihat §7 #19.
+>
+> **v1.2 — Ketua sprint & perpanjang deadline.** Sprint dibuat dengan **deadline**, **ketua tim** (anggota kelompok, per
+> sprint), dan **daftar tugas cepat**. **Ketua yang membagi tugas** sprint-nya ke anggota di Board (boleh beberapa orang
+> per tugas); mentor tetap bisa sebagai cadangan. Sprint tidak bisa dimulai tanpa ketua. Tugas tanpa assignee ditandai
+> "belum dibagi". Mentor dapat **memperpanjang deadline** tugas (membuka kunci kirim hasil). Notifikasi baru dikirim
+> **lewat email + in-app**. Lihat §7 #19 bagian v1.2.
+>
+> **v1.3 — Tampilan deadline per tugas.** Deadline tetap milik **tugas** (`tasks.due_at`); tidak ada tabel baru. Yang baru
+> hanya tampilan: (1) kartu kelompok di daftar menampilkan tugas terdekat + jumlah tugas lewat deadline, (2) daftar kelompok
+> diurutkan "deadline terdekat" + filter "Perlu perhatian", (3) tab **Deadline** di tiap kelompok (agenda + kalender, semua
+> peran, hanya tugas kelompok itu), (4) chip deadline di hero kelompok, (5) widget dashboard mentor "Deadline 7 Hari ke
+> Depan". Lihat §7 #20.
+>
+> **v1.4 — Timeline, Laporan, Otomasi.** Tiga tab baru di halaman kelompok. **Timeline** (semua peran, hanya baca): jalur sprint + batang
+> tugas dari `start_at` sampai `due_at`, murni dari `$initialTasks` dan `$sprints` (tanpa endpoint baru). **Laporan** (semua peran):
+> burndown, tugas selesai per sprint/minggu, sebaran status, ketepatan waktu, dan (mentor/admin) beban per anggota. Anak magang hanya
+> melihat data tugasnya sendiri. Dihitung di client dari data yang sama; dashboard mentor menambah dua grafik mini lewat
+> `GET /workspace/summary` (§8). **Otomasi** (mentor/admin, kelompok aktif): aturan pekerjaan berulang berbentuk When → If → Then
+> (jadwal → kondisi → aksi buat tugas / kirim notifikasi). Lihat §7 #21.
 
 ---
 
@@ -104,6 +128,9 @@ Disimpan sebagai string (PHP Enum `TaskStatus`, `TaskPriority`). Label harus sam
   "members_count": 4,
   "members_preview": [ UserMini, UserMini, UserMini, UserMini ],
   "can": { "rename": true, "add_members": true, "finish": true },
+  "active_sprint": { "id": 31, "name": "Sprint 2", "goal": "…", "start_date": "2026-10-22", "end_date": "2026-11-05" } | null,
+  "deadline": { "next": { "id": 301, "code": "T-7", "title": "…", "due_at": "2026-10-31T17:00:00+07:00", "url": "/workspace/tasks/301" } | null,
+                "overdue_count": 2, "due_soon_count": 1 } | null,
   "url": "/workspace/3"
 }
 ```
@@ -115,6 +142,25 @@ Disimpan sebagai string (PHP Enum `TaskStatus`, `TaskPriority`). Label harus sam
 - `can.rename` & `can.finish`: mentor pemilik + admin. `can.add_members`: mentor pemilik saja. Semua `false` bila `finished`.
 - `stats.late` dihitung terpisah dan **tidak** ikut dijumlahkan ke total.
 - `is_read_only` = kelompok selesai magang.
+- `deadline` (v1.3) = ringkasan deadline **per tugas** untuk kartu di daftar kelompok; `null` bila kelompok `finished`. Hanya tugas
+  berstatus `todo` / `in_progress` / `revision` yang dihitung (tugas `review` dan `done` sudah dikirim). Semua tugas kelompok ikut,
+  termasuk backlog dan sprint terencana. `next` = tugas yang belum lewat dengan `due_at` terkecil (`null` bila tidak ada).
+  `overdue_count` = `is_late = true` atau `due_at` < sekarang. `due_soon_count` = belum lewat dan `due_at` ≤ sekarang + 3 hari.
+  Isi dengan satu query agregat per halaman (bukan satu query per kelompok). Lihat §7 #20.
+
+### Sprint — *usulan* #19
+```json
+{ "id": 31, "workspace_id": 3, "name": "Sprint 2", "goal": "Selesaikan prototipe halaman utama",
+  "status": "active", "start_date": "2026-10-22", "end_date": "2026-11-05",
+  "leader": InternMini | null, "completed_at": null }
+```
+- `end_date` = **deadline sprint**, wajib sejak sprint dibuat (v1.2). `start_date` diisi saat sprint dimulai.
+- `leader` (v1.2) = ketua tim sprint ini, anggota kelompok. Boleh `null` saat `planned`; **wajib** untuk memulai.
+- `Workspace.active_sprint` ikut membawa `leader`.
+- `TaskCard.can` menambah `assign` (mentor/admin, atau ketua sprint tugas itu bila sprint belum `completed`) dan `extend_deadline` (mentor/admin, tugas belum `done`).
+- `status`: `planned` (tanggal boleh `null`) → `active` (tanggal wajib) → `completed` (`completed_at` diisi).
+- **Maksimal satu sprint `active` per kelompok.** Urutan sprint `planned` = urutan dibuat.
+- TaskCard menambah `sprint_id` (`null` = Backlog) dan `rank` (urutan di dalam sprint/backlog; terpisah dari `position` kolom board).
 
 ### Roster (anak bimbingan + kelompoknya) — *usulan* #18
 ```json
@@ -287,8 +333,10 @@ Semua halaman memakai `@extends('workspace.layout')`. Hak akses halaman dikirim 
 | --- | --- | --- |
 | `$noGroup` | bool | Intern belum dimasukkan ke kelompok. Variabel lain boleh kosong. |
 | `$mentor` | `UserMini\|null` | Mentor intern (untuk keterangan `$noGroup`). |
-| `$groups` | `LengthAwarePaginator<Workspace>` | 9 per halaman. Urutan: **aktif dulu (terbaru dibuat)**, lalu **selesai magang (terbaru selesai)**. Mentor: kelompok miliknya. Admin: semua. Filter `?q=` (nama kelompok/anggota), admin juga `?team=` & `?mentor=`. |
-| `$counts` | `{active, finished}` | Jumlah tanpa filter (untuk hero). |
+| `$groups` | `LengthAwarePaginator<Workspace>` | 9 per halaman. Urutan: **aktif dulu**, lalu **selesai magang (terbaru selesai)**. Urutan aktif mengikuti `?sort=` (lihat bawah). Mentor: kelompok miliknya. Admin: semua. Filter `?q=` (nama kelompok/anggota), admin juga `?team=` & `?mentor=`, dan `?attention=1`. |
+| `$counts` | `{active, finished, attention}` | Jumlah tanpa filter (untuk hero & chip "Perlu perhatian"). `attention` = kelompok aktif yang perlu perhatian (v1.3). |
+| `$sort` | `'deadline'\|'newest'` | v1.3. `?sort=` (default `deadline`). `newest` = aktif terbaru dibuat. `deadline` = (1) kelompok dengan `deadline.overdue_count` > 0, terbanyak dulu, (2) `deadline.next.due_at` terdekat, (3) kelompok tanpa deadline; sama kuat → terbaru dibuat. Kelompok selesai tidak terpengaruh. |
+| `$attention` | bool | v1.3. `?attention=1`: hanya kelompok aktif dengan `overdue_count` > 0 **atau** `due_soon_count` > 0. |
 | `$ungrouped` | `Roster[]` | Mentor: anak bimbingan aktif yang belum punya kelompok (banner "Masukkan"). |
 | `$teams`, `$mentors` | `{id,name}[]` | Admin saja: isi filter. Kosong untuk mentor. |
 | `$can` | array | `['create_group' => bool (mentor), 'manage_templates' => bool]`. |
@@ -297,10 +345,11 @@ Semua halaman memakai `@extends('workspace.layout')`. Hak akses halaman dikirim 
 | Variabel | Tipe | Isi | Fase |
 | --- | --- | --- | --- |
 | `$workspace` | `Workspace` | | 1A |
-| `$tab` | string | `board` \| `list` \| `channel` \| `activity` (dari `?tab=`, nilai lain → `board`) | 1A |
+| `$tab` | string | `backlog` \| `board` \| `list` \| `timeline` \| `deadline` \| `laporan` \| `otomasi` \| `channel` \| `activity` (dari `?tab=`, nilai lain → `board`). Intern: tanpa `backlog` dan `otomasi` (nilai itu → `board`). `otomasi` hanya untuk mentor pemilik/admin dan kelompok yang belum selesai (`!is_read_only`). | 1A, v1.1, v1.3, v1.4 |
 | `$members` | `UserMini[]` | Slide-over anggota, autocomplete mention, filter. | 1A |
 | `$activities` | `Activity[]` | 20 aktivitas terbaru, urut terbaru dulu. Lanjutan lewat `GET /workspace/{id}/activities`. | 1A |
 | `$can` | array | `create_task`, `manage_channels` (v1.0: selalu `false` — tidak ada channel buatan sendiri di kelompok), `create_template` (menu "Simpan sebagai template"), `manage_labels` ("Kelola label" di form tugas); mentor/admin. Semua `false` bila `is_read_only`. | 1A ✅ |
+| `$sprints` | `Sprint[]` | Semua sprint kelompok (planned, active, completed), urut dibuat. Mengisi tab Backlog & bilah sprint di Board. | v1.1 ✅ |
 | `$candidates` | `Roster[]` | Anak bimbingan tanpa kelompok, untuk "Tambah anggota". Kosong bila `!workspace.can.add_members`. | v1.0 ✅ |
 | `$assignableInterns` | `InternMini[]` | Anggota kelompok (intern). | 1B ✅ |
 | `$labels` | `{id,name,color}[]` | Label tim. | 1B ✅ |
@@ -477,6 +526,105 @@ Perilaku frontend (`channels.js`):
 | 17 | Rekap tugas ke laporan akhir & nilai tugas sebagai masukan sertifikat (PRD Fase 3) — **dipakai sejak Fase 3** | `GET /workspace/recap` (JSON + halaman cetak). Form laporan akhir mengirim `include_task_recap` (0/1). Form sertifikat hanya menampilkan referensi (rata-rata, rentang, ketepatan waktu); **tidak** mengisi nilai otomatis selama keputusan PRD belum ada. |
 | 14 | Detail intern (admin & mentor): tugas — **dipakai sejak Fase 2** | `GET /workspace/interns/{intern}/tasks` → `{ data, stats, group: {id,name,color,url} \| null }` (v1.0: `space_url` diganti `group`). Komponen `<x-workspace.intern-tasks>`. |
 | 18 | **Kelompok buatan mentor (v1.0)** — **dipakai sejak 27 Okt 2026** | Lihat daftar di bawah tabel ini. |
+| 19 | **Sprint & Backlog (v1.1) + ketua sprint & perpanjang deadline (v1.2)** — **dipakai sejak 28 Okt 2026** | Lihat daftar #19 di bawah tabel ini. |
+| 20 | **Tampilan deadline per tugas (v1.3)** — **dipakai sejak 28 Okt 2026** | Lihat daftar #20 di bawah tabel ini. |
+| 21 | **Timeline, Laporan & Otomasi (v1.4)** — **dipakai sejak 29 Okt 2026** | Lihat daftar #21 di bawah tabel ini. |
+
+**#19 — Sprint & Backlog (v1.1)**
+- **Data:** tabel `sprints (id, workspace_id, name, goal, status, start_date, end_date, completed_at, timestamps)`; kolom `tasks.sprint_id` (nullable FK, `null` = backlog) dan `tasks.rank` (int). Indeks unik parsial: satu `active` per `workspace_id`.
+- **Board:** bila ada sprint aktif, board (dan `TaskCard` yang ditampilkan) hanya tugas `sprint_id = active.id`. Tanpa sprint aktif: semua tugas (kelompok yang tidak memakai sprint tetap berfungsi). Statistik kelompok tetap menghitung semua tugas.
+- **Assignee opsional** saat membuat tugas (tugas backlog boleh belum di-assign). `POST /workspace/{id}/tasks` menerima `sprint_id` opsional; validasi `assignee_ids` menjadi `array` (boleh kosong). Assign/ubah assignee lewat `PUT /workspace/tasks/{id}` `{ assignee_ids }` dari tombol avatar di kartu board (mentor/admin). Intern tidak dapat memindahkan tugas yang belum di-assign kepadanya.
+- **Endpoint** (semua mentor pemilik/admin; intern → 403; kelompok selesai → 403):
+  - `POST /workspace/{workspace}/sprints` `{ name?, goal?, start_date?, end_date? }` → `201 { data: Sprint }` (planned; nama default "Sprint N").
+  - `PATCH /workspace/sprints/{sprint}` `{ name?, goal?, start_date?, end_date? }` → `{ data: Sprint }`. Sprint `completed` → 403. Sprint `active` wajib punya kedua tanggal.
+  - `POST /workspace/sprints/{sprint}/start` `{ name, goal?, start_date, end_date }` → `{ data: Sprint }`. 422 `errors.sprint` bila sudah ada sprint aktif / sprint bukan planned; 422 `end_date` bila ≤ `start_date`.
+  - `POST /workspace/sprints/{sprint}/complete` `{ move_to: "backlog" | "new" | sprintId }` → `{ data: Sprint, moved: { task_ids: [..], sprint_id: number|null }, created_sprint: Sprint|null }`. Tugas berstatus selain `done` dipindah; tugas `done` tetap tercatat di sprint itu (riwayat). `move_to` sprint harus `planned`.
+  - `DELETE /workspace/sprints/{sprint}` → `204`. Hanya `planned`; tugasnya kembali ke backlog (`sprint_id = null`).
+  - `PATCH /workspace/tasks/{task}/sprint` `{ sprint_id: number|null, rank_order: [taskId…] }` → `{ data: TaskCard }`. `rank_order` = urutan lengkap bagian tujuan setelah dipindah; server menulis ulang `rank` 1..n. Tidak boleh ke sprint `completed`.
+- **Realtime (opsional):** event `sprint.changed { sprint }` di channel `workspace.{id}`; `task.changed` cukup untuk perpindahan tugas.
+- **Deadline tetap per tugas** (tidak mengikuti tanggal sprint). Tag "Belum diselesaikan" & kunci kirim hasil tidak berubah.
+
+**#19 v1.2 — Ketua sprint, tugas cepat, perpanjang deadline**
+- **Data:** `sprints.leader_intern_id` (nullable FK `interns`, harus anggota kelompok). `sprints.end_date` wajib saat dibuat.
+- `POST /workspace/{workspace}/sprints` sekarang menerima `{ name?, goal?, end_date (wajib, ≥ hari ini), leader_id?, tasks?: [{ title (≤150), priority }] }`
+  → `201 { data: Sprint, tasks: TaskCard[] }`. Tugas dibuat di sprint itu, **tanpa assignee**, `due_at = end_date 23:59` (zona waktu aplikasi). Error per baris: `errors["tasks.0.title"]`.
+- `PATCH /workspace/sprints/{sprint}` menerima `leader_id` (ganti ketua; `null` hanya bila sprint `planned`).
+- `POST /workspace/sprints/{sprint}/start` menerima `leader_id`; **422 `errors.leader_id`** bila sprint belum punya ketua. Kelompok dengan 1 anggota: frontend memilih anggota itu otomatis.
+- **Bagi tugas:** `PATCH /workspace/tasks/{task}/assignees` `{ assignee_ids: [internId…] }` (boleh kosong, boleh >1) → `{ data: TaskDetail }`.
+  Izin: mentor pemilik/admin, **atau intern yang menjadi ketua sprint tugas itu** (sprint `planned`/`active`). Selain itu 403. Catat `assigned`/`unassigned` di `task_activities`.
+  Intern yang dibagi tugas mendapat `task_assigned` seperti biasa.
+- **Perpanjang deadline:** `PATCH /workspace/tasks/{task}/deadline` `{ due_at, reason? (≤200) }` → `{ data: TaskDetail }`. Mentor/admin; tugas belum `done`.
+  422 bila `due_at` ≤ deadline lama atau ≤ sekarang. Server: set `is_late = false` (kunci kirim hasil terbuka), catat aktivitas
+  `deadline_extended` dengan `meta: { from, to, reason }` (frontend menampilkan "memperpanjang deadline sampai … — "alasan"").
+- **Notifikasi baru (in-app + EMAIL, default email aktif; ikut pengaturan notifikasi #16):**
+
+  | type | Penerima | Kapan | Isi email (judul · isi · tombol) |
+  | --- | --- | --- | --- |
+  | `sprint_leader` | intern yang ditunjuk ketua | sprint dibuat/diubah dengan `leader_id` baru | "Anda ketua {Sprint} · {Kelompok}" · deadline sprint, jumlah tugas · "Buka board" → `{workspace.url}?tab=board` |
+  | `sprint_to_divide` | ketua sprint | sprint dimulai dan ada tugas tanpa assignee (ulangi H+1 bila masih ada) | "{N} tugas menunggu Anda bagi" · daftar judul (maks. 5) · "Bagi tugas" → `{workspace.url}?tab=board` |
+  | `deadline_extended` | semua assignee tugas | deadline diperpanjang | "Deadline {T-12} diperpanjang" · deadline lama → baru + alasan · "Lihat tugas" → URL tugas |
+
+  Email dikirim lewat queue (`ShouldQueue`), memakai template email Simagang yang sudah ada; `url` notifikasi in-app sama dengan tombol email.
+
+**#21 — Timeline, Laporan & Otomasi (v1.4)**
+
+*Timeline & Laporan — tanpa endpoint baru, tetapi bergantung pada kelengkapan data:*
+- **Timeline** memakai `TaskCard.start_at` / `due_at` dan `Sprint.start_date` / `end_date`. Bila `start_at` kosong, batang dimulai dari `start_date` sprint tugas itu
+  (diberi tanda "perkiraan"); bila tidak ada sprint, 3 hari sebelum `due_at`. Sprint terencana tanpa `start_date` digambar mulai saat sprint sebelumnya berakhir.
+  Jika memungkinkan, isi `start_at` saat tugas dimulai (status → In Progress) supaya batang akurat.
+- **Laporan** memakai `completed_at` (wajib terisi untuk status `done`; dasar burndown dan ketepatan waktu), `due_at`, `sprint_id`, `status`, `assignees`.
+  Ketepatan waktu = `completed_at <= due_at`. Burndown per hari memakai tanggal `completed_at` pada rentang `start_date`–`end_date` sprint.
+  **Burnup ditunda**: butuh riwayat kapan tugas masuk sprint (usulan kolom `tasks.sprint_added_at`).
+- Keduanya memakai `$initialTasks` (maks. 200 tugas aktif + Selesai terbaru). Untuk laporan historis yang akurat, `$initialTasks` sebaiknya memuat semua tugas sprint berjalan dan sprint terakhir yang selesai.
+- **Anak magang** hanya diberi data kelompoknya sendiri (policy `view` yang sama); filter "tugas milik sendiri" dilakukan di client dari `assignees[].user_id`.
+
+*Otomasi — aturan pekerjaan berulang (mentor pemilik/admin; intern → 403; kelompok `finished` → 403, aturan ikut nonaktif):*
+- **Data:** `automation_rules (id, workspace_id, created_by, name ≤60, enabled, trigger json, conditions json, actions json, last_run_at, timestamps)` dan
+  `automation_runs (id, rule_id, scheduled_for, ran_at, ok, summary, task_ids json)`. Unik `(rule_id, scheduled_for)` supaya satu jadwal tidak berjalan dua kali.
+- **Bentuk Rule:**
+  ```json
+  { "id": 101001, "workspace_id": 101, "name": "Laporan mingguan", "enabled": true,
+    "trigger":    { "type": "schedule", "frequency": "weekly", "time": "15:00", "days": [5], "month_day": null },
+    "conditions": [ { "type": "active_sprint" }, { "type": "skip_if_open" } ],
+    "actions": [
+      { "type": "create_task", "title": "Laporan kemajuan mingguan", "priority": "medium", "assignees": "all",
+        "assignee_ids": [], "per_member": true, "due_in_days": 3, "destination": "active_sprint" },
+      { "type": "notify", "to": "assignees", "message": "Tugas laporan mingguan sudah dibuat." } ],
+    "next_run_at": "2026-10-30T15:00:00+08:00", "last_run_at": null,
+    "runs": [ { "at": "…", "ok": true, "summary": "Membuat 3 tugas (T-23, T-24, T-25) · notifikasi dikirim ke 3 orang." } ] }
+  ```
+  - `trigger.frequency`: `daily` | `weekly` (`days`: 1 = Senin … 7 = Minggu) | `monthly` (`month_day`: 1–31 atau `"last"`; tanggal yang tidak ada di bulan itu → hari terakhir bulan). `time` = `HH:MM` zona waktu aplikasi. Hanya `type: schedule` untuk saat ini; struktur disiapkan untuk pemicu kejadian (mis. deadline lewat) di versi berikutnya.
+  - `conditions` (opsional, masing-masing maks. sekali): `workday` (lewati Sabtu/Minggu), `active_sprint` (lewati bila tidak ada sprint berjalan), `skip_if_open` (lewati `create_task` bila di kelompok ada tugas **belum `done`** berjudul sama persis).
+  - `actions` (minimal 1, dijalankan berurutan): `create_task` dan `notify` (lihat di bawah).
+  - `runs`: 5 eksekusi terakhir (terbaru dulu). `next_run_at` = jadwal berikutnya (`null` bila `enabled = false`).
+- **`create_task`:** tugas dibuat atas nama mentor pemilik aturan, `start_at` = waktu eksekusi, `due_at` = tanggal eksekusi + `due_in_days` pukul **17:00**.
+  `destination`: `active_sprint` (bila tidak ada sprint berjalan → Backlog) atau `backlog`. `assignees`: `all` (semua anggota), `leader` (ketua sprint berjalan; tanpa ketua → tugas dibuat tanpa assignee),
+  `selected` (`assignee_ids` = `interns.id`, harus anggota kelompok). `per_member = true` (dan `assignees` ≠ `leader`) → **satu tugas per anggota**; `false` → satu tugas bersama. `due_in_days` 0–60.
+  Catat aktivitas `created` dengan `meta: { automation: { id, name } }`; assignee mendapat `task_assigned` seperti biasa.
+- **`notify`:** `to` = `assignees` (penerima tugas yang dibuat pada eksekusi itu) | `all` | `leader` | `mentor`; `message` ≤200 karakter, teks polos. Dikirim **in-app + email** sebagai tipe notifikasi baru
+  `automation_message` (ikut pengaturan notifikasi #16, default aktif; judul = nama aturan, tombol = `{workspace.url}`).
+- **Endpoint** (semua mengembalikan `{ data: Rule }` kecuali disebut lain):
+  - `GET /workspace/{workspace}/automations` → `{ data: Rule[] }`
+  - `POST /workspace/{workspace}/automations` `{ name, enabled, trigger, conditions, actions }` → `201`
+  - `PATCH /workspace/automations/{rule}` aturan penuh, atau hanya `{ enabled }` untuk saklar
+  - `DELETE /workspace/automations/{rule}` → `204`
+  - `POST /workspace/automations/{rule}/run` ("Jalankan sekarang", untuk uji) → `{ data: Rule, run: { at, ok, summary }, tasks: TaskCard[] }`. **Kondisi tetap dihormati** (hasil `ok: false`, `summary` "Dilewati: …"); jadwal diabaikan.
+  - **422** dengan kunci per field, mis. `errors["name"]`, `errors["trigger.days"]`, `errors["actions.0.title"]`, `errors["actions.1.message"]`, `errors["actions"]` (tanpa aksi).
+- **Eksekusi terjadwal:** scheduler Laravel menjalankan perintah (mis. `automation:run`) **tiap menit**: ambil aturan `enabled` yang `scheduled_for <= now` dan belum punya `automation_runs`, jalankan, simpan hasil.
+  Eksekusi terlewat (server mati) boleh dikejar maksimal satu kali per aturan. Kelompok `finished` → semua aturannya di-`enabled = false`.
+- **Preview lokal:** aturan disimpan di `localStorage` browser per kelompok (tidak sinkron antar akun/perangkat); "Jalankan sekarang" membuat tugas di data preview. Dua aturan contoh dibuat otomatis saat pertama dibuka.
+
+**#20 — Tampilan deadline per tugas (v1.3)**
+- **Tanpa tabel/endpoint baru.** Sumber tunggal tetap `tasks.due_at`. Tag "Belum diselesaikan" dan kunci kirim hasil tidak berubah.
+- **Kartu kelompok** (`GET /workspace`): resource `Workspace.deadline` (lihat definisi di bagian Workspace). Tampil sebagai "N lewat deadline" + "Terdekat T-7 · 3 hari lagi".
+  Kartu kelompok selesai tidak menampilkan deadline.
+- **Urutan & filter daftar:** `?sort=deadline|newest` dan `?attention=1` (lihat `$sort`, `$attention` di §5). Default `deadline`. Semua parameter tetap ikut di tautan paginasi.
+  Disarankan satu subquery agregat: `SELECT workspace_id, MIN(due_at) FILTER(...), COUNT(*) FILTER(...) FROM tasks WHERE status IN ('todo','in_progress','revision') GROUP BY workspace_id`.
+- **Tab Deadline** (`?tab=deadline`, semua peran): agenda (Lewat deadline / Hari ini / Besok / Minggu ini / Lebih dari seminggu / Sudah dikirim / Selesai) dan kalender bulanan. **Murni client** dari
+  `$initialTasks`, jadi tidak perlu endpoint. Backend cukup memastikan `$initialTasks` memuat `due_at` semua tugas aktif; tugas `done` hanya yang termuat (maks. 200 aktif + Selesai terbaru).
+  Cakupan akses sama dengan halaman kelompok: intern hanya melihat **kelompoknya sendiri** (kelompok lain → 403 seperti biasa). Mentor/admin punya tombol "Perpanjang deadline" per baris (endpoint #19 v1.2).
+- **Hero kelompok:** chip "N tugas lewat deadline" (merah) atau "Deadline terdekat T-7 · besok". Dihitung di client dari store tugas, sama dengan `Workspace.deadline`.
+- **Widget dashboard mentor/admin:** `GET /workspace/summary` menambah `upcoming_deadlines` (lihat §8).
 
 **#18 — perubahan PRD & backend untuk model Kelompok**
 - **Data:** `workspaces.type` hanya `group`; tambah kolom `color`, `description`, `mentor_id` (pemilik), `status` (`active`/`finished`), `finished_at`. Keanggotaan intern unik: `workspace_members` dengan indeks unik `intern_id` untuk workspace aktif (1 anak magang = 1 kelompok). Workspace tim otomatis per `teams` dan space privat per intern **tidak dibuat lagi** (hapus listener/observer pembuatan otomatis di PRD Fitur 1).
@@ -529,6 +677,10 @@ Komponen `<x-workspace.dashboard-widgets role="intern|mentor" />` dipasang di `i
     { "intern": InternMini, "workspace": { "id", "name", "type", "color", "url" }, "late_count": 3,
       "tasks": [ { "id", "code", "title", "due_at", "url" } ] }
   ],
+  "upcoming_deadlines": { "data": [ TaskCard + { "workspace": { "id", "name", "type", "color", "url" } } ], "total": 21 },
+  "group_progress": [ { "workspace": { "id", "name", "type", "color", "url" }, "total": 22, "done": 8, "overdue": 2 } ],
+  "workload": [ { "intern": InternMini, "workspace": { "id", "name", "type", "color", "url" },
+                  "counts": { "todo": 5, "in_progress": 1, "review": 1, "revision": 1 }, "overdue": 0 } ],
   "ungrouped_interns": [ Roster ],
   "groups_url": "/workspace"
 }
@@ -536,6 +688,9 @@ Komponen `<x-workspace.dashboard-widgets role="intern|mentor" />` dipasang di `i
 - `ungrouped_interns` (v1.0): anak bimbingan aktif tanpa kelompok → widget "Anak bimbingan baru" dengan tombol "Masukkan". Kosong untuk admin.
 - `to_review.data`: maks. 6 tugas berstatus `review` di workspace yang dibimbing, **terlama menunggu dulu** (`submitted_at` = waktu pindah ke Review, dari `task_activities`).
 - `late_by_intern`: intern dengan `is_late` > 0, urut jumlah terbanyak. `workspace` = kelompok intern (link membuka `?tab=list`).
+- `group_progress` (v1.4): maks. 6 kelompok aktif (`!is_read_only`), urut: terbanyak `overdue` dulu, lalu persentase `done / total` terendah. `total` = semua tugas kelompok; `overdue` = tugas belum `done` yang `is_late`. Klik membuka `{workspace.url}?tab=laporan`.
+- `workload` (v1.4): maks. 8 anak bimbingan dengan tugas aktif (bukan `done`), urut jumlah tugas aktif terbanyak. `counts` per status aktif; `overdue` = tugas `is_late`. Intern yang ada di beberapa kelompok hanya muncul sekali (kelompok aktifnya).
+- `upcoming_deadlines` (v1.3): tugas berstatus `todo` / `in_progress` / `revision` di kelompok aktif yang dibimbing, belum lewat deadline dan `due_at` ≤ sekarang + 7 hari. `data` maks. 6, urut `due_at` terdekat; `total` = jumlah seluruhnya. Tugas tanpa assignee ikut (ditandai "Belum dibagi").
 
 Klik tugas di widget membuka `{workspace.url}?task={code}` (slide-over di board). Badge pesan diperbarui dari `unread_messages.by_channel` pada polling lonceng (usulan #3).
 

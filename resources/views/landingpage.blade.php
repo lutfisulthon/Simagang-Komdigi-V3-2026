@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('layouts.partials.theme-head', ['splash' => true])
     <title>Simagang - Sistem Manajemen Magang</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1114,9 +1115,117 @@
             font-size: 22px;
             box-shadow: 0 10px 22px rgba(220, 39, 67, 0.5);
         }
+
+        /* ── TIM SIMAGANG V4 (kartu gelap + logo kampus beranimasi) ── */
+        .v4-grid {
+            position: relative; z-index: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 285px));
+            justify-content: center; gap: 22px; max-width: 600px; margin: 0 auto;
+        }
+        .v4-card {
+            --accent: 250, 204, 21;
+            position: relative; padding: 12px; border-radius: 20px;
+            background: linear-gradient(165deg, #131f35 0%, #0d1628 60%, #0a1222 100%);
+            border: 1px solid rgba(255, 255, 255, .09); box-shadow: 0 14px 40px rgba(0, 0, 0, .45);
+            transition: transform .45s cubic-bezier(.22, 1, .36, 1), border-color .35s ease, box-shadow .35s ease;
+            animation: v4CardIn .75s cubic-bezier(.16, 1, .3, 1) backwards;
+        }
+        .v4-card:nth-child(2) { animation-delay: .16s; }
+        .v4-card:nth-child(3) { animation-delay: .26s; }
+        .v4-card:nth-child(4) { animation-delay: .36s; }
+        .v4-card--gold { --accent: 250, 204, 21; }
+        .v4-card--red { --accent: 239, 68, 68; }
+        .v4-card:hover, .v4-card:focus-within {
+            transform: translateY(-6px); border-color: rgba(var(--accent), .65);
+            box-shadow: 0 24px 55px rgba(0, 0, 0, .55), 0 0 0 1px rgba(var(--accent), .35), 0 0 46px rgba(var(--accent), .24);
+        }
+        @keyframes v4CardIn { from { opacity: 0; transform: translateY(34px) scale(.95); } to { opacity: 1; transform: none; } }
+
+        .v4-photo {
+            position: relative; overflow: hidden; aspect-ratio: 1 / 1.05; border-radius: 14px;
+            background: radial-gradient(120% 90% at 50% 0%, #26364f 0%, #18233a 55%, #121b2d 100%);
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+        .v4-photo::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .11) 50%, transparent 65%);
+            transform: translateX(-125%);
+        }
+        .v4-card:hover .v4-photo::after { transform: translateX(125%); transition: transform 1.1s ease; }
+        .v4-silhouette {
+            position: absolute; left: 50%; bottom: -3%; width: 76%; height: auto; transform: translateX(-50%);
+            transition: transform .7s cubic-bezier(.22, 1, .36, 1), filter .4s ease;
+        }
+        .v4-card:hover .v4-silhouette { transform: translateX(-50%) translateY(-7px) scale(1.04); filter: brightness(1.14); }
+
+        /* Logo kampus: bergerak pelan + cincin "splash" berwarna emas (Undipa) / merah (Unhas) saat kartu di-hover */
+        .v4-logo {
+            position: absolute; top: 10px; left: 10px; z-index: 3; width: 44px; height: 44px; display: grid; place-items: center;
+            transition: left .95s cubic-bezier(.65, 0, .35, 1);
+        }
+        .v4-card:hover .v4-logo, .v4-card:focus-within .v4-logo {
+            left: calc(100% - 54px);
+            animation: v4Glide .95s cubic-bezier(.45, 0, .55, 1);
+        }
+        @keyframes v4Glide {
+            0%, 100% { transform: translateY(0) scale(1); }
+            45% { transform: translateY(-9px) scale(1.12); }
+        }
+        .v4-logo__img { position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain; border-radius: 50%; transition: filter .45s ease; }
+        .v4-logo--round .v4-logo__img { object-fit: cover; background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .45); }
+        .v4-logo--plain .v4-logo__img { border-radius: 0; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .55)); }
+        .v4-logo::before, .v4-logo::after {
+            content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; z-index: 1;
+            border: 2px solid rgba(var(--accent), .95); background: radial-gradient(circle, rgba(var(--accent), .35) 0%, rgba(var(--accent), 0) 70%);
+            opacity: 0;
+        }
+        .v4-card:hover .v4-logo::before, .v4-card:focus-within .v4-logo::before { animation: v4Splash 2.2s ease-out infinite; }
+        .v4-card:hover .v4-logo::after, .v4-card:focus-within .v4-logo::after { animation: v4Splash 2.2s ease-out 1.1s infinite; }
+        .v4-card:hover .v4-logo__img, .v4-card:focus-within .v4-logo__img {
+            animation: v4Float 3.4s ease-in-out infinite;
+            filter: drop-shadow(0 0 9px rgba(var(--accent), .9)) drop-shadow(0 0 22px rgba(var(--accent), .55));
+        }
+        @keyframes v4Float {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-5px) rotate(5deg) scale(1.1); }
+        }
+        @keyframes v4Splash { 0% { transform: scale(.85); opacity: .75; } 100% { transform: scale(2.2); opacity: 0; } }
+
+        .v4-ig {
+            position: absolute; right: 10px; bottom: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 10px; border-radius: 10px; background: rgba(9, 15, 28, .88); border: 1px solid rgba(255, 255, 255, .14);
+            color: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer; backdrop-filter: blur(6px);
+            transition: transform .3s ease, border-color .3s ease;
+        }
+        .v4-ig .fa-instagram { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 13px; }
+        .v4-ig .v4-ig__out { font-size: 9px; opacity: .7; }
+        .v4-card:hover .v4-ig, .v4-ig:hover { border-color: rgba(var(--accent), .7); transform: translateY(-2px); }
+        .v4-ig:focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }
+
+        .v4-info { padding: 12px 4px 2px; text-align: left; }
+        .v4-role { display: inline-block; padding: 4px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+        .v4-role--front { color: #facc15; background: rgba(250, 204, 21, .1); border: 1px solid rgba(250, 204, 21, .35); }
+        .v4-role--back { color: #fb7185; background: rgba(244, 63, 94, .1); border: 1px solid rgba(244, 63, 94, .38); }
+        .v4-name { margin: 8px 0 4px; font-size: 1.08rem; font-weight: 700; line-height: 1.25; color: #fff; }
+        .v4-name::after { content: ''; display: block; width: 0; height: 2px; margin-top: 5px; border-radius: 2px; background: rgba(var(--accent), .95); transition: width .45s cubic-bezier(.22, 1, .36, 1); }
+        .v4-card:hover .v4-name::after { width: 56px; }
+        .v4-campus { margin: 0; font-size: .78rem; font-weight: 700; }
+        .v4-campus--gold { color: #facc15; }
+        .v4-campus--red { color: #f25555; }
+        .v4-program { margin: 2px 0 0; font-size: .74rem; color: #94a3b8; }
+
+        @media (max-width: 720px) {
+            .v4-grid { grid-template-columns: minmax(0, 300px); gap: 18px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .v4-card, .v4-silhouette, .v4-photo::after, .v4-logo { animation: none !important; transition: none !important; }
+            .v4-card:hover .v4-logo::before, .v4-card:hover .v4-logo::after, .v4-card:hover .v4-logo__img,
+            .v4-card:focus-within .v4-logo::before, .v4-card:focus-within .v4-logo::after, .v4-card:focus-within .v4-logo__img { animation: none !important; }
+            .v4-card:hover .v4-logo::before { opacity: .55; }
+        }
     </style>
 </head>
 <body>
+    <x-splash-screen />
 
 <!-- ===== NAVBAR ===== -->
 <header class="navbar">
@@ -1172,6 +1281,7 @@
         </nav>
 
         <div class="navbar-actions">
+            <x-theme-menu />
             <button type="button" class="nav-toggle" aria-label="Buka menu" aria-expanded="false">
                 <i class="fas fa-bars" style="font-size:18px"></i>
             </button>
@@ -1727,7 +1837,7 @@
 </section>
 
 {{-- Sharing Session Mingguan --}}
-<section id="sharing-session" class="py-24 bg-[#eef6ff] relative overflow-hidden">
+<section id="sharing-session" class="py-24 bg-[#eef6ff] relative overflow-hidden" data-dm-native>
     <div class="absolute top-0 left-0 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl -translate-x-24 -translate-y-24"></div>
     <div class="absolute bottom-0 right-0 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl translate-x-24 translate-y-24"></div>
     <div class="container mx-auto px-6 relative z-10">
@@ -1833,13 +1943,61 @@
         <h2 class="team-tabs-title">Tim Pengembang Simagang</h2>
 
         <div class="team-tabs-nav">
-            <button class="team-tab-btn active" data-tab="angkatan3">Simagang v3.5</button>
+            <button class="team-tab-btn active" data-tab="v4">Simagang v4</button>
+            <button class="team-tab-btn" data-tab="angkatan3">Simagang v3.5</button>
             <button class="team-tab-btn" data-tab="angkatan1">Simagang v2</button>
             <button class="team-tab-btn" data-tab="angkatan2">Simagang v1</button>
         </div>
 
-        <!-- ── TAB PANEL: SIMAGANG V3.5 / ANGKATAN 3 (ACTIVE & BLUE ELEGAN CARD) ── -->
-        <div class="team-tab-panel active" id="tab-angkatan3">
+        <!-- ── TAB PANEL: SIMAGANG V4 (ACTIVE) ── -->
+        @php
+            $simagangV4 = [
+                ['name' => 'Indra Pranata', 'role' => 'Frontend', 'campus' => 'Universitas Dipa Makassar', 'logo' => 'partners/undipa.png',
+                 'logo_style' => 'round', 'theme' => 'gold', 'instagram' => 'indrapranata369'],
+                ['name' => 'Aan Syawaluddin Adi Putra', 'role' => 'Backend', 'campus' => 'Universitas Hasanuddin', 'logo' => 'partners/logo_unhas.png',
+                 'logo_style' => 'plain', 'theme' => 'red', 'instagram' => 'aansyawaluddinn'],
+            ];
+        @endphp
+        <div class="team-tab-panel active" id="tab-v4">
+            <div class="v4-grid">
+                @foreach ($simagangV4 as $m)
+                    @php($igUrl = 'https://www.instagram.com/' . $m['instagram'])
+                    <article class="v4-card v4-card--{{ $m['theme'] }}">
+                        <div class="v4-photo">
+                            <svg class="v4-silhouette" viewBox="0 0 200 220" aria-hidden="true" focusable="false">
+                                <defs>
+                                    <linearGradient id="v4sil-{{ $loop->index }}" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0" stop-color="#6b7f9e"/><stop offset="1" stop-color="#3b4a63"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="100" cy="62" r="44" fill="url(#v4sil-{{ $loop->index }})"/>
+                                <path d="M14 220 C14 150 52 116 100 116 C148 116 186 150 186 220 Z" fill="url(#v4sil-{{ $loop->index }})"/>
+                            </svg>
+
+                            <span class="v4-logo v4-logo--{{ $m['logo_style'] }}">
+                                <img class="v4-logo__img" src="{{ asset('storage/' . $m['logo']) }}" alt="Logo {{ $m['campus'] }}" loading="lazy">
+                            </span>
+
+                            <button type="button" class="v4-ig" aria-label="Buka Instagram {{ $m['name'] }}"
+                                    onclick="openInstagramModal(@js($m['name']), @js($igUrl))">
+                                <i class="fab fa-instagram" aria-hidden="true"></i>
+                                <span>&#64;{{ $m['instagram'] }}</span>
+                                <i class="fas fa-arrow-up-right-from-square v4-ig__out" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="v4-info">
+                            <span class="v4-role {{ $m['role'] === 'Frontend' ? 'v4-role--front' : 'v4-role--back' }}">{{ $m['role'] }}</span>
+                            <h3 class="v4-name">{{ $m['name'] }}</h3>
+                            <p class="v4-campus v4-campus--{{ $m['theme'] }}">{{ $m['campus'] }}</p>
+                            <p class="v4-program">Maganghub batch 2 | 2026</p>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- ── TAB PANEL: SIMAGANG V3.5 / ANGKATAN 3 (BLUE ELEGAN CARD) ── -->
+        <div class="team-tab-panel" id="tab-angkatan3">
             <div class="team-carousel-wrapper">
                 <div class="team-members-grid max-w-4xl mx-auto !grid-cols-1 sm:!grid-cols-3 gap-5" id="carousel-grid-3">
                     

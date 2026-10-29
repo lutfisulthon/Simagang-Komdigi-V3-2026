@@ -43,6 +43,16 @@
             // Tugas milik intern yang login, untuk dropdown "Tugas terkait" di logbook (usulan kontrak #13).
             mine: () => call('tasks.mine', [],
                 () => WS.http('GET', url('/workspace/tasks/mine'))),
+            // Backlog (usulan kontrak #19): pindah ke sprint / backlog + urutan.
+            // payload: { sprint_id: number|null, rank_order: [taskId, ...] } (urutan seluruh bagian tujuan)
+            plan: (taskId, payload) => call('tasks.plan', [taskId, payload],
+                () => WS.http('PATCH', url(`/workspace/tasks/${taskId}/sprint`), { body: payload })),
+            // Bagi tugas (usulan kontrak #19, v1.2): mentor/admin atau ketua sprint tugas itu. payload: { assignee_ids: [] }
+            assign: (taskId, payload) => call('tasks.assign', [taskId, payload],
+                () => WS.http('PATCH', url(`/workspace/tasks/${taskId}/assignees`), { body: payload })),
+            // Perpanjang deadline (mentor/admin). payload: { due_at, reason? } → { data: TaskDetail }
+            extendDeadline: (taskId, payload) => call('tasks.extendDeadline', [taskId, payload],
+                () => WS.http('PATCH', url(`/workspace/tasks/${taskId}/deadline`), { body: payload })),
             // Usulan endpoint (kontrak "Celah PRD" #4). payload: { is_done }
             toggleChecklist: (taskId, itemId, payload) => call('tasks.toggleChecklist', [taskId, itemId, payload],
                 () => WS.http('PATCH', url(`/workspace/tasks/${taskId}/checklist/${itemId}`), { body: payload })),
@@ -119,6 +129,44 @@
                 () => WS.http('PATCH', url(`/workspace/labels/${labelId}`), { body: payload })),
             remove: (labelId) => call('labels.remove', [labelId],
                 () => WS.http('DELETE', url(`/workspace/labels/${labelId}`))),
+        },
+
+        // Sprint per kelompok (usulan kontrak #19). Sprint: { id, workspace_id, name, goal, status, start_date, end_date, completed_at }
+        sprints: {
+            // payload: { name?, goal?, end_date, leader_id?, tasks?: [{ title, priority }] }
+            // → { data: Sprint, tasks: TaskCard[] } (status planned; tugas dibuat di sprint, deadline = end_date)
+            create: (workspaceId, payload) => call('sprints.create', [workspaceId, payload],
+                () => WS.http('POST', url(`/workspace/${workspaceId}/sprints`), { body: payload })),
+            update: (sprintId, payload) => call('sprints.update', [sprintId, payload],
+                () => WS.http('PATCH', url(`/workspace/sprints/${sprintId}`), { body: payload })),
+            // payload: { name, goal?, start_date, end_date, leader_id } → { data: Sprint } (status active).
+            // 422 bila ada sprint aktif / ketua belum dipilih.
+            start: (sprintId, payload) => call('sprints.start', [sprintId, payload],
+                () => WS.http('POST', url(`/workspace/sprints/${sprintId}/start`), { body: payload })),
+            // payload: { move_to: 'backlog' | 'new' | sprintId } → { data: Sprint, moved: { task_ids, sprint_id }, created_sprint?: Sprint }
+            complete: (sprintId, payload) => call('sprints.complete', [sprintId, payload],
+                () => WS.http('POST', url(`/workspace/sprints/${sprintId}/complete`), { body: payload })),
+            // Hanya sprint planned; tugasnya kembali ke backlog. → 204
+            remove: (sprintId) => call('sprints.remove', [sprintId],
+                () => WS.http('DELETE', url(`/workspace/sprints/${sprintId}`))),
+        },
+
+        // Otomasi pekerjaan berulang per kelompok (usulan kontrak #21). Hanya mentor pemilik/admin; kelompok selesai → 403.
+        // Rule: { id, workspace_id, name, enabled, trigger, conditions[], actions[], next_run_at, last_run_at, runs[] }
+        automations: {
+            list: (workspaceId) => call('automations.list', [workspaceId],
+                () => WS.http('GET', url(`/workspace/${workspaceId}/automations`))),
+            // payload: { name, enabled, trigger, conditions, actions } → 201 { data: Rule }. 422 per field ("actions.0.title").
+            create: (workspaceId, payload) => call('automations.create', [workspaceId, payload],
+                () => WS.http('POST', url(`/workspace/${workspaceId}/automations`), { body: payload })),
+            // Aturan penuh, atau hanya { enabled } untuk saklar aktif/nonaktif → { data: Rule }
+            update: (id, payload) => call('automations.update', [id, payload],
+                () => WS.http('PATCH', url(`/workspace/automations/${id}`), { body: payload })),
+            remove: (id) => call('automations.remove', [id],
+                () => WS.http('DELETE', url(`/workspace/automations/${id}`))),
+            // Jalankan sekarang (uji). Kondisi tetap dihormati. → { data: Rule, run: { at, ok, summary }, tasks: TaskCard[] }
+            run: (id) => call('automations.run', [id],
+                () => WS.http('POST', url(`/workspace/automations/${id}/run`))),
         },
 
         // Kelompok buatan mentor (usulan kontrak #18). 1 anak magang = 1 kelompok; anggota tidak bisa dikeluarkan.

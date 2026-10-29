@@ -1,4 +1,4 @@
-{{-- Top bar desktop (lg ke atas). Di HP, lonceng ada di header mobile. --}}
+{{-- Top bar desktop (lg ke atas). Di HP, lonceng dan ikon gerigi ada di header mobile. --}}
 @if ($wsEnabled)
     <header class="ws-topbar hidden lg:flex items-center justify-between px-6 shrink-0">
         <div class="flex items-center gap-2 text-sm text-slate-500">
@@ -20,6 +20,16 @@
                 <span x-text="s === 'connected' ? 'Realtime' : s === 'connecting' ? 'Menghubungkan…' : 'Polling'"></span>
             </span>
             <x-workspace.notification-bell />
+            <x-theme-menu />
         </div>
+    </header>
+@else
+    {{-- Peran tanpa workspace (institusi, industri): top bar sederhana agar ikon gerigi tetap ada di pojok kanan. --}}
+    <header class="hidden lg:flex items-center justify-between px-6 shrink-0 h-14 bg-white border-b border-gray-100 relative z-40">
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+            <i class="far fa-calendar"></i>
+            <span>{{ now()->locale('id')->translatedFormat('l, j F Y') }}</span>
+        </div>
+        <x-theme-menu />
     </header>
 @endif

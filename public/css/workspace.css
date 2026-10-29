@@ -2424,19 +2424,19 @@ a.ws-pagination__link:focus-visible { outline: 2px solid #6366f1; outline-offset
     .ws-stat__label { font-size: 10px; letter-spacing: .03em; line-height: 1.25; }
     .ws-stat__value { font-size: 1.15rem; margin-top: 2px; }
 
-    /* Tab: 4 tab berbagi lebar, ikon di atas label */
+    /* Tab: berbagi lebar, ikon di atas label. Bila banyak (mentor: sampai 9), tab tidak diciutkan sampai label terpotong; bar bisa digeser. */
     #ws-tabbar .ws-tabs { width: 100%; }
     #ws-tabbar .ws-tab {
-        flex: 1 1 0;
+        flex: 1 0 auto;
         display: grid;
         grid-template-columns: auto auto;
         justify-content: center;
         align-items: center;
         column-gap: 4px;
         row-gap: 2px;
-        padding: 6px 2px;
+        padding: 6px 8px;
         font-size: 11.5px;
-        min-width: 0;
+        min-width: 62px;
     }
     #ws-tabbar .ws-tab > i { grid-row: 1; font-size: 13px; }
     #ws-tabbar .ws-tab__count { grid-row: 1; font-size: 10px; line-height: 15px; min-width: 16px; padding: 0 4px; }
@@ -2451,4 +2451,888 @@ a.ws-pagination__link:focus-visible { outline: 2px solid #6366f1; outline-offset
 /* Tablet: kolom board sedikit lebih ramping supaya ±3 kolom terlihat */
 @media (min-width: 640px) and (max-width: 1023px) {
     .ws-board { grid-auto-columns: minmax(256px, 1fr); }
+}
+
+/* ---------- Backlog & sprint ---------- */
+
+.ws-bl-section {
+    background: var(--ws-surface);
+    border: 1px solid #e0e7ff;
+    border-radius: 16px;
+    padding: 6px 6px 8px;
+}
+
+.ws-bl-section--active { border-color: #a5b4fc; box-shadow: 0 0 0 3px rgba(99, 102, 241, .08); }
+
+.ws-bl-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 6px 8px;
+}
+
+.ws-bl-head__toggle {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    min-height: 32px;
+    min-width: 0;
+    text-align: left;
+    border-radius: 8px;
+}
+
+.ws-bl-head__toggle:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
+.ws-bl-head__side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+
+.ws-bl-counts { display: inline-flex; gap: 4px; }
+.ws-bl-count {
+    min-width: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+.ws-bl-count--todo { background: #e2e8f0; color: #334155; }
+.ws-bl-count--progress { background: #dbeafe; color: #1d4ed8; }
+.ws-bl-count--done { background: #d1fae5; color: #047857; }
+
+.ws-bl-goal { padding: 0 10px 6px 30px; font-size: 13px; color: #475569; }
+
+.ws-bl-list { display: flex; flex-direction: column; min-height: 8px; border-radius: 10px; }
+.ws-bl-list:empty { min-height: 44px; border: 1.5px dashed #c7d2fe; margin: 2px 4px; }
+
+.ws-bl-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 46px;
+    padding: 4px 6px;
+    border-top: 1px solid #f1f5f9;
+    background: #fff;
+}
+
+.ws-bl-row:first-child { border-top-color: transparent; }
+.ws-bl-row:hover { background: #f8faff; }
+.ws-bl-row--ghost { opacity: .45; background: #eef2ff; }
+
+.ws-bl-row__handle {
+    width: 24px;
+    flex-shrink: 0;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: grab;
+    touch-action: none;
+}
+
+.ws-bl-row__main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    padding: 6px 4px;
+    text-align: left;
+    border-radius: 8px;
+}
+
+.ws-bl-row__main:focus-visible { outline: 2px solid #818cf8; outline-offset: 1px; }
+.ws-bl-row__labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.ws-bl-row__meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ws-bl-row__prio { width: 18px; text-align: center; font-size: 12px; background: none !important; border: 0 !important; }
+.ws-bl-row__due { font-size: 12px; min-width: 92px; }
+
+.ws-bl-unassigned {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #64748b;
+    border: 1.5px dashed #94a3b8;
+    background: #fff;
+}
+
+.ws-bl-empty { padding: 10px 14px; font-size: 13px; color: #64748b; }
+
+.ws-bl-create {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    margin: 4px 6px 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4f46e5;
+}
+
+.ws-bl-create:hover { background: #eef2ff; }
+.ws-bl-create:focus-visible { outline: 2px solid #818cf8; outline-offset: 1px; }
+
+.ws-bl-done {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+/* Bilah sprint di atas board */
+.ws-sprint-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #c7d2fe;
+}
+
+.ws-sprint-bar--idle { gap: 8px; border-style: dashed; background: rgba(255, 255, 255, .7); }
+
+/* Tombol assign di kartu board */
+.ws-assign-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 2px;
+    border-radius: 999px;
+}
+
+.ws-assign-btn:hover { background: #eef2ff; }
+.ws-assign-btn:focus-visible { outline: 2px solid #818cf8; outline-offset: 1px; }
+
+.ws-assign-btn__empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1.5px dashed #a5b4fc;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4338ca;
+}
+
+@media (max-width: 639px) {
+    /* Baris backlog: judul di atas, meta di bawah */
+    .ws-bl-row { flex-wrap: wrap; row-gap: 0; padding: 6px 4px 8px; }
+    .ws-bl-row__main { flex-basis: calc(100% - 30px); }
+    .ws-bl-row__handle { align-self: flex-start; }
+    .ws-bl-row__meta { width: 100%; padding-left: 28px; flex-wrap: wrap; }
+    .ws-bl-row__meta > .relative { margin-left: auto; }
+    .ws-bl-row__due { min-width: 0; }
+    .ws-bl-head__side { margin-left: 0; width: 100%; }
+    .ws-bl-goal { padding-left: 10px; }
+    .ws-sprint-bar > div:last-child { width: 100%; }
+    .ws-sprint-bar > div:last-child > .ws-btn { flex: 1; justify-content: center; }
+}
+
+/* ---------- Ketua sprint, belum dibagi, tugas cepat ---------- */
+
+.ws-leader-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 4px 12px 4px 5px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ws-line);
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+}
+
+.ws-leader-opt:hover { border-color: #a5b4fc; }
+.ws-leader-opt--on { border-color: #6366f1; background: #eef2ff; color: #312e81; }
+.ws-leader-opt:has(input:focus-visible) { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+.ws-leader-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #5b21b6;
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+}
+
+.ws-leader-chip--warn { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+
+.ws-undivided {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #9a3412;
+    background: #fff7ed;
+    border: 1px dashed #fdba74;
+}
+
+.ws-quick-tasks { margin-bottom: 8px; border: 1px solid var(--ws-line); border-radius: 12px; overflow: hidden; }
+.ws-quick-tasks > li + li { border-top: 1px solid #f1f5f9; }
+
+.ws-quick-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+}
+
+.ws-quick-task--new { padding: 0; }
+
+@media (max-width: 639px) {
+    .ws-quick-task { flex-wrap: wrap; }
+    .ws-quick-task > input { flex-basis: calc(100% - 28px); }
+    .ws-quick-task--new > select { margin-left: 28px; }
+}
+
+/* ---------- Deadline per tugas: kartu kelompok, hero, tab Deadline ---------- */
+
+/* Kartu kelompok (daftar) */
+.ws-card__deadline {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.ws-card__deadline .ws-due { white-space: normal; }
+
+/* Urutan & filter daftar kelompok */
+.ws-sortbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.ws-sortbar__label { font-size: 12px; font-weight: 700; color: var(--ws-faint); margin-right: 2px; }
+
+a.ws-chip[aria-current="true"] {
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #3730a3;
+}
+
+a.ws-chip.ws-chip--late[aria-current="true"],
+.ws-chip.ws-chip--late[aria-pressed="true"] { border-color: #ef4444; background: #fef2f2; color: #991b1b; }
+.ws-chip.ws-chip--late { border-color: #fecaca; color: #b91c1c; }
+
+/* Chip deadline di hero kelompok */
+.ws-hero-deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background .2s ease;
+}
+
+.ws-hero-deadline:hover { background: rgba(255, 255, 255, 0.24); }
+.ws-hero-deadline--late { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.ws-hero-deadline--late:hover { background: #fee2e2; }
+
+/* Kontrol segmen (Agenda / Kalender) */
+.ws-seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 12px;
+    background: #eef2ff;
+    gap: 2px;
+}
+
+.ws-seg__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.ws-seg__item[aria-pressed="true"] { background: #fff; color: #3730a3; box-shadow: 0 1px 3px rgba(30, 58, 138, .15); }
+.ws-seg__item:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; }
+
+.ws-dl-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .08);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+}
+
+/* Agenda */
+.ws-dl-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: #f8faff;
+    color: #334155;
+    border-bottom: 1px solid var(--ws-line);
+}
+
+.ws-dl-head--late { background: #fef2f2; color: #991b1b; border-bottom-color: #fecaca; }
+.ws-dl-head--today { background: #fffbeb; color: #92400e; border-bottom-color: #fde68a; }
+.ws-dl-head--sent { background: #f5f3ff; color: #5b21b6; border-bottom-color: #ddd6fe; }
+.ws-dl-head--done { background: #ecfdf5; color: #047857; border-bottom-color: #a7f3d0; }
+
+.ws-dl-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 10px;
+    border-left: 3px solid transparent;
+}
+
+.ws-dl-row + .ws-dl-row { border-top: 1px solid #f1f5ff; }
+.ws-dl-row--late { border-left-color: #ef4444; }
+.ws-dl-row--soon { border-left-color: #f59e0b; }
+.ws-dl-row:hover { background: #f8faff; }
+
+.ws-dl-row__open {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 8px 12px 15px;
+    text-align: left;
+    border-radius: 12px;
+}
+
+.ws-dl-row__open:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+
+.ws-dl-row__main { display: block; flex: 1; min-width: 0; }
+.ws-dl-row__people { display: flex; align-items: center; flex-shrink: 0; }
+
+.ws-dl-row__due {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    min-width: 128px;
+    text-align: right;
+}
+
+.ws-dl-row__date { font-size: 12px; font-weight: 600; color: #334155; }
+.ws-dl-row__rel { font-size: 12px; font-weight: 600; color: var(--ws-faint); }
+.ws-dl-row--late .ws-dl-row__rel { color: #b91c1c; }
+.ws-dl-row--soon .ws-dl-row__rel { color: #b45309; }
+
+/* Kalender */
+.ws-cal { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; }
+
+.ws-cal th {
+    padding: 4px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ws-faint);
+    text-align: center;
+}
+
+.ws-cal td {
+    padding: 0;
+    height: 96px;
+    vertical-align: top;
+    border: 1px solid var(--ws-line);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.ws-cal__cell--out { background: #f8fafc; }
+.ws-cal__cell--today { border-color: #6366f1; box-shadow: inset 0 0 0 1px #6366f1; }
+.ws-cal__cell--picked { background: #eef2ff; }
+
+.ws-cal__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    border-radius: 11px;
+    text-align: left;
+    overflow: hidden;
+}
+
+.ws-cal__btn:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+.ws-cal__btn:hover { background: rgba(99, 102, 241, .06); }
+
+.ws-cal__num { font-size: 13px; font-weight: 700; color: #334155; line-height: 1; }
+.ws-cal__cell--out .ws-cal__num { color: var(--ws-faint); font-weight: 600; }
+.ws-cal__cell--today .ws-cal__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin: -3px 0 0 -3px;
+    border-radius: 999px;
+    background: #4f46e5;
+    color: #fff;
+}
+
+.ws-cal__items { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ws-cal__chips { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.ws-cal__chip {
+    display: block;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ws-cal__chip--late   { background: #fef2f2; color: #b91c1c; }
+.ws-cal__chip--soon   { background: #fffbeb; color: #92400e; }
+.ws-cal__chip--normal { background: #eef2ff; color: #3730a3; }
+.ws-cal__chip--sent   { background: #f5f3ff; color: #5b21b6; }
+.ws-cal__chip--done   { background: #ecfdf5; color: #047857; }
+
+.ws-cal__more { font-size: 11px; font-weight: 700; color: var(--ws-faint); padding-left: 4px; }
+
+.ws-cal__dots { display: none; gap: 3px; flex-wrap: wrap; }
+
+.ws-cal__dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+.ws-cal__dot--late   { background: #ef4444; }
+.ws-cal__dot--soon   { background: #f59e0b; }
+.ws-cal__dot--normal { background: #6366f1; }
+.ws-cal__dot--sent   { background: #8b5cf6; }
+.ws-cal__dot--done   { background: #10b981; }
+
+.ws-cal__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.ws-cal__legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+@media (max-width: 767px) {
+    .ws-cal { border-spacing: 2px; }
+    .ws-cal td { height: 56px; border-radius: 10px; }
+    .ws-cal__btn { padding: 4px; gap: 3px; align-items: center; }
+    .ws-cal__chips { display: none; }
+    .ws-cal__dots { display: flex; justify-content: center; }
+    .ws-cal__items { align-items: center; }
+    .ws-cal__num { font-size: 12px; }
+}
+
+@media (max-width: 639px) {
+    .ws-dl-row { flex-wrap: wrap; padding-right: 8px; }
+    .ws-dl-row__open { flex-wrap: wrap; gap: 8px 12px; padding: 12px 4px 12px 12px; }
+    .ws-dl-row__main { flex-basis: 100%; }
+    .ws-dl-row__due { flex: 1; flex-direction: row; justify-content: flex-end; align-items: baseline; gap: 8px; min-width: 0; text-align: right; }
+    .ws-dl-row__people { order: 2; }
+    .ws-dl-row__extend { align-self: center; }
+}
+
+/* Placeholder "belum dibagi" selebar avatar sm di baris widget dashboard */
+.ws-widget__row .ws-bl-unassigned { width: 32px; height: 32px; font-size: 12px; }
+
+/* ---------- Timeline (roadmap gaya Jira) ---------- */
+
+.ws-tl { --tl-left: 340px; }
+
+@media (max-width: 1023px) { .ws-tl { --tl-left: 280px; } }
+@media (max-width: 639px) { .ws-tl { --tl-left: 148px; } }
+
+.ws-tl__scroll { overflow: auto; max-height: 72vh; position: relative; overscroll-behavior: contain; }
+.ws-tl__scroll:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+.ws-tl__canvas { position: relative; min-width: 100%; }
+
+.ws-tl__head { position: sticky; top: 0; z-index: 6; display: flex; background: #fff; border-bottom: 1px solid var(--ws-line); }
+
+.ws-tl__corner {
+    position: sticky;
+    left: 0;
+    z-index: 7;
+    display: flex;
+    align-items: flex-end;
+    flex: none;
+    width: var(--tl-left);
+    padding: 0 14px 8px;
+    background: #f8faff;
+    border-right: 1px solid var(--ws-line);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ws-faint);
+}
+
+.ws-tl__bands { position: relative; flex: none; height: 56px; }
+.ws-tl__band { position: relative; height: 28px; }
+
+.ws-tl__cell {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-left: 1px solid var(--ws-line);
+    font-size: 11px;
+    line-height: 1.1;
+    color: #475569;
+}
+
+.ws-tl__cell--top { align-items: flex-start; padding-left: 8px; overflow: visible; font-weight: 700; color: #334155; text-transform: capitalize; white-space: nowrap; }
+
+/* Label bulan tetap terlihat di sebelah kolom tugas saat timeline digeser. */
+.ws-tl__cell--top > span { position: sticky; left: calc(var(--tl-left) + 8px); max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+.ws-tl--quarters .ws-tl__people { display: none; }
+.ws-tl__cell--weekend { background: #f8fafc; }
+.ws-tl__day { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; border-radius: 999px; font-weight: 600; font-size: 11px; }
+.ws-tl__dow { font-size: 9px; color: var(--ws-faint); }
+.ws-tl__cell--today .ws-tl__day { background: #4f46e5; color: #fff; padding: 0 4px; }
+
+.ws-tl__body { position: relative; }
+
+.ws-tl__grid { position: absolute; top: 0; bottom: 0; z-index: 0; pointer-events: none; }
+.ws-tl__col { position: absolute; top: 0; bottom: 0; border-left: 1px solid #f1f5f9; }
+.ws-tl__col--strong { border-left-color: #e2e8f0; }
+.ws-tl__col--weekend { background: #fafbfd; }
+
+.ws-tl__row { position: relative; z-index: 1; display: flex; align-items: stretch; min-height: 40px; border-bottom: 1px solid #f1f5f9; }
+
+.ws-tl__left {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    width: var(--tl-left);
+    min-width: 0;
+    padding: 0 8px 0 14px;
+    background: #fff;
+    border-right: 1px solid var(--ws-line);
+}
+
+.ws-tl__row--task:hover .ws-tl__left { background: #f8faff; }
+.ws-tl__left--empty { font-size: 12px; color: var(--ws-faint); font-style: italic; }
+.ws-tl__left--lane { font-size: 12px; font-weight: 700; color: #334155; }
+.ws-tl__row--lane { min-height: 38px; }
+
+.ws-tl__row--section { background: rgba(240, 244, 255, .7); }
+.ws-tl__left--section { background: #f0f4ff; padding-left: 8px; }
+
+.ws-tl__toggle { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 6px; border-radius: 8px; font-size: 13px; }
+.ws-tl__toggle:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; }
+
+.ws-tl__chip { flex: none; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 18px; }
+.ws-tl__chip--active { background: #dbeafe; color: #1e40af; }
+.ws-tl__chip--completed { background: #e2e8f0; color: #475569; }
+.ws-tl__count { margin-left: auto; flex: none; font-size: 11px; font-weight: 700; color: var(--ws-faint); }
+
+.ws-tl__task { display: flex; flex: 1; min-width: 0; align-items: baseline; gap: 8px; padding: 9px 0; text-align: left; border-radius: 8px; }
+.ws-tl__task:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; }
+.ws-tl__code { flex: none; font-family: 'DM Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; color: var(--ws-faint); }
+.ws-tl__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; color: #1f2937; }
+.ws-tl__status { flex: none; padding: 1px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: .03em; }
+
+.ws-tl__extend { flex: none; opacity: 0; transition: opacity .15s ease; }
+.ws-tl__row:hover .ws-tl__extend, .ws-tl__extend:focus-visible { opacity: 1; }
+
+.ws-tl__track { position: relative; flex: none; }
+
+.ws-tl__bar {
+    --bar: #64748b;
+    position: absolute;
+    top: 50%;
+    height: 14px;
+    margin-top: -7px;
+    border-radius: 7px;
+    cursor: pointer;
+    background-color: var(--bar);
+    background-image: linear-gradient(90deg, rgba(15, 23, 42, .3) var(--p, 0%), transparent var(--p, 0%));
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .2);
+    transition: filter .15s ease;
+}
+
+.ws-tl__bar:hover { filter: brightness(1.08) saturate(1.1); }
+.ws-tl__bar--est { border-left: 3px dotted rgba(255, 255, 255, .9); }
+.ws-tl__bar--mine { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #312e81; }
+
+.ws-tl__bar--todo { --bar: #94a3b8; }
+.ws-tl__bar--in_progress { --bar: #3b82f6; }
+.ws-tl__bar--review { --bar: #8b5cf6; }
+.ws-tl__bar--revision { --bar: #f97316; }
+.ws-tl__bar--done { --bar: #10b981; }
+.ws-tl__bar--late { --bar: #ef4444; }
+
+.ws-tl__people { position: absolute; top: 50%; display: inline-flex; transform: translateY(-50%); }
+
+.ws-tl__sprint {
+    position: absolute;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    height: 22px;
+    margin-top: -11px;
+    padding: 0 8px;
+    overflow: hidden;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ws-tl__sprint > span { overflow: hidden; text-overflow: ellipsis; }
+.ws-tl__sprint--active { background: #dbeafe; color: #1e40af; }
+.ws-tl__sprint--planned { background: #fff; border: 1.5px dashed #93c5fd; color: #1d4ed8; }
+.ws-tl__sprint--completed { background: #e2e8f0; color: #475569; }
+
+.ws-tl__today-wrap { position: absolute; top: 0; bottom: 0; z-index: 3; pointer-events: none; }
+.ws-tl__today { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #f97316; }
+
+.ws-avatar-filter { display: inline-flex; gap: 2px; }
+.ws-avatar-filter__btn { padding: 2px; border: 2px solid transparent; border-radius: 999px; opacity: .6; transition: opacity .15s ease, border-color .15s ease; }
+.ws-avatar-filter__btn:hover { opacity: 1; }
+.ws-avatar-filter__btn[aria-pressed="true"] { opacity: 1; border-color: #4f46e5; }
+.ws-avatar-filter__btn:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; opacity: 1; }
+
+.ws-tl__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; color: #475569; }
+.ws-tl__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ws-tl__swatch { display: inline-block; width: 22px; height: 8px; border-radius: 4px; background-color: var(--bar); }
+
+@media (max-width: 639px) {
+    .ws-tl__row { min-height: 46px; }
+    .ws-tl__left { gap: 4px; padding: 0 6px 0 10px; }
+    .ws-tl__status, .ws-tl__extend, .ws-tl__chip { display: none; }
+    .ws-tl__task { flex-direction: column; align-items: flex-start; gap: 0; padding: 6px 0; }
+    .ws-tl__title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 12px; line-height: 1.25; }
+    .ws-tl__scroll { max-height: 68vh; }
+}
+
+@media (hover: none) { .ws-tl__extend { opacity: .8; } }
+
+/* ---------- Laporan (grafik) ---------- */
+
+.ws-rp { display: flex; flex-direction: column; gap: 12px; }
+.ws-rp__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 16px; }
+.ws-rp__title { font-size: 16px; font-weight: 700; color: #1f2937; }
+.ws-rp__desc { margin-top: 2px; font-size: 13px; line-height: 1.45; color: #64748b; max-width: 56ch; }
+.ws-rp__empty { display: flex; align-items: center; gap: 10px; padding: 28px 8px; font-size: 14px; color: #64748b; }
+.ws-rp__empty i { font-size: 20px; color: #a5b4fc; }
+
+.ws-rp__kpi { font-size: 13px; color: #475569; }
+.ws-rp__kpi strong { font-size: 15px; color: #1f2937; }
+.ws-rp__state { padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.ws-rp__state--ahead { background: #ecfdf5; color: #047857; }
+.ws-rp__state--on { background: #eff6ff; color: #1d4ed8; }
+.ws-rp__state--behind { background: #fff7ed; color: #c2410c; }
+
+.ws-rp__chart { width: 100%; min-height: 250px; overflow: hidden; }
+.ws-rp__chart svg { display: block; max-width: 100%; height: auto; }
+
+.ws-rp__keys { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: #475569; }
+.ws-rp__keys li { display: inline-flex; align-items: center; gap: 6px; }
+.ws-rp__swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.ws-rp__line { display: inline-block; width: 22px; height: 0; border-top: 3px solid #4f46e5; border-radius: 2px; }
+.ws-rp__line--ideal { border-top: 2px dashed #94a3b8; }
+
+.ws-rp__data { font-size: 13px; color: #475569; }
+.ws-rp__data summary { cursor: pointer; width: fit-content; padding: 2px 0; font-weight: 600; color: #4f46e5; }
+.ws-rp__data summary:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; border-radius: 4px; }
+.ws-rp__data table { margin-top: 8px; border-collapse: collapse; }
+.ws-rp__data th, .ws-rp__data td { padding: 4px 16px 4px 0; text-align: left; border-bottom: 1px solid #f1f5f9; }
+.ws-rp__data th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ws-faint); }
+
+/* Donat */
+.ws-rp__donutwrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
+.ws-donut { position: relative; flex: none; width: 148px; height: 148px; border-radius: 50%; }
+.ws-donut::after { content: ''; position: absolute; inset: 24px; border-radius: 50%; background: #fff; }
+.ws-donut__center { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+.ws-donut__center strong { font-size: 24px; font-weight: 800; color: #1f2937; }
+.ws-donut__center span { font-size: 11px; color: var(--ws-faint); }
+.ws-rp__legend { display: grid; gap: 6px; font-size: 13px; color: #334155; min-width: 150px; }
+.ws-rp__legend li { display: flex; align-items: center; gap: 8px; }
+.ws-rp__legend strong { margin-left: auto; padding-left: 8px; color: #1f2937; }
+
+/* Diagram batang */
+.ws-bc { padding: 18px 0 0 28px; }
+.ws-bc__plot { position: relative; height: 180px; border-bottom: 1px solid #cbd5e1; }
+.ws-bc__tick { position: absolute; left: 0; right: 0; border-top: 1px dashed #e2e8f0; }
+.ws-bc__tick span { position: absolute; left: -28px; width: 22px; transform: translateY(-50%); text-align: right; font-size: 11px; color: var(--ws-faint); }
+.ws-bc__cols { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 8px; padding: 0 4px; }
+.ws-bc__col { display: flex; flex: 1; min-width: 0; height: 100%; flex-direction: column; align-items: center; justify-content: flex-end; }
+.ws-bc__bar { position: relative; width: min(100%, 44px); min-height: 2px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #6366f1, #4f46e5); transition: height .3s ease; }
+.ws-bc__val { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #334155; }
+.ws-bc__labels { display: flex; gap: 8px; padding: 6px 4px 0; }
+.ws-bc__label { flex: 1; min-width: 0; overflow-wrap: anywhere; text-align: center; font-size: 11px; line-height: 1.2; color: #475569; }
+
+/* Beban anggota */
+.ws-wl { display: grid; gap: 8px; }
+.ws-wl__row { display: grid; grid-template-columns: minmax(96px, 168px) 1fr 28px; align-items: center; gap: 12px; }
+.ws-wl__name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; font-weight: 600; color: #334155; }
+.ws-wl__bar { display: flex; height: 16px; overflow: hidden; border-radius: 8px; background: #f1f5f9; }
+.ws-wl__seg { display: block; height: 100%; min-width: 3px; }
+.ws-wl__seg + .ws-wl__seg { border-left: 2px solid #fff; }
+.ws-wl__total { text-align: right; font-size: 13px; font-weight: 700; color: #1f2937; }
+
+@media (max-width: 639px) {
+    .ws-rp__donutwrap { justify-content: center; }
+    .ws-bc__plot { height: 150px; }
+    .ws-bc__label { font-size: 10px; }
+    .ws-wl__row { grid-template-columns: 88px 1fr 24px; gap: 8px; }
+}
+
+/* ---------- Otomasi (daftar aturan + penyusun When → If → Then) ---------- */
+
+.ws-au-rule { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
+.ws-au-rule__main { display: flex; flex: 1; gap: 14px; min-width: min(100%, 320px); }
+.ws-au-rule__name { border-radius: 6px; font-size: 16px; font-weight: 700; color: #1f2937; text-align: left; }
+.ws-au-rule__name:hover { color: #4338ca; text-decoration: underline; }
+.ws-au-rule__name:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.ws-au-rule__desc { margin-top: 2px; font-size: 13px; line-height: 1.5; color: #475569; }
+.ws-au-rule__meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--ws-faint); }
+.ws-au-rule__meta strong { color: #334155; }
+.ws-au-rule__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ws-au-rule--off .ws-au-rule__name { color: #475569; }
+
+.ws-au-name {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    background: #f8faff;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.ws-au-name:hover { border-color: #c7d2fe; }
+.ws-au-name:focus { outline: none; border-color: #6366f1; background: #fff; }
+.ws-au-name.ws-input--error { border-color: #ef4444; }
+
+.ws-au-chain { display: flex; flex-direction: column; align-items: stretch; }
+
+.ws-au-card {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 24px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ws-au-card--on { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .14); }
+.ws-au-card--err { border-color: #f87171; }
+
+.ws-au-card__row { display: flex; align-items: center; }
+
+.ws-au-card__head {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 24px;
+    text-align: left;
+}
+
+.ws-au-card__head:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+.ws-au-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 16px;
+}
+
+.ws-au-icon--when { background: #dcfce7; color: #15803d; }
+.ws-au-icon--if { background: #fef3c7; color: #c2410c; }
+.ws-au-icon--then { background: #dbeafe; color: #1d4ed8; }
+.ws-au-icon--notify { background: #ede9fe; color: #6d28d9; }
+
+.ws-au-card__title { display: block; font-size: 15px; font-weight: 600; color: #1e293b; }
+.ws-au-card__sub { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: #64748b; overflow-wrap: anywhere; }
+.ws-au-card__sub:empty { display: none; }
+.ws-au-card__tools { display: flex; flex: none; gap: 2px; padding-right: 10px; }
+.ws-au-card__body { padding: 4px 18px 18px 76px; }
+.ws-au-field { margin-bottom: 16px; }
+.ws-au-link { width: 2px; height: 26px; margin-left: 40px; background: #d5dbe6; }
+.ws-au-chev { flex: none; color: #94a3b8; transition: transform .15s ease; }
+.ws-au-chev.is-open { transform: rotate(180deg); }
+
+.ws-au-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #e9edf3;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    transition: background .15s ease;
+}
+
+.ws-au-add:hover { background: #dde3ec; }
+.ws-au-add:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+@media (max-width: 639px) {
+    .ws-au-card { border-radius: 20px; }
+    .ws-au-card__head { gap: 12px; padding: 12px 14px; }
+    .ws-au-card__body { padding: 2px 14px 16px; }
+    .ws-au-link { margin-left: 36px; }
+    .ws-au-rule__actions { width: 100%; }
 }

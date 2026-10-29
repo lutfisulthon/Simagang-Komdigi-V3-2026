@@ -2,6 +2,7 @@
     Widget Workspace untuk dashboard yang sudah ada (PRD "Perubahan di halaman yang sudah ada").
       role="intern" → "Tugas Saya" (5 deadline terdekat) + "Pesan belum dibaca"
       role="mentor" → "Anak bimbingan baru" (belum punya kelompok, bila ada) + "Perlu Review" + "Tugas Terlambat" per intern
+                      + "Deadline 7 Hari ke Depan" (per tugas, semua kelompok)
     Data diambil sendiri lewat WS.api.dashboard.summary() (GET /workspace/summary), jadi controller
     dashboard tidak perlu diubah. Tidak dirender sama sekali selama modul Workspace belum aktif.
 --}}
@@ -224,6 +225,114 @@
                                     </template>
                                     <li class="text-xs ws-text-faint" x-show="l.tasks.length > 2" x-text="'+' + (l.tasks.length - 2) + ' lainnya'"></li>
                                 </ul>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+            {{-- ================= Deadline tugas 7 hari ke depan (per tugas, semua kelompok yang dibimbing) ================= --}}
+            <div class="ws-widget md:col-span-2 lg:col-span-5">
+                <div class="ws-widget__head">
+                    <span class="ws-widget__icon" style="--w-c:#b45309;--w-bg:#fffbeb;"><i class="fas fa-calendar-days"></i></span>
+                    <h2 class="ws-widget__title">Deadline 7 Hari ke Depan</h2>
+                    <span class="ws-widget__count" x-cloak x-show="data && data.upcoming_deadlines && data.upcoming_deadlines.total"
+                          x-text="data && data.upcoming_deadlines ? data.upcoming_deadlines.total + ' tugas' : ''"></span>
+                    <a class="ws-widget__more" href="{{ route('workspace.index') }}">Semua kelompok <i class="fas fa-arrow-right text-[10px]"></i></a>
+                </div>
+                <div class="ws-widget__body">
+                    @include('workspace.partials.widget-states', ['rows' => 3])
+
+                    <template x-if="!loading && !error && data && data.upcoming_deadlines && !data.upcoming_deadlines.data.length">
+                        <p class="ws-widget__empty"><i class="fas fa-calendar-check"></i> Tidak ada tugas yang jatuh tempo dalam 7 hari ke depan.</p>
+                    </template>
+
+                    <ul x-show="!loading && !error && data && data.upcoming_deadlines && data.upcoming_deadlines.data.length">
+                        <template x-for="t in (data && data.upcoming_deadlines ? data.upcoming_deadlines.data : [])" :key="t.id">
+                            <li>
+                                <a :href="boardUrl(t)" class="ws-widget__row">
+                                    <span class="ws-avatar-stack shrink-0">
+                                        <template x-for="a in t.assignees" :key="a.id"><x-workspace.avatar-js user="a" size="sm" /></template>
+                                        <span class="ws-bl-unassigned" x-show="!t.assignees.length" title="Belum dibagi"><i class="fas fa-user" aria-hidden="true"></i><span class="sr-only">Belum dibagi</span></span>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-sm font-semibold text-gray-800 truncate">
+                                            <span class="ws-mono ws-text-faint font-medium mr-1" x-text="t.code"></span><span x-text="t.title"></span>
+                                        </span>
+                                        <span class="block text-xs ws-text-faint truncate">
+                                            <span x-text="t.assignees.length ? t.assignees.map((a) => a.name).join(', ') : 'Belum dibagi'"></span> ·
+                                            <span x-text="t.workspace.name"></span>
+                                        </span>
+                                    </span>
+                                    <span class="ws-widget__due" :class="'ws-widget__due--' + due(t).state" :title="dateTime(t.due_at)" x-text="due(t).text"></span>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                    <p class="ws-widget__footnote" x-show="!loading && !error && data && data.upcoming_deadlines && data.upcoming_deadlines.total > data.upcoming_deadlines.data.length"
+                       x-text="data && data.upcoming_deadlines ? '+' + (data.upcoming_deadlines.total - data.upcoming_deadlines.data.length) + ' tugas lain dalam 7 hari ke depan' : ''"></p>
+                </div>
+            </div>
+
+            {{-- ================= Progres kelompok (grafik mini) ================= --}}
+            <div class="ws-widget lg:col-span-3">
+                <div class="ws-widget__head">
+                    <span class="ws-widget__icon" style="--w-c:#4f46e5;--w-bg:#eef2ff;"><i class="fas fa-chart-simple"></i></span>
+                    <h2 class="ws-widget__title">Progres Kelompok</h2>
+                    <a class="ws-widget__more" href="{{ route('workspace.index') }}">Semua kelompok <i class="fas fa-arrow-right text-[10px]"></i></a>
+                </div>
+                <div class="ws-widget__body">
+                    @include('workspace.partials.widget-states', ['rows' => 3])
+
+                    <template x-if="!loading && !error && data && data.group_progress && !data.group_progress.length">
+                        <p class="ws-widget__empty"><i class="fas fa-users"></i> Belum ada kelompok aktif.</p>
+                    </template>
+
+                    <ul x-show="!loading && !error && data && data.group_progress && data.group_progress.length">
+                        <template x-for="g in (data && data.group_progress ? data.group_progress : [])" :key="g.workspace.id">
+                            <li>
+                                <a :href="g.workspace.url + '?tab=laporan'" class="ws-widget__row">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ background: g.workspace.color }" aria-hidden="true"></span>
+                                            <span class="text-sm font-semibold text-gray-800 truncate" x-text="g.workspace.name"></span>
+                                            <span class="ws-badge ws-badge--late !text-[11px] !px-2 !py-0 shrink-0" x-show="g.overdue" x-text="g.overdue + ' terlambat'"></span>
+                                        </span>
+                                        <span class="ws-progress mt-2 block" role="progressbar" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="pct(g)" :aria-label="'Progres ' + g.workspace.name">
+                                            <span class="ws-progress__bar block" :style="{ width: pct(g) + '%' }"></span>
+                                        </span>
+                                    </span>
+                                    <span class="ws-widget__due text-right" x-text="g.done + '/' + g.total + ' selesai'"></span>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+            {{-- ================= Beban tugas aktif per anak bimbingan (grafik mini) ================= --}}
+            <div class="ws-widget lg:col-span-2">
+                <div class="ws-widget__head">
+                    <span class="ws-widget__icon" style="--w-c:#0891b2;--w-bg:#ecfeff;"><i class="fas fa-layer-group"></i></span>
+                    <h2 class="ws-widget__title">Beban Tugas Aktif</h2>
+                </div>
+                <div class="ws-widget__body">
+                    @include('workspace.partials.widget-states', ['rows' => 3])
+
+                    <template x-if="!loading && !error && data && data.workload && !data.workload.length">
+                        <p class="ws-widget__empty"><i class="fas fa-circle-check"></i> Tidak ada tugas aktif.</p>
+                    </template>
+
+                    <ul class="ws-wl !gap-0" x-show="!loading && !error && data && data.workload && data.workload.length">
+                        <template x-for="r in workloadRows" :key="r.intern.id">
+                            <li>
+                                <a :href="r.workspace.url + '?tab=laporan'" class="ws-wl__row !px-2 !py-2 rounded-xl hover:bg-slate-50">
+                                    <span class="ws-wl__name"><x-workspace.avatar-js user="r.intern" size="xs" /><span class="truncate" x-text="r.intern.name.split(' ')[0]"></span></span>
+                                    <span class="ws-wl__bar" role="img" :aria-label="r.intern.name + ': ' + r.segs.filter((s) => s.count).map((s) => s.count + ' ' + s.label).join(', ')">
+                                        <template x-for="s in r.segs" :key="s.key"><span class="ws-wl__seg" x-show="s.count" :style="{ width: s.pct + '%', background: s.color }" :title="s.label + ': ' + s.count"></span></template>
+                                    </span>
+                                    <span class="ws-wl__total" x-text="r.total"></span>
+                                </a>
                             </li>
                         </template>
                     </ul>

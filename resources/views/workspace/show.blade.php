@@ -1,5 +1,5 @@
 {{--
-    Halaman kelompok (workspace) dengan tab Board / List / Channel / Aktivitas.
+    Halaman kelompok (workspace) dengan tab Backlog / Board / List / Timeline / Deadline / Laporan / Otomasi (staff) / Channel / Aktivitas.
     Variabel (lihat docs/workspace/kontrak-frontend.md §5):
       $workspace   Workspace type=group (can: rename, add_members, finish)
       $candidates  Roster[]    anak bimbingan tanpa kelompok (untuk "Tambah anggota"; kosong bila tidak berhak)
@@ -10,7 +10,8 @@
       $labels             {id,name,color}[]
       $channels           Channel[]    channel workspace ini + #pengumuman
       $templates          Template[]   template tim (untuk "Pakai template"); kosong untuk intern
-      $tab         'board'|'list'|'channel'|'activity'
+      $sprints     Sprint[]    sprint kelompok (planned, active, completed) — tab Backlog & board
+      $tab         'backlog'|'board'|'list'|'timeline'|'deadline'|'laporan'|'otomasi'|'channel'|'activity'
       $can         ['create_task', 'manage_channels', 'create_template', 'manage_labels' => bool]
 --}}
 @extends('workspace.layout')
@@ -27,12 +28,19 @@
         $date = fn ($iso) => \Illuminate\Support\Carbon::parse($iso)->locale('id')->translatedFormat('j M Y');
         $initials = collect(preg_split('/\s+/', trim($workspace['name'])))->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
-        $tabs = [
+        $canAutomate = ($can['manage_sprints'] ?? false) && ! $workspace['is_read_only'];
+        $isIntern = auth()->user()->isIntern();
+        $tabs = array_filter([
+            'backlog' => $isIntern ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
+            'timeline' => ['Timeline', 'fa-chart-gantt', null, false],
+            'deadline' => ['Deadline', 'fa-calendar-days', null, true],
+            'laporan' => ['Laporan', 'fa-chart-pie', null, false],
+            'otomasi' => $canAutomate ? ['Otomasi', 'fa-bolt', null, false] : null,
             'channel' => ['Channel', 'fa-hashtag', $workspace['unread_messages'] ?: null, true],
             'activity' => ['Aktivitas', 'fa-clock-rotate-left', null, false],
-        ];
+        ]);
         $statTiles = [
             ['todo', 'To Do', $s['todo'], '#94a3b8'],
             ['in_progress', 'In Progress', $s['in_progress'], '#3b82f6'],
@@ -50,7 +58,7 @@
     @endphp
 
     {{-- Boot store tugas sebelum board/list diinisialisasi (urutan DOM). --}}
-    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks]))"></div>
+    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks, 'sprints' => $sprints ?? [], 'interns' => $assignableInterns]))"></div>
     <div hidden x-data x-init="$store.wsChat.boot(@js(['workspaceId' => $workspace['id'], 'channels' => $channels, 'readOnly' => $workspace['is_read_only']]))"></div>
 
     <div x-data="wsWorkspaceShow(@js(['tab' => $tab, 'tabs' => array_keys($tabs)]))">
@@ -77,6 +85,17 @@
                 @elseif ($workspace['end_date'])
                     <span class="inline-flex items-center gap-1.5"><i class="far fa-calendar"></i> Magang s.d. {{ $date($workspace['end_date']) }}</span>
                 @endif
+                {{-- Deadline tugas: lewat deadline (merah) atau yang terdekat. Klik → tab Deadline. --}}
+                @unless ($workspace['is_read_only'])
+                    <button type="button" class="ws-hero-deadline" x-cloak
+                            x-show="$store.wsTasks.booted && ($store.wsTasks.overdueCount > 0 || $store.wsTasks.nextDue)"
+                            :class="$store.wsTasks.overdueCount > 0 && 'ws-hero-deadline--late'"
+                            :title="$store.wsTasks.nextDue ? $store.wsTasks.nextDue.title + ' · ' + WS.time.dateTime($store.wsTasks.nextDue.due_at) : ''"
+                            x-on:click="$dispatch('ws-select-tab', 'deadline')">
+                        <i class="fas" :class="$store.wsTasks.overdueCount > 0 ? 'fa-triangle-exclamation' : 'fa-clock'" aria-hidden="true"></i>
+                        <span x-text="$store.wsTasks.deadlineLine"></span>
+                    </button>
+                @endunless
             </x-slot:meta>
 
             <button type="button" class="ws-hero-btn" x-on:click="$dispatch('ws-open-modal', 'ws-members')">
@@ -102,6 +121,11 @@
                         @if ($groupCan['add_members'] ?? false)
                             <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-group-add', { group: @js($groupMini) })">
                                 <i class="fas fa-user-plus text-xs ws-text-faint"></i> Tambah anggota
+                            </button>
+                        @endif
+                        @if ($canAutomate)
+                            <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-select-tab', 'otomasi')">
+                                <i class="fas fa-bolt text-xs ws-text-faint"></i> Otomasi
                             </button>
                         @endif
                         @if ($groupCan['finish'] ?? false)
@@ -150,6 +174,11 @@
                         <span class="ws-tab__label">{{ $label }}</span>
                         @if ($key === 'board')
                             <span class="ws-tab__count" x-text="$store.wsTasks.booted ? $store.wsTasks.activeCount : {{ $count }}">{{ $count }}</span>
+                        @elseif ($key === 'deadline')
+                            {{-- Jumlah tugas lewat deadline (hidup dari store); disembunyikan bila 0. --}}
+                            <span class="ws-tab__count ws-tab__count--alert" style="display: none"
+                                  x-show="$store.wsTasks.booted && $store.wsTasks.overdueCount > 0"
+                                  x-text="$store.wsTasks.overdueCount"></span>
                         @elseif ($key === 'channel')
                             {{-- Ikut berubah saat channel dibaca / ada pesan baru (store wsChat). --}}
                             <span class="ws-tab__count ws-tab__count--alert" @unless ($count) style="display: none" @endunless
@@ -169,6 +198,11 @@
             @endif
         </div>
 
+        <section id="ws-panel-backlog" role="tabpanel" aria-labelledby="ws-tab-backlog"
+                 x-show="tab === 'backlog'" @if ($tab !== 'backlog') x-cloak @endif>
+            @include('workspace.partials.backlog')
+        </section>
+
         <section id="ws-panel-board" role="tabpanel" aria-labelledby="ws-tab-board"
                  x-show="tab === 'board'" @if ($tab !== 'board') x-cloak @endif>
             @if ($workspace['is_read_only'])
@@ -180,6 +214,28 @@
         <section id="ws-panel-list" role="tabpanel" aria-labelledby="ws-tab-list"
                  x-show="tab === 'list'" @if ($tab !== 'list') x-cloak @endif>
             @include('workspace.partials.task-list')
+        </section>
+
+        <section id="ws-panel-timeline" role="tabpanel" aria-labelledby="ws-tab-timeline"
+                 x-show="tab === 'timeline'" @if ($tab !== 'timeline') x-cloak @endif>
+            @include('workspace.partials.timeline')
+        </section>
+
+        @if ($canAutomate)
+            <section id="ws-panel-otomasi" role="tabpanel" aria-labelledby="ws-tab-otomasi"
+                     x-show="tab === 'otomasi'" @if ($tab !== 'otomasi') x-cloak @endif>
+                @include('workspace.partials.automations')
+            </section>
+        @endif
+
+        <section id="ws-panel-laporan" role="tabpanel" aria-labelledby="ws-tab-laporan"
+                 x-show="tab === 'laporan'" @if ($tab !== 'laporan') x-cloak @endif>
+            @include('workspace.partials.reports')
+        </section>
+
+        <section id="ws-panel-deadline" role="tabpanel" aria-labelledby="ws-tab-deadline"
+                 x-show="tab === 'deadline'" @if ($tab !== 'deadline') x-cloak @endif>
+            @include('workspace.partials.deadlines')
         </section>
 
         <section id="ws-panel-channel" role="tabpanel" aria-labelledby="ws-tab-channel"
@@ -286,6 +342,10 @@
         @include('workspace.partials.group-modals')
     @endif
 
+    @if ($can['manage_sprints'] ?? false)
+        @include('workspace.partials.sprint-modals')
+    @endif
+
     @if (($can['manage_labels'] ?? false) && $workspace['team'])
         @include('workspace.partials.label-manager', ['labelTeams' => [$workspace['team']], 'labelsByTeam' => [$workspace['team']['id'] => $labels]])
     @endif
@@ -301,6 +361,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
         if (WS.config.mock && WS.mock) {
+            WS.mock.seed('sprint-context', @js(['workspace_id' => $workspace['id'], 'sprints' => $sprints ?? [], 'members' => $assignableInterns]));
             WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
             WS.mock.seed('label-context', @js(['teams' => $workspace['team'] ? [$workspace['team']] : [], 'labels' => $labels]));
             WS.mock.seed('template-context', @js(['templates' => $templates ?? [], 'labels' => $labels, 'teams' => $workspace['team'] ? [$workspace['team']] : []]));

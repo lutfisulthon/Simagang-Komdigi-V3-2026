@@ -74,7 +74,7 @@
                     </div>
 
                     <!-- Grading Criteria Info -->
-                    <div class="mb-8 p-4 bg-blue-600 rounded-xl border-2 border-blue-200">
+                    <div class="mb-8 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
                         <div class="flex items-start">
                             <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
                             <div>

@@ -34,13 +34,66 @@
     // Ambil field TaskCard dari TaskDetail (untuk memperbarui board).
     function cardOf(task) {
         const keys = ['id', 'workspace_id', 'code', 'title', 'status', 'priority', 'position', 'start_at', 'due_at',
-            'completed_at', 'is_late', 'labels', 'assignees', 'checklist', 'comments_count', 'attachments_count', 'url', 'can'];
+            'completed_at', 'is_late', 'sprint_id', 'rank', 'labels', 'assignees', 'checklist', 'comments_count', 'attachments_count', 'url', 'can'];
         return Object.fromEntries(keys.filter((k) => k in task).map((k) => [k, task[k]]));
     }
 
     WS.tasks = Object.assign(WS.tasks || {}, { cardOf });
 
+    // datetime-local ↔ ISO (zona waktu lokal browser)
+    const toLocal = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
+
     document.addEventListener('alpine:init', () => {
+        // ---------- Perpanjang deadline (mentor/admin) ----------
+        // Dibuka lewat event window `ws-open-deadline` { task } dari detail tugas atau menu kartu board.
+        window.Alpine.data('wsDeadline', () => ({
+            open: false,
+            task: null,
+            days: 3,
+            dueAt: '',
+            reason: '',
+            errors: {},
+            saving: false,
+            options: [{ days: 1, label: '+1 hari' }, { days: 3, label: '+3 hari' }, { days: 7, label: '+1 minggu' }],
+
+            init() {
+                window.addEventListener('ws-open-deadline', (e) => {
+                    this.task = e.detail.task;
+                    this.reason = '';
+                    this.errors = {};
+                    this.choose(3);
+                    this.open = true;
+                });
+            },
+
+            get current() {
+                return this.task ? WS.time.dateTime(this.task.due_at) : '';
+            },
+
+            // Dihitung dari deadline lama, atau dari sekarang bila deadline sudah lewat.
+            choose(days) {
+                this.days = days;
+                const base = Math.max(Date.now(), new Date(this.task.due_at).getTime());
+                this.dueAt = toLocal(base + days * 86400000);
+            },
+
+            async submit() {
+                if (!this.dueAt) { this.errors = { due_at: 'Deadline baru wajib diisi.' }; return; }
+                this.saving = true;
+                try {
+                    const res = await WS.api.tasks.extendDeadline(this.task.id, { due_at: new Date(this.dueAt).toISOString(), reason: this.reason.trim() || null });
+                    emit('ws-task-saved', { card: cardOf(res.data) });
+                    WS.toast(`Deadline ${this.task.code} diperpanjang sampai ${WS.time.dateTime(res.data.due_at)}.`, 'success');
+                    this.open = false;
+                } catch (err) {
+                    if (err.status === 422 && err.errors) this.errors = Object.fromEntries(Object.entries(err.errors).map(([k, v]) => [k, v[0]]));
+                    else WS.toast(err.message, 'error');
+                } finally {
+                    this.saving = false;
+                }
+            },
+        }));
+
         const Alpine = window.Alpine;
 
         // ---------- Detail tugas ----------

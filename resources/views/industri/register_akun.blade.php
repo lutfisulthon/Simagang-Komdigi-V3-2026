@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('layouts.partials.theme-head')
     <title>Pendaftaran Industri - Simagang</title>
     <link rel="shortcut icon" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
