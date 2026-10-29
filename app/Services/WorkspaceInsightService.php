@@ -199,9 +199,91 @@ class WorkspaceInsightService
                 'total' => $review->count(),
             ],
             'late_by_intern' => $lateByIntern,
+            'group_progress' => $this->groupProgress($user),
+            'workload' => $this->workload($user),
             'ungrouped_interns' => [],
             'groups_url' => route('workspace.index'),
         ];
+    }
+
+    /** Id workspace aktif yang dibimbing mentor (admin: semua), dasar widget progres dan beban kerja. */
+    private function managedWorkspaceIds(User $user)
+    {
+        $isAdmin = $user->isSuperAdmin() || $user->isAdminFull();
+
+        return Workspace::query()
+            ->where('is_archived', false)
+            ->when(! $isAdmin, fn ($q) => $q->whereHas('members', fn ($m) => $m
+                ->where('users.id', $user->id)
+                ->where('workspace_members.role', 'mentor')
+                ->whereNull('workspace_members.left_at')))
+            ->pluck('id');
+    }
+
+    /** Maks. 6 kelompok aktif: terbanyak tugas lewat deadline dulu, lalu persentase selesai terendah. */
+    private function groupProgress(User $user): array
+    {
+        $rows = DB::table('tasks')
+            ->whereNull('deleted_at')
+            ->whereIn('workspace_id', $this->managedWorkspaceIds($user))
+            ->groupBy('workspace_id')
+            ->selectRaw("workspace_id, count(*) as total, sum(case when status = 'done' then 1 else 0 end) as done, sum(case when status != 'done' and overdue_at is not null then 1 else 0 end) as overdue")
+            ->get();
+
+        $workspaces = Workspace::whereIn('id', $rows->pluck('workspace_id'))->get()->keyBy('id');
+
+        return $rows
+            ->sort(fn ($a, $b) => ($b->overdue <=> $a->overdue) ?: (($a->done / $a->total) <=> ($b->done / $b->total)) ?: ($a->workspace_id <=> $b->workspace_id))
+            ->take(6)
+            ->map(fn ($r) => [
+                'workspace' => $this->presenter->workspaceMini($workspaces[$r->workspace_id]),
+                'total' => (int) $r->total,
+                'done' => (int) $r->done,
+                'overdue' => (int) $r->overdue,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Maks. 8 anak bimbingan dengan tugas aktif, terbanyak dulu. Intern di beberapa workspace
+     * muncul sekali, di workspace tempat tugas aktifnya paling banyak.
+     */
+    private function workload(User $user): array
+    {
+        $rows = DB::table('tasks')
+            ->join('task_assignees', 'task_assignees.task_id', '=', 'tasks.id')
+            ->whereNull('tasks.deleted_at')
+            ->whereIn('tasks.workspace_id', $this->managedWorkspaceIds($user))
+            ->where('tasks.status', '!=', TaskStatus::Done->value)
+            ->groupBy('task_assignees.intern_id', 'tasks.workspace_id', 'tasks.status')
+            ->selectRaw('task_assignees.intern_id, tasks.workspace_id, tasks.status, count(*) as total, sum(case when tasks.overdue_at is not null then 1 else 0 end) as overdue')
+            ->get();
+
+        $perIntern = $rows->groupBy('intern_id')->map(function (Collection $internRows) {
+            $byWorkspace = $internRows->groupBy('workspace_id')->sortByDesc(fn ($g) => $g->sum('total'));
+            $chosen = $byWorkspace->first();
+
+            return [
+                'workspace_id' => $byWorkspace->keys()->first(),
+                'active' => (int) $internRows->sum('total'),
+                'counts' => array_merge(
+                    ['todo' => 0, 'in_progress' => 0, 'review' => 0, 'revision' => 0],
+                    $chosen->pluck('total', 'status')->map(fn ($n) => (int) $n)->all()
+                ),
+                'overdue' => (int) $chosen->sum('overdue'),
+            ];
+        })->sortByDesc('active')->take(8);
+
+        $interns = Intern::whereIn('id', $perIntern->keys())->get()->keyBy('id');
+        $workspaces = Workspace::whereIn('id', $perIntern->pluck('workspace_id'))->get()->keyBy('id');
+
+        return $perIntern->map(fn ($r, $internId) => [
+            'intern' => $this->presenter->intern($interns[$internId]),
+            'workspace' => $this->presenter->workspaceMini($workspaces[$r['workspace_id']]),
+            'counts' => $r['counts'],
+            'overdue' => $r['overdue'],
+        ])->values()->all();
     }
 
     private function cardWithWorkspace(Task $task, User $viewer): array

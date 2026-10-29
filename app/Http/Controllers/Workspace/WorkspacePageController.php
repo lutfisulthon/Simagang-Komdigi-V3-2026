@@ -6,6 +6,7 @@ use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Intern;
 use App\Models\Mentor;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskLabel;
@@ -28,6 +29,7 @@ class WorkspacePageController extends Controller
     private const PER_PAGE = 9;
     private const ACTIVE_LIMIT = 200;
     private const DONE_LIMIT = 8;
+    private const DONE_REPORT_LIMIT = 200;
 
     public function __construct(private WorkspacePresenter $presenter, private WorkspaceDeadlineService $deadlines)
     {
@@ -151,7 +153,7 @@ class WorkspacePageController extends Controller
         $canSprints = $gate->allows('manageSprints', $workspace);
 
         // Backlog hanya untuk staf di workspace tim (Space pribadi dan intern tidak memakainya).
-        $tabs = ['board', 'list', 'deadline', 'channel', 'activity'];
+        $tabs = ['board', 'list', 'timeline', 'deadline', 'laporan', 'channel', 'activity'];
         if (! $user->isIntern() && $workspace->type !== 'intern') {
             array_unshift($tabs, 'backlog');
         }
@@ -246,7 +248,11 @@ class WorkspacePageController extends Controller
         return $query->orderBy('name')->get()->map(fn (Intern $i) => $this->presenter->intern($i))->all();
     }
 
-    /** Semua tugas aktif (maks. 200) + Selesai terbaru, siap dipakai board tanpa request tambahan. */
+    /**
+     * Semua tugas aktif (maks. 200) + Selesai terbaru, siap dipakai board tanpa request tambahan.
+     * Timeline dan Laporan memakai data yang sama, jadi tugas Selesai di sprint berjalan dan sprint
+     * terakhir yang selesai ikut dimuat (burndown dan ketepatan waktu).
+     */
     private function initialTasks(Workspace $workspace, $user): array
     {
         $query = fn () => Task::query()
@@ -256,8 +262,18 @@ class WorkspacePageController extends Controller
 
         $active = $query()->where('status', '!=', TaskStatus::Done->value)
             ->orderBy('position')->orderBy('id')->limit(self::ACTIVE_LIMIT)->get();
+        $lastCompleted = $workspace->sprints()->where('status', Sprint::COMPLETED)
+            ->reorder()->orderByDesc('completed_at')->orderByDesc('id')->value('id');
+        $reportSprintIds = $workspace->sprints()
+            ->where(fn ($q) => $q->where('status', Sprint::ACTIVE)->orWhere('id', $lastCompleted ?? 0))
+            ->pluck('id');
+
+        $recentDone = Task::where('workspace_id', $workspace->id)->where('status', TaskStatus::Done->value)
+            ->orderByDesc('completed_at')->limit(self::DONE_LIMIT)->pluck('id');
+
         $done = $query()->where('status', TaskStatus::Done->value)
-            ->orderByDesc('completed_at')->limit(self::DONE_LIMIT)->get();
+            ->where(fn ($q) => $q->whereIn('sprint_id', $reportSprintIds)->orWhereIn('id', $recentDone))
+            ->orderByDesc('completed_at')->limit(self::DONE_REPORT_LIMIT)->get();
 
         return $active->concat($done)->map(fn (Task $t) => $this->presenter->taskCard($t, $user))->all();
     }

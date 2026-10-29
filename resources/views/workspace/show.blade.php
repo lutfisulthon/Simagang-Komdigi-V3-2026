@@ -28,7 +28,8 @@
         $date = fn ($iso) => \Illuminate\Support\Carbon::parse($iso)->locale('id')->translatedFormat('j M Y');
         $initials = collect(preg_split('/\s+/', trim($workspace['name'])))->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
-        $canAutomate = ($can['manage_sprints'] ?? false) && ! $workspace['is_read_only'];
+        // Otomasi belum punya backend (keputusan: ditiadakan); tab, menu, dan panelnya tidak ditampilkan.
+        $canAutomate = false;
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
             'backlog' => $isIntern || ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],

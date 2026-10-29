@@ -101,6 +101,10 @@ class TaskService
 
             $task->status = $to;
             $task->position = $index;
+            // Batang timeline dimulai saat tugas mulai dikerjakan, kecuali tanggal mulai sudah ditentukan.
+            if ($to === TaskStatus::InProgress && ! $task->start_at) {
+                $task->start_at = now();
+            }
             if ($from === TaskStatus::Done && $to !== TaskStatus::Done) {
                 $task->completed_at = null;
             } elseif ($to === TaskStatus::Done && ! $task->completed_at) {
