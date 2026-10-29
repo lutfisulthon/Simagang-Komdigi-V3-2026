@@ -26,8 +26,14 @@ class WorkspacePresenter
     /** Warna ikon kelompok (kontras teks putih >= 4,5:1), dipilih deterministik dari id. */
     private const COLORS = ['#4f46e5', '#0f766e', '#be185d', '#b45309', '#1d4ed8', '#7e22ce', '#047857', '#b91c1c'];
 
-    public function __construct(private ChannelUnreadService $unread)
+    public function __construct(private ChannelUnreadService $unread, private WorkspaceDeadlineService $deadlines)
     {
+    }
+
+    /** Muat ringkasan deadline banyak workspace sekaligus (hindari satu query per kartu di daftar). */
+    public function preloadDeadlines(array $workspaceIds): void
+    {
+        $this->deadlines->preload($workspaceIds);
     }
 
     public function markdown(?string $text): string
@@ -186,6 +192,7 @@ class WorkspacePresenter
             'is_read_only' => $workspace->is_archived,
             'stats' => $this->stats($workspace),
             'active_sprint' => $this->activeSprint($workspace),
+            'deadline' => $this->deadlines->forWorkspace($workspace->id, (bool) $workspace->is_archived),
             'unread_messages' => (int) $unread,
             'members_count' => $minis->count(),
             'interns_count' => $internMinis->count(),

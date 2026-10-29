@@ -177,8 +177,21 @@ class WorkspaceInsightService
             ->values()
             ->all();
 
+        // Tugas yang akan jatuh tempo dalam 7 hari (belum lewat deadline, belum dikirim); yang belum dibagi ikut.
+        $upcoming = fn () => $scope()
+            ->whereIn('status', [TaskStatus::Todo->value, TaskStatus::InProgress->value, TaskStatus::Revision->value])
+            ->whereNull('overdue_at')
+            ->whereBetween('due_at', [now(), now()->addDays(7)]);
+
+        $upcomingTasks = $upcoming()->with(self::TASK_RELATIONS)->withCount(['comments', 'attachments'])
+            ->orderBy('due_at')->orderBy('id')->limit(6)->get();
+
         return [
             'role' => 'mentor',
+            'upcoming_deadlines' => [
+                'data' => $upcomingTasks->map(fn (Task $t) => $this->cardWithWorkspace($t, $user))->values()->all(),
+                'total' => $upcoming()->count(),
+            ],
             'to_review' => [
                 'data' => $waiting->take(6)->map(fn (Task $t) => $this->cardWithWorkspace($t, $user) + [
                     'submitted_at' => $this->presenter->iso(\Illuminate\Support\Carbon::parse($t->submitted_at)),

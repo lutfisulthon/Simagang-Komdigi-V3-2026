@@ -12,6 +12,7 @@ use App\Models\TaskLabel;
 use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\Workspace;
+use App\Services\WorkspaceDeadlineService;
 use App\Services\WorkspacePresenter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +29,7 @@ class WorkspacePageController extends Controller
     private const ACTIVE_LIMIT = 200;
     private const DONE_LIMIT = 8;
 
-    public function __construct(private WorkspacePresenter $presenter)
+    public function __construct(private WorkspacePresenter $presenter, private WorkspaceDeadlineService $deadlines)
     {
     }
 
@@ -60,13 +61,21 @@ class WorkspacePageController extends Controller
             }
         }
 
+        // Agregat deadline per workspace aktif: dipakai untuk urutan, filter, dan hitungan "perlu perhatian".
+        $withDeadline = fn ($query) => $query->leftJoinSub($this->deadlines->aggregate(), 'dl', 'dl.workspace_id', '=', 'workspaces.id')->select('workspaces.*');
+        $needsAttention = fn ($query) => $query->where(fn ($x) => $x->where('dl.overdue_count', '>', 0)->orWhere('dl.due_soon_count', '>', 0));
+
         $counts = [
             'active' => (clone $base)->where('is_archived', false)->count(),
             'finished' => (clone $base)->where('is_archived', true)->count(),
+            'attention' => $needsAttention($withDeadline(clone $base))->where('workspaces.is_archived', false)->count(),
         ];
 
+        $sort = $request->query('sort') === 'newest' ? 'newest' : 'deadline';
+        $attention = $request->boolean('attention');
+
         $q = trim((string) $request->query('q'));
-        $filtered = (clone $base)
+        $filtered = $withDeadline(clone $base)
             ->when($request->filled('team') && $isAdmin, fn ($w) => $w->where('team_id', $request->integer('team')))
             ->when($request->filled('mentor') && $isAdmin, fn ($w) => $w->whereHas(
                 'members',
@@ -77,14 +86,20 @@ class WorkspacePageController extends Controller
                 $w->where(fn ($x) => $x->where('name', 'like', $like)
                     ->orWhereHas('members', fn ($m) => $m->where('users.name', 'like', $like)));
             })
-            ->orderBy('is_archived')
-            ->orderByDesc('id');
+            ->when($attention, $needsAttention)
+            ->orderBy('workspaces.is_archived')
+            // Deadline terdekat: yang punya tugas lewat deadline dulu (terbanyak), lalu tugas terdekat, lalu yang tanpa deadline.
+            ->when($sort === 'deadline', fn ($w) => $w
+                ->orderByRaw('coalesce(dl.overdue_count, 0) desc')
+                ->orderByRaw('dl.next_due is null')
+                ->orderBy('dl.next_due'))
+            ->orderByDesc('workspaces.id');
 
         $total = (clone $filtered)->count();
         $page = max(1, (int) $request->query('page', 1));
-        $items = $filtered->forPage($page, self::PER_PAGE)->get()
-            ->map(fn (Workspace $w) => $this->presenter->workspace($w, $user))
-            ->all();
+        $pageRows = $filtered->forPage($page, self::PER_PAGE)->get();
+        $this->presenter->preloadDeadlines($pageRows->pluck('id')->all());
+        $items = $pageRows->map(fn (Workspace $w) => $this->presenter->workspace($w, $user))->all();
 
         $groups = new LengthAwarePaginator($items, $total, self::PER_PAGE, $page, [
             'path' => route('workspace.index'),
@@ -96,6 +111,8 @@ class WorkspacePageController extends Controller
             'mentor' => null,
             'groups' => $groups,
             'counts' => $counts,
+            'sort' => $sort,
+            'attention' => $attention,
             'ungrouped' => [],
             'teams' => $isAdmin ? Team::orderBy('name')->get(['id', 'name'])->toArray() : [],
             'mentors' => $isAdmin
@@ -134,7 +151,7 @@ class WorkspacePageController extends Controller
         $canSprints = $gate->allows('manageSprints', $workspace);
 
         // Backlog hanya untuk staf di workspace tim (Space pribadi dan intern tidak memakainya).
-        $tabs = ['board', 'list', 'channel', 'activity'];
+        $tabs = ['board', 'list', 'deadline', 'channel', 'activity'];
         if (! $user->isIntern() && $workspace->type !== 'intern') {
             array_unshift($tabs, 'backlog');
         }
