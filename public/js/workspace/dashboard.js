@@ -248,6 +248,19 @@
                 return { state, text: 'Deadline ' + WS.time.date(card.due_at) };
             },
 
+            // Grafik mini mentor: progres kelompok (persen selesai) & beban tugas aktif per anak bimbingan.
+            pct: (g) => (g.total ? Math.round(g.done / g.total * 100) : 0),
+            get workloadRows() {
+                const rows = (this.data && this.data.workload) || [];
+                const sum = (r) => Object.values(r.counts).reduce((n, v) => n + v, 0);
+                const max = Math.max(1, ...rows.map(sum));
+                const colors = { todo: '#94a3b8', in_progress: '#3b82f6', review: '#8b5cf6', revision: '#f97316' };
+                return rows.map((r) => ({
+                    ...r, total: sum(r),
+                    segs: Object.keys(colors).map((k) => ({ key: k, label: WS.STATUS[k], count: r.counts[k] || 0, pct: (r.counts[k] || 0) / max * 100, color: colors[k] })),
+                }));
+            },
+
             channelTitle(c) {
                 if (c.type !== 'direct') return '#' + c.name;
                 const members = c.members || [];

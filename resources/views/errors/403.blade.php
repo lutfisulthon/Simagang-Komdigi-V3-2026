@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('layouts.partials.theme-head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>403 - Akses Ditolak | SIMAGANG</title>
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">

@@ -19,6 +19,9 @@
         announcement:          { icon: 'fa-bullhorn',            color: '#0891b2', bg: '#ecfeff' },
         intern_joined:         { icon: 'fa-user-plus',           color: '#059669', bg: '#ecfdf5' },
         group_joined:          { icon: 'fa-users',               color: '#4f46e5', bg: '#eef2ff' },
+        sprint_leader:         { icon: 'fa-flag',                color: '#7c3aed', bg: '#f5f3ff' },
+        sprint_to_divide:      { icon: 'fa-people-arrows',       color: '#0e7490', bg: '#ecfeff' },
+        deadline_extended:     { icon: 'fa-calendar-plus',       color: '#b45309', bg: '#fffbeb' },
         intern_without_mentor: { icon: 'fa-user-clock',          color: '#d97706', bg: '#fffbeb' },
     };
     const FALLBACK_META = { icon: 'fa-bell', color: '#475569', bg: '#f1f5f9' };
@@ -358,7 +361,8 @@
             categoryLabel(type) {
                 if (type.startsWith('task_')) return 'Tugas';
                 if (type.startsWith('intern_')) return 'Intern';
-                return { mentioned: 'Mention', announcement: 'Pengumuman', group_joined: 'Kelompok' }[type] || 'Lainnya';
+                if (type.startsWith('sprint_')) return 'Sprint';
+                return { mentioned: 'Mention', announcement: 'Pengumuman', group_joined: 'Kelompok', deadline_extended: 'Tugas' }[type] || 'Lainnya';
             },
             relative: (iso) => WS.time.relative(iso),
             dateTime: (iso) => WS.time.dateTime(iso),

@@ -185,6 +185,34 @@ return function (User $user, bool $forcePending = false): array {
         return $s;
     };
 
+    // ---------- Sprint per kelompok ----------
+    // Kelompok aktif: Sprint 1 selesai, Sprint 2 berjalan, Sprint 3 direncanakan. Kelompok selesai magang:
+    // semua sprint selesai. Kelompok buatan session: belum punya sprint. Id sprint = workspace_id * 10 + k.
+    // end_date = deadline sprint (dipilih saat sprint dibuat). leader = ketua tim (InternMini) per sprint.
+    $sprintsOf = function (int $id, ?\Illuminate\Support\Carbon $finishedAt, bool $isNew, array $members) use ($now) {
+        if ($isNew) return [];
+        $mini = fn ($p) => $p ? ['id' => $p['id'], 'user_id' => $p['user_id'], 'name' => $p['name'], 'avatar_url' => $p['avatar_url']] : null;
+        $lead = fn (int $k) => $mini(collect($members)->firstWhere('key', 'siti') && $k === 2 ? collect($members)->firstWhere('key', 'siti') : ($members[($k - 1) % max(1, count($members))] ?? null));
+        $make = fn (int $k, string $status, $start, $end, string $goal) => [
+            'id' => $id * 10 + $k, 'workspace_id' => $id, 'name' => 'Sprint ' . $k, 'goal' => $goal, 'status' => $status,
+            'start_date' => $start?->toDateString(), 'end_date' => $end?->toDateString(),
+            'leader' => $status === 'planned' ? null : $lead($k),
+            'completed_at' => $status === 'completed' ? $end->copy()->setTime(17, 0)->toIso8601String() : null,
+        ];
+        if ($finishedAt) {
+            $end = $finishedAt->copy();
+            return [
+                $make(1, 'completed', $end->copy()->subDays(28), $end->copy()->subDays(14), 'Riset & rancangan awal'),
+                $make(2, 'completed', $end->copy()->subDays(14), $end, 'Penyelesaian & presentasi hasil'),
+            ];
+        }
+        return [
+            $make(1, 'completed', $now->copy()->subDays(20), $now->copy()->subDays(7), 'Onboarding & riset kebutuhan'),
+            $make(2, 'active', $now->copy()->subDays(6), $now->copy()->addDays(8), 'Selesaikan prototipe halaman utama'),
+            $make(3, 'planned', null, $now->copy()->addDays(22), 'Integrasi API & uji tampilan HP'),
+        ];
+    };
+
     // ---------- Kelompok (Workspace type=group) ----------
     // Id: kelompok contoh 101, 102, … (urutan $groupMeta); kelompok buatan session 301, 302, …
     $workspaces = [];
@@ -212,6 +240,9 @@ return function (User $user, bool $forcePending = false): array {
 
         $userMembers = array_merge([$mentorMini($g['mentor'])], array_map($internUser, $members));
         $owner = $meMentor === $g['mentor'];
+        $sprints = $sprintsOf($id, $finishedAt, $isNew, $members);
+        $active = collect($sprints)->firstWhere('status', 'active');
+        if ($active) $s['todo'] += 7; // rencana: 3 tugas di sprint berikutnya + 4 di backlog
         $workspaces[$id] = [
             'id' => $id,
             'type' => 'group',
@@ -227,6 +258,8 @@ return function (User $user, bool $forcePending = false): array {
             'end_date' => $lastEnd,
             'is_archived' => $finished,
             'is_read_only' => $finished,
+            // Sprint yang sedang berjalan (null = tidak ada; board menampilkan semua tugas).
+            'active_sprint' => $active ? array_intersect_key($active, array_flip(['id', 'name', 'goal', 'start_date', 'end_date', 'leader'])) : null,
             'stats' => $s,
             'unread_messages' => $finished || $isNew ? 0 : $num("unread-$id", 6),
             'members_count' => count($userMembers),
@@ -243,6 +276,7 @@ return function (User $user, bool $forcePending = false): array {
             '_team_index' => $mentors[$g['mentor']]['team'],
             '_mentor_index' => $g['mentor'],
             '_key' => $key,
+            '_sprints' => $sprints,
         ];
     }
 
@@ -310,6 +344,7 @@ return function (User $user, bool $forcePending = false): array {
             for ($i = 0; $i < $count; $i++) $plan[] = $status;
         }
         $late = $s['late'];
+        $todoIndex = 0;
         $positions = [];
         $cards = [];
         foreach ($plan as $k => $status) {
@@ -322,9 +357,28 @@ return function (User $user, bool $forcePending = false): array {
             if (count($assignables) > 1 && $num("$key-a2", 4) === 0) {
                 $assignees = array_slice($assignables, 0, 2);
             }
+
+            // Sprint: tugas aktif di sprint berjalan; To Do dibagi ke sprint berjalan / berikutnya / backlog.
+            $sprints = $ws['_sprints'];
+            $active = collect($sprints)->firstWhere('status', 'active');
+            $planned = collect($sprints)->firstWhere('status', 'planned');
+            $lastDone = collect($sprints)->where('status', 'completed')->last();
+            $sprintId = match (true) {
+                ! $sprints => null,
+                ! $active => $lastDone['id'] ?? null,
+                $status === 'done' => $num("$key-sp", 2) === 0 ? $active['id'] : ($lastDone['id'] ?? $active['id']),
+                $status !== 'todo' => $active['id'],
+                // 4 To Do terakhir di backlog, 3 sebelumnya di sprint berikutnya, sisanya di sprint berjalan.
+                default => (fn ($fromEnd) => $fromEnd <= 4 ? null : ($fromEnd <= 7 ? ($planned['id'] ?? null) : $active['id']))($s['todo'] - $todoIndex),
+            };
+            if ($status === 'todo') $todoIndex++;
+            // Tugas di backlog / sprint berikutnya sebagian belum di-assign (assign dilakukan di board).
+            if ($status === 'todo' && $active && $sprintId !== $active['id'] && $num("$key-un", 1) === 0) $assignees = [];
             $creator = $mentorsOnly[$num("$key-c", count($mentorsOnly) - 1)];
             $creatorIsMe = $creator['id'] === $user->id;
             $assignedToMe = collect($assignees)->contains('user_id', $user->id);
+            $taskSprint = $sprintId ? collect($sprints)->firstWhere('id', $sprintId) : null;
+            $iLead = $taskSprint && $taskSprint['status'] !== 'completed' && ($taskSprint['leader']['user_id'] ?? null) === $user->id;
             $readOnly = $ws['is_read_only'];
 
             $due = match (true) {
@@ -352,8 +406,11 @@ return function (User $user, bool $forcePending = false): array {
                 'position' => $positions[$status],
                 'start_at' => $num("$key-st", 1) ? $due->copy()->subDays(4)->toIso8601String() : null,
                 'due_at' => $due->toIso8601String(),
-                'completed_at' => $status === 'done' ? $due->copy()->subHours(3)->toIso8601String() : null,
+                // Sebagian kecil tugas selesai setelah deadline (untuk grafik ketepatan waktu).
+                'completed_at' => $status === 'done' ? $due->copy()->addHours($num("$key-ot", 3) === 0 ? 9 : -3)->toIso8601String() : null,
                 'is_late' => $isLate,
+                'sprint_id' => $sprintId,
+                'rank' => $n,
                 'labels' => array_slice(array_merge(array_slice($labels, $num("$key-l", 4)), $labels), 0, $labelCount),
                 'assignees' => $assignees,
                 'checklist' => ['done' => $checkDone, 'total' => $checkTotal],
@@ -365,6 +422,10 @@ return function (User $user, bool $forcePending = false): array {
                     'move' => ! $readOnly && ($isStaff || $assignedToMe),
                     'review' => ! $readOnly && $isStaff,
                     'delete' => ! $readOnly && ($role === 'admin' || ($role === 'mentor' && $creatorIsMe)),
+                    // Bagi tugas: mentor/admin, atau ketua sprint tugas ini.
+                    'assign' => ! $readOnly && ($isStaff || $iLead),
+                    // Perpanjang deadline: mentor/admin, tugas belum selesai.
+                    'extend_deadline' => ! $readOnly && $isStaff && $status !== 'done',
                 ],
                 '_creator' => $creator,
             ];
@@ -377,7 +438,7 @@ return function (User $user, bool $forcePending = false): array {
     // TaskDetail: TaskCard + deskripsi, checklist, lampiran, komentar, riwayat.
     $taskDetail = function (array $ws, array $card) use ($num, $markdown) {
         $key = 'detail-' . $card['id'];
-        $intern = $card['assignees'][0];
+        $intern = $card['assignees'][0] ?? $ws['_assignables'][0];
         $internUser = ['id' => $intern['user_id'], 'name' => $intern['name'], 'role' => 'intern', 'avatar_url' => $intern['avatar_url']];
         $creator = $card['_creator'];
         $mentor = $creator['role'] === 'mentor' ? $creator : (collect($ws['_members'])->firstWhere('role', 'mentor') ?? $creator);
@@ -421,7 +482,7 @@ return function (User $user, bool $forcePending = false): array {
             ];
         }
 
-        $history = [[$creator, 'created', []], [$creator, 'assigned', ['assignee' => $intern['name']]]];
+        $history = $card['assignees'] ? [[$creator, 'created', []], [$creator, 'assigned', ['assignee' => $intern['name']]]] : [[$creator, 'created', []]];
         $path = ['todo' => [], 'in_progress' => ['in_progress'], 'review' => ['in_progress', 'review'],
             'revision' => ['in_progress', 'review', 'revision'], 'done' => ['in_progress', 'review', 'done']][$card['status']];
         $prev = 'todo';
@@ -628,12 +689,50 @@ return function (User $user, bool $forcePending = false): array {
         return $channels;
     };
 
+    // ---------- Ringkasan deadline per kelompok (kartu daftar kelompok, kontrak #20) ----------
+    // Dihitung dari tugas yang belum dikirim (To Do / In Progress / Revisi). Kelompok selesai magang: null.
+    //   next            tugas terdekat yang belum lewat deadline
+    //   overdue_count   tugas yang sudah lewat deadline dan belum dikirim ("Belum diselesaikan")
+    //   due_soon_count  tugas yang deadline-nya ≤ 3 hari lagi
+    foreach ($workspaces as &$wsRef) {
+        $wsRef['deadline'] = null;
+        if ($wsRef['status'] === 'finished') continue;
+        $nowTs = now()->getTimestamp();
+        $open = array_values(array_filter($tasksFor($wsRef), fn ($t) => in_array($t['status'], ['todo', 'in_progress', 'revision'], true)));
+        $overdue = array_filter($open, fn ($t) => $t['is_late'] || strtotime($t['due_at']) < $nowTs);
+        $upcoming = array_values(array_filter($open, fn ($t) => ! $t['is_late'] && strtotime($t['due_at']) >= $nowTs));
+        usort($upcoming, fn ($a, $b) => strcmp($a['due_at'], $b['due_at']));
+        $wsRef['deadline'] = [
+            'next' => $upcoming ? array_intersect_key($upcoming[0], array_flip(['id', 'code', 'title', 'due_at', 'url'])) : null,
+            'overdue_count' => count($overdue),
+            'due_soon_count' => count(array_filter($upcoming, fn ($t) => strtotime($t['due_at']) <= $nowTs + 3 * 86400)),
+        ];
+    }
+    unset($wsRef);
+
     $strip = fn (array $ws) => array_filter($ws, fn ($key) => ! str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
-    // Urutan daftar kelompok: aktif (terbaru dibuat) dulu, lalu selesai magang (terbaru selesai).
-    $sortGroups = function (array $list) {
-        usort($list, fn ($a, $b) => [$a['status'] === 'finished', $b['status'] === 'finished' ? $b['finished_at'] : $b['created_at']]
-            <=> [$b['status'] === 'finished', $a['status'] === 'finished' ? $a['finished_at'] : $a['created_at']]);
+    // Kelompok aktif perlu perhatian: ada tugas lewat deadline, atau deadline ≤ 3 hari lagi.
+    $needsAttention = fn (array $ws) => $ws['status'] === 'active'
+        && (($ws['deadline']['overdue_count'] ?? 0) > 0 || ($ws['deadline']['due_soon_count'] ?? 0) > 0);
+
+    // Urutan daftar kelompok: aktif dulu, lalu selesai magang (terbaru selesai).
+    //   by = 'newest'   (default) aktif terbaru dibuat
+    //   by = 'deadline' ada tugas lewat deadline (terbanyak) → deadline tugas terdekat → belum ada deadline
+    $sortGroups = function (array $list, string $by = 'newest') {
+        $rank = function (array $w) {
+            $overdue = $w['deadline']['overdue_count'] ?? 0;
+            $next = $w['deadline']['next']['due_at'] ?? null;
+            return [$overdue > 0 ? 0 : ($next ? 1 : 2), -$overdue, $next ?? ''];
+        };
+        usort($list, function ($a, $b) use ($by, $rank) {
+            $fa = $a['status'] === 'finished';
+            $fb = $b['status'] === 'finished';
+            if ($fa !== $fb) return $fa <=> $fb;
+            if ($fa) return strcmp($b['finished_at'], $a['finished_at']);
+            if ($by === 'deadline' && ($cmp = $rank($a) <=> $rank($b)) !== 0) return $cmp;
+            return strcmp($b['created_at'], $a['created_at']);
+        });
         return $list;
     };
 
@@ -651,10 +750,12 @@ return function (User $user, bool $forcePending = false): array {
             return $card ? $taskDetail($ws, $card) : null;
         },
         'channels' => $channelsFor,
+        'sprints' => fn (array $ws) => $ws['_sprints'],
         'templates' => $templatesFor,
         'templateTargets' => $templateTargets,
         'strip' => $strip,
         'sortGroups' => $sortGroups,
+        'needsAttention' => $needsAttention,
         'roster' => $roster,
         'personFor' => $personFor,
         'people' => $people,

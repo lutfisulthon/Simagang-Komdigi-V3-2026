@@ -18,6 +18,10 @@
         commented:        { icon: 'fa-comment',          color: '#475569', bg: '#f1f5f9', text: () => ['mengomentari', ''] },
         attachment_added: { icon: 'fa-paperclip',        color: '#0f766e', bg: '#f0fdfa', text: (m) => ['melampirkan ' + (m.file || 'berkas') + ' di', ''] },
         marked_late:      { icon: 'fa-triangle-exclamation', color: '#dc2626', bg: '#fef2f2', text: () => ['menandai', 'terlambat'] },
+        deadline_extended: {
+            icon: 'fa-calendar-plus', color: '#b45309', bg: '#fffbeb',
+            text: (m) => ['memperpanjang deadline', 'sampai ' + (m.to ? WS.time.dateTime(m.to) : '') + (m.reason ? ' — "' + m.reason + '"' : '')],
+        },
         reviewed: {
             icon: 'fa-clipboard-check', color: '#059669', bg: '#ecfdf5',
             text: (m) => (m.decision === 'approve'
@@ -97,6 +101,11 @@
 
             init() {
                 this.$nextTick(() => this.revealTab());
+                // Tautan antar tab dari dalam panel (mis. "Backlog" di bilah sprint board).
+                window.addEventListener('ws-select-tab', (e) => {
+                    this.select(e.detail);
+                    this.$nextTick(() => document.getElementById('ws-tabbar')?.scrollIntoView({ behavior: WS.scrollBehavior(), block: 'nearest' }));
+                });
             },
 
             select(tab) {

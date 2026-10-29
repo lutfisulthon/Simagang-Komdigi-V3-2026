@@ -55,7 +55,7 @@
 
                 {{-- Assignee --}}
                 <div x-show="!selfOnly">
-                    <p class="ws-label" id="ws-f-assignee">Assignee <span class="text-red-600">*</span></p>
+                    <p class="ws-label" id="ws-f-assignee">Assignee <span class="font-normal text-slate-500">(opsional · bisa di-assign nanti di board)</span></p>
                     <div class="flex flex-wrap gap-2" role="group" aria-labelledby="ws-f-assignee">
                         <template x-for="i in interns" :key="i.id">
                             <button type="button" class="ws-chip" :aria-pressed="form.assignee_ids.includes(i.id).toString()" x-on:click="toggle('assignee_ids', i.id)">
@@ -277,6 +277,45 @@
             <button type="button" class="ws-btn ws-btn--ghost" x-on:click="open = false">Batal</button>
             <button type="button" class="ws-btn ws-btn--danger" x-on:click="confirm()" :disabled="saving">
                 <i class="fas" :class="saving ? 'fa-spinner fa-spin' : 'fa-trash'"></i> Hapus tugas
+            </button>
+        </x-slot:footer>
+    </x-workspace.modal>
+</div>
+
+{{-- ================= Perpanjang deadline (mentor/admin) ================= --}}
+<div x-data="wsDeadline">
+    <x-workspace.modal name="ws-deadline" max-width="md" labelledby="ws-deadline-heading" x-model="open">
+        <template x-if="task">
+            <div class="-mt-1">
+                <h2 id="ws-deadline-heading" class="text-lg font-bold text-gray-800 mb-1" x-text="'Perpanjang deadline ' + task.code"></h2>
+                <p class="text-sm text-slate-500 mb-4">
+                    Deadline sekarang: <strong class="text-slate-700" x-text="current"></strong>.
+                    Anak magang mendapat notifikasi (email), dan kunci kirim hasil terbuka lagi.
+                </p>
+                <fieldset class="mb-4">
+                    <legend class="ws-label">Tambah waktu</legend>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="o in options" :key="o.days">
+                            <button type="button" class="ws-chip" :aria-pressed="(days === o.days).toString()" x-on:click="choose(o.days)" x-text="o.label"></button>
+                        </template>
+                    </div>
+                </fieldset>
+                <div class="mb-4">
+                    <label class="ws-label" for="ws-dl-due">Deadline baru <span class="text-red-600">*</span></label>
+                    <input id="ws-dl-due" type="datetime-local" class="ws-input" x-model="dueAt" x-on:input="days = null" :class="errors.due_at && 'ws-input--error'">
+                    <p class="ws-field-error" x-show="errors.due_at" x-text="errors.due_at"></p>
+                </div>
+                <div>
+                    <label class="ws-label" for="ws-dl-reason">Alasan <span class="font-normal text-slate-500">(opsional, tampil di riwayat)</span></label>
+                    <input id="ws-dl-reason" type="text" class="ws-input" x-model="reason" maxlength="200" placeholder="Contoh: menunggu akses API dari tim lain">
+                    <p class="ws-field-error" x-show="errors.reason" x-text="errors.reason"></p>
+                </div>
+            </div>
+        </template>
+        <x-slot:footer>
+            <button type="button" class="ws-btn ws-btn--ghost" x-on:click="open = false">Batal</button>
+            <button type="button" class="ws-btn ws-btn--primary" x-on:click="submit()" :disabled="saving">
+                <i class="fas" :class="saving ? 'fa-spinner fa-spin' : 'fa-calendar-plus'"></i> Perpanjang
             </button>
         </x-slot:footer>
     </x-workspace.modal>

@@ -47,7 +47,13 @@
     const PRIORITY_ICON = { low: 'fa-arrow-down', medium: 'fa-equals', high: 'fa-arrow-up', urgent: 'fa-fire' };
     const priorityIcon = (p) => PRIORITY_ICON[p] || 'fa-flag';
 
-    WS.tasks = Object.assign(WS.tasks || {}, { STATUSES, allowedTargets, dialogFor, dueInfo, priorityIcon });
+    // Sprint tujuan default tugas baru: sprint berjalan (supaya langsung tampil di board), selain itu backlog.
+    const defaultSprintId = () => {
+        const store = window.Alpine && window.Alpine.store('wsTasks');
+        return store && store.activeSprint ? store.activeSprint.id : null;
+    };
+
+    WS.tasks = Object.assign(WS.tasks || {}, { STATUSES, allowedTargets, dialogFor, dueInfo, priorityIcon, defaultSprintId });
 
     document.addEventListener('alpine:init', () => {
         const Alpine = window.Alpine;
@@ -57,6 +63,8 @@
             booted: false,
             workspace: null,
             tasks: [],
+            sprints: [],       // Sprint[] kelompok ini (planned, active, completed)
+            interns: [],       // anggota yang bisa di-assign (assign di board)
             initialDone: 0,
             readOnly: false,
             busy: {},          // { [taskId]: true } saat request berjalan
@@ -66,6 +74,8 @@
             boot(config) {
                 this.workspace = config.workspace;
                 this.tasks = config.tasks;
+                this.sprints = config.sprints || [];
+                this.interns = config.interns || [];
                 this.readOnly = !!config.workspace.is_read_only;
                 this.initialDone = config.tasks.filter((t) => t.status === 'done').length;
                 this.booted = true;
@@ -91,25 +101,128 @@
                 return this.tasks.find((t) => t.id === id);
             },
 
+            // ---------- Sprint ----------
+
+            get activeSprint() {
+                return this.sprints.find((sp) => sp.status === 'active') || null;
+            },
+
+            // Board hanya menampilkan sprint berjalan. Tanpa sprint aktif: semua tugas (kelompok tanpa sprint).
+            onBoard(t) {
+                const active = this.activeSprint;
+                return active ? t.sprint_id === active.id : true;
+            },
+
+            // Isi satu bagian backlog (sprintId null = Backlog), urut rank.
+            section(sprintId) {
+                return this.tasks
+                    .filter((t) => (t.sprint_id || null) === sprintId)
+                    .sort((a, b) => (a.rank || 0) - (b.rank || 0));
+            },
+
+            sprintById(id) {
+                return this.sprints.find((sp) => sp.id === id) || null;
+            },
+
+            // User yang login adalah ketua sprint ini?
+            leads(sprint) {
+                return !!(sprint && sprint.leader && sprint.leader.user_id === (WS.config.user && WS.config.user.id));
+            },
+
+            // Tugas belum dibagi (tanpa assignee, belum selesai) di satu sprint/backlog.
+            undivided(sprintId) {
+                return this.section(sprintId).filter((t) => !t.assignees.length && t.status !== 'done').length;
+            },
+
+            upsertSprint(sprint) {
+                const i = this.sprints.findIndex((sp) => sp.id === sprint.id);
+                if (i === -1) this.sprints.push(sprint);
+                else this.sprints.splice(i, 1, Object.assign({}, this.sprints[i], sprint));
+            },
+
+            // Pindahkan tugas ke sprint/backlog pada indeks tertentu (optimistic, seperti requestMove).
+            async moveToSprint(card, sprintId, index) {
+                const snapshot = this.tasks.map((t) => ({ id: t.id, sprint_id: t.sprint_id, rank: t.rank }));
+                const ids = this.section(sprintId).map((t) => t.id).filter((id) => id !== card.id);
+                ids.splice(Math.max(0, Math.min(index, ids.length)), 0, card.id);
+                const from = card.sprint_id || null;
+                card.sprint_id = sprintId;
+                ids.forEach((id, i) => { const t = this.byId(id); if (t) t.rank = i + 1; });
+                this.busy[card.id] = true;
+                try {
+                    await WS.api.tasks.plan(card.id, { sprint_id: sprintId, rank_order: ids });
+                    if (from !== sprintId) {
+                        const sp = this.sprintById(sprintId);
+                        WS.toast(`${card.code} dipindah ke ${sp ? sp.name : 'Backlog'}.`, 'success');
+                    }
+                } catch (err) {
+                    snapshot.forEach((x) => Object.assign(this.byId(x.id) || {}, { sprint_id: x.sprint_id, rank: x.rank }));
+                    WS.toast(err.message + ' Posisi tugas dikembalikan.', 'error');
+                } finally {
+                    delete this.busy[card.id];
+                }
+            },
+
+            // Bagi tugas di board (optimistic): mentor/admin atau ketua sprint. ids = [internId, ...]; kosong = belum dibagi.
+            async assign(card, ids) {
+                const before = card.assignees;
+                card.assignees = ids.map((id) => this.interns.find((i) => i.id === id)).filter(Boolean);
+                this.busy[card.id] = true;
+                try {
+                    const res = await WS.api.tasks.assign(card.id, { assignee_ids: ids });
+                    this.upsert(WS.tasks.cardOf(res.data));
+                    WS.toast(ids.length ? `${card.code} dibagi ke ${card.assignees.map((a) => a.name.split(' ')[0]).join(', ')}.` : `${card.code} belum dibagi ke siapa pun.`, 'success');
+                } catch (err) {
+                    card.assignees = before;
+                    WS.toast(err.message, 'error');
+                } finally {
+                    delete this.busy[card.id];
+                }
+            },
+
+            // ---------- Board ----------
+
             column(status) {
                 return this.tasks
-                    .filter((t) => t.status === status)
+                    .filter((t) => t.status === status && this.onBoard(t))
                     .sort((a, b) => a.position - b.position);
             },
 
             count(status) {
-                return this.tasks.filter((t) => t.status === status).length;
+                return this.tasks.filter((t) => t.status === status && this.onBoard(t)).length;
             },
 
-            // Statistik hidup: angka server + perubahan yang terjadi di halaman ini.
+            // Statistik hidup (seluruh kelompok, bukan hanya sprint): angka server + perubahan di halaman ini.
             stat(status, serverValue) {
+                const all = (st) => this.tasks.filter((t) => t.status === st).length;
                 if (status === 'late') return this.tasks.filter((t) => t.is_late && t.status !== 'done').length;
-                if (status === 'done') return serverValue + (this.count('done') - this.initialDone);
-                return this.count(status);
+                if (status === 'done') return serverValue + (all('done') - this.initialDone);
+                return all(status);
             },
 
             get activeCount() {
-                return this.tasks.filter((t) => t.status !== 'done').length;
+                return this.tasks.filter((t) => t.status !== 'done' && this.onBoard(t)).length;
+            },
+
+            // ---------- Deadline (seluruh kelompok, termasuk backlog) ----------
+            // Dihitung dari tugas yang belum dikirim (To Do / In Progress / Revisi), sama dengan kartu di daftar kelompok.
+
+            // Lewat deadline dan belum dikirim ("Belum diselesaikan").
+            get overdueCount() {
+                return this.tasks.filter((t) => WS.tasks.unfinished(t)).length;
+            },
+
+            // Tugas terdekat yang belum lewat deadline.
+            get nextDue() {
+                const open = this.tasks.filter((t) => ['todo', 'in_progress', 'revision'].includes(t.status) && !WS.tasks.unfinished(t));
+                return open.sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0] || null;
+            },
+
+            get deadlineLine() {
+                const late = this.overdueCount;
+                if (late) return late + ' tugas lewat deadline';
+                const next = this.nextDue;
+                return next ? 'Deadline terdekat ' + next.code + ' · ' + WS.time.relative(next.due_at) : '';
             },
 
             upsert(card) {
@@ -270,6 +383,17 @@
                 // Klik yang terjadi tepat setelah drag bukan niat membuka detail.
                 if (Date.now() - this.justDraggedAt < 300) return;
                 this.$store.wsTasks.openDetail(card);
+            },
+
+            // Bagi tugas: mentor/admin atau ketua sprint tugas ini (can.assign dari server).
+            canAssign(card) {
+                return !!card.can.assign && !this.$store.wsTasks.readOnly && this.$store.wsTasks.interns.length > 0;
+            },
+
+            toggleAssignee(card, internId) {
+                const ids = card.assignees.map((a) => a.id);
+                const next = ids.includes(internId) ? ids.filter((id) => id !== internId) : ids.concat(internId);
+                this.$store.wsTasks.assign(card, next);
             },
 
             targets: allowedTargets,

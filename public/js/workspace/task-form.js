@@ -114,6 +114,7 @@
             labels: config.labels,
             templates: config.templates || [],
             selfOnly: !!config.selfInternId,
+            sprintId: null,       // sprint tujuan tugas baru (null = backlog)
             canManageLabels: !!config.canManageLabels,
 
             init() {
@@ -138,8 +139,10 @@
                 });
             },
 
-            start({ task }) {
+            start({ task, sprint_id }) {
                 this.editing = task || null;
+                // "+ Buat tugas" di bagian sprint/backlog: tugas baru langsung masuk ke sana.
+                this.sprintId = task ? null : (sprint_id === undefined ? WS.tasks.defaultSprintId() : sprint_id);
                 this.submitted = false;
                 this.errors = {};
                 this.files = [];
@@ -229,7 +232,6 @@
                 const errors = {};
                 if (!f.title.trim()) errors.title = 'Judul wajib diisi.';
                 else if (f.title.length > 150) errors.title = 'Judul maksimal 150 karakter.';
-                if (!f.assignee_ids.length) errors.assignee_ids = 'Pilih minimal satu intern.';
                 if (!f.due_at) errors.due_at = 'Deadline wajib diisi.';
                 else if (f.start_at && new Date(f.start_at) > new Date(f.due_at)) errors.due_at = 'Deadline harus setelah tanggal mulai.';
                 f.result_links.forEach((l, i) => {
@@ -254,6 +256,7 @@
                     attachment_ids: this.files.filter((x) => x.status === 'done').map((x) => x.attachment.id),
                     // Hanya saat membuat: satu salinan per assignee (respons tetap berupa array TaskCard).
                     ...(this.editing ? {} : {
+                        sprint_id: this.sprintId,
                         template_id: f.template_id || null,
                         separate_copies: f.separate_copies && f.assignee_ids.length > 1,
                     }),

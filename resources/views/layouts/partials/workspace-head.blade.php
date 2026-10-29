@@ -14,6 +14,8 @@
             $wsMock ? 'js/workspace/mock-tasks.js' : null,
             $wsMock ? 'js/workspace/mock-channels.js' : null,
             $wsMock ? 'js/workspace/mock-templates.js' : null,
+            $wsMock ? 'js/workspace/mock-sprints.js' : null,
+            $wsMock ? 'js/workspace/mock-automations.js' : null,
             'js/workspace/notifications.js',
             'js/workspace/groups.js',
         ]);
