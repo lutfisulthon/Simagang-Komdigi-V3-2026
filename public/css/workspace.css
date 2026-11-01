@@ -3044,7 +3044,7 @@ a.ws-chip.ws-chip--late[aria-current="true"],
 .ws-tl__col--strong { border-left-color: #e2e8f0; }
 .ws-tl__col--weekend { background: #fafbfd; }
 
-.ws-tl__row { position: relative; z-index: 1; display: flex; align-items: stretch; min-height: 40px; border-bottom: 1px solid #f1f5f9; }
+.ws-tl__row { position: relative; display: flex; align-items: stretch; min-height: 40px; border-bottom: 1px solid #f1f5f9; }
 
 .ws-tl__left {
     position: sticky;
@@ -3230,109 +3230,3 @@ a.ws-chip.ws-chip--late[aria-current="true"],
     .ws-wl__row { grid-template-columns: 88px 1fr 24px; gap: 8px; }
 }
 
-/* ---------- Otomasi (daftar aturan + penyusun When → If → Then) ---------- */
-
-.ws-au-rule { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
-.ws-au-rule__main { display: flex; flex: 1; gap: 14px; min-width: min(100%, 320px); }
-.ws-au-rule__name { border-radius: 6px; font-size: 16px; font-weight: 700; color: #1f2937; text-align: left; }
-.ws-au-rule__name:hover { color: #4338ca; text-decoration: underline; }
-.ws-au-rule__name:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
-.ws-au-rule__desc { margin-top: 2px; font-size: 13px; line-height: 1.5; color: #475569; }
-.ws-au-rule__meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--ws-faint); }
-.ws-au-rule__meta strong { color: #334155; }
-.ws-au-rule__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ws-au-rule--off .ws-au-rule__name { color: #475569; }
-
-.ws-au-name {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    background: #f8faff;
-    font-size: 18px;
-    font-weight: 700;
-    color: #1f2937;
-    transition: border-color .15s ease, background .15s ease;
-}
-
-.ws-au-name:hover { border-color: #c7d2fe; }
-.ws-au-name:focus { outline: none; border-color: #6366f1; background: #fff; }
-.ws-au-name.ws-input--error { border-color: #ef4444; }
-
-.ws-au-chain { display: flex; flex-direction: column; align-items: stretch; }
-
-.ws-au-card {
-    background: #fff;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 24px;
-    transition: border-color .15s ease, box-shadow .15s ease;
-}
-
-.ws-au-card--on { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .14); }
-.ws-au-card--err { border-color: #f87171; }
-
-.ws-au-card__row { display: flex; align-items: center; }
-
-.ws-au-card__head {
-    display: flex;
-    flex: 1;
-    width: 100%;
-    min-width: 0;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    border-radius: 24px;
-    text-align: left;
-}
-
-.ws-au-card__head:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
-
-.ws-au-icon {
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    font-size: 16px;
-}
-
-.ws-au-icon--when { background: #dcfce7; color: #15803d; }
-.ws-au-icon--if { background: #fef3c7; color: #c2410c; }
-.ws-au-icon--then { background: #dbeafe; color: #1d4ed8; }
-.ws-au-icon--notify { background: #ede9fe; color: #6d28d9; }
-
-.ws-au-card__title { display: block; font-size: 15px; font-weight: 600; color: #1e293b; }
-.ws-au-card__sub { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: #64748b; overflow-wrap: anywhere; }
-.ws-au-card__sub:empty { display: none; }
-.ws-au-card__tools { display: flex; flex: none; gap: 2px; padding-right: 10px; }
-.ws-au-card__body { padding: 4px 18px 18px 76px; }
-.ws-au-field { margin-bottom: 16px; }
-.ws-au-link { width: 2px; height: 26px; margin-left: 40px; background: #d5dbe6; }
-.ws-au-chev { flex: none; color: #94a3b8; transition: transform .15s ease; }
-.ws-au-chev.is-open { transform: rotate(180deg); }
-
-.ws-au-add {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: #e9edf3;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e293b;
-    transition: background .15s ease;
-}
-
-.ws-au-add:hover { background: #dde3ec; }
-.ws-au-add:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
-
-@media (max-width: 639px) {
-    .ws-au-card { border-radius: 20px; }
-    .ws-au-card__head { gap: 12px; padding: 12px 14px; }
-    .ws-au-card__body { padding: 2px 14px 16px; }
-    .ws-au-link { margin-left: 36px; }
-    .ws-au-rule__actions { width: 100%; }
-}

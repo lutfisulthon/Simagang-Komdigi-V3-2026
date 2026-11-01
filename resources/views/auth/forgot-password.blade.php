@@ -100,7 +100,7 @@
 </head>
 
 <body>
-<div class="bg-wrapper">
+<div class="bg-wrapper" data-dm-native>
 
     <div class="login-container">
         <a href="{{ route('login') }}" class="close-login-btn" title="Kembali ke Login">

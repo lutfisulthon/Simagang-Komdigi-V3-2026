@@ -578,6 +578,8 @@ Perilaku frontend (`channels.js`):
 - Keduanya memakai `$initialTasks` (maks. 200 tugas aktif + Selesai terbaru). Untuk laporan historis yang akurat, `$initialTasks` sebaiknya memuat semua tugas sprint berjalan dan sprint terakhir yang selesai.
 - **Anak magang** hanya diberi data kelompoknya sendiri (policy `view` yang sama); filter "tugas milik sendiri" dilakukan di client dari `assignees[].user_id`.
 
+> **Dibatalkan 1 Nov 2026:** fitur Otomasi dihapus dari frontend; tidak perlu dibuat di backend. Catatan di bawah hanya arsip.
+
 *Otomasi — aturan pekerjaan berulang (mentor pemilik/admin; intern → 403; kelompok `finished` → 403, aturan ikut nonaktif):*
 - **Data:** `automation_rules (id, workspace_id, created_by, name ≤60, enabled, trigger json, conditions json, actions json, last_run_at, timestamps)` dan
   `automation_runs (id, rule_id, scheduled_for, ran_at, ok, summary, task_ids json)`. Unik `(rule_id, scheduled_for)` supaya satu jadwal tidak berjalan dua kali.

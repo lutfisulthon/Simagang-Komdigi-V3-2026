@@ -426,7 +426,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #eff6ff, transparent);
+            background: linear-gradient(135deg, rgba(96, 165, 250, .12), transparent);
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -438,7 +438,7 @@
             right: 1.5rem;
             font-size: 3.5rem;
             font-weight: 900;
-            color: #bfdbfe;
+            color: #60a5fa;
             line-height: 1;
         }
         .process-icon {
@@ -1141,9 +1141,17 @@
         @keyframes v4CardIn { from { opacity: 0; transform: translateY(34px) scale(.95); } to { opacity: 1; transform: none; } }
 
         .v4-photo {
-            position: relative; overflow: hidden; aspect-ratio: 1 / 1.05; border-radius: 14px;
+            position: relative; overflow: hidden; isolation: isolate; aspect-ratio: 600 / 851; border-radius: 14px;
             background: radial-gradient(120% 90% at 50% 0%, #26364f 0%, #18233a 55%, #121b2d 100%);
             border: 1px solid rgba(255, 255, 255, .06);
+        }
+        /* Pencahayaan sinematik: hangat dari kiri atas, biru dingin dari kanan, sudut menggelap */
+        .v4-photo::before {
+            content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: soft-light;
+            background:
+                radial-gradient(70% 45% at 30% 22%, rgba(255, 200, 140, .26), transparent 70%),
+                radial-gradient(80% 70% at 96% 36%, rgba(60, 130, 255, .42), transparent 70%),
+                radial-gradient(125% 95% at 50% 36%, transparent 52%, rgba(2, 6, 16, .8) 100%);
         }
         .v4-photo::after {
             content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
@@ -1151,11 +1159,16 @@
             transform: translateX(-125%);
         }
         .v4-card:hover .v4-photo::after { transform: translateX(125%); transition: transform 1.1s ease; }
-        .v4-silhouette {
-            position: absolute; left: 50%; bottom: -3%; width: 76%; height: auto; transform: translateX(-50%);
+        .v4-person {
+            position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top;
+            transform-origin: center bottom;
+            filter: contrast(1.05) drop-shadow(1px -1px 3px rgba(100, 155, 255, .24));
             transition: transform .7s cubic-bezier(.22, 1, .36, 1), filter .4s ease;
         }
-        .v4-card:hover .v4-silhouette { transform: translateX(-50%) translateY(-7px) scale(1.04); filter: brightness(1.14); }
+        .v4-card:hover .v4-person {
+            transform: translateY(-6px) scale(1.03);
+            filter: contrast(1.05) brightness(1.06) drop-shadow(1px -1px 4px rgba(100, 155, 255, .36));
+        }
 
         /* Logo kampus: bergerak pelan + cincin "splash" berwarna emas (Undipa) / merah (Unhas) saat kartu di-hover */
         .v4-logo {
@@ -1191,8 +1204,8 @@
         @keyframes v4Splash { 0% { transform: scale(.85); opacity: .75; } 100% { transform: scale(2.2); opacity: 0; } }
 
         .v4-ig {
-            position: absolute; right: 10px; bottom: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 10px; border-radius: 10px; background: rgba(9, 15, 28, .88); border: 1px solid rgba(255, 255, 255, .14);
+            position: relative; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+            padding: 6px 10px; border-radius: 10px; background: rgba(9, 15, 28, .6); border: 1px solid rgba(255, 255, 255, .14);
             color: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer; backdrop-filter: blur(6px);
             transition: transform .3s ease, border-color .3s ease;
         }
@@ -1201,23 +1214,35 @@
         .v4-card:hover .v4-ig, .v4-ig:hover { border-color: rgba(var(--accent), .7); transform: translateY(-2px); }
         .v4-ig:focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }
 
-        .v4-info { padding: 12px 4px 2px; text-align: left; }
-        .v4-role { display: inline-block; padding: 4px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-        .v4-role--front { color: #facc15; background: rgba(250, 204, 21, .1); border: 1px solid rgba(250, 204, 21, .35); }
-        .v4-role--back { color: #fb7185; background: rgba(244, 63, 94, .1); border: 1px solid rgba(244, 63, 94, .38); }
-        .v4-name { margin: 8px 0 4px; font-size: 1.08rem; font-weight: 700; line-height: 1.25; color: #fff; }
+        .v4-info {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 70px 14px 14px; text-align: left;
+            background: linear-gradient(to top, rgba(8, 14, 28, .84) 0%, rgba(8, 14, 28, .66) 52%, rgba(8, 14, 28, 0) 100%);
+            text-shadow: 0 1px 8px rgba(0, 0, 0, .65);
+        }
+        .v4-name { margin: 0 0 4px; font-size: 1rem; font-weight: 700; line-height: 1.25; color: #fff; }
         .v4-name::after { content: ''; display: block; width: 0; height: 2px; margin-top: 5px; border-radius: 2px; background: rgba(var(--accent), .95); transition: width .45s cubic-bezier(.22, 1, .36, 1); }
         .v4-card:hover .v4-name::after { width: 56px; }
         .v4-campus { margin: 0; font-size: .78rem; font-weight: 700; }
         .v4-campus--gold { color: #facc15; }
         .v4-campus--red { color: #f25555; }
-        .v4-program { margin: 2px 0 0; font-size: .74rem; color: #94a3b8; }
+        .v4-program { margin: 2px 0 0; font-size: .74rem; color: #cbd5e1; }
 
         @media (max-width: 720px) {
             .v4-grid { grid-template-columns: minmax(0, 300px); gap: 18px; }
         }
+        @media (max-width: 480px) {
+            .v4-grid {
+                display: flex; gap: 0; max-width: none; margin: 0; justify-content: flex-start;
+                transition: transform .5s cubic-bezier(.4, 0, .2, 1); will-change: transform;
+            }
+            .v4-card, .v4-card:hover, .v4-card:focus-within {
+                flex: 0 0 100%; min-width: 100%; padding: 8px 0; background: transparent;
+                border-color: transparent; box-shadow: none; transform: none; animation: none;
+            }
+            .v4-photo { width: 78%; max-width: 270px; margin: 0 auto; box-shadow: 0 6px 28px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08); }
+        }
         @media (prefers-reduced-motion: reduce) {
-            .v4-card, .v4-silhouette, .v4-photo::after, .v4-logo { animation: none !important; transition: none !important; }
+            .v4-card, .v4-person, .v4-photo::after, .v4-logo { animation: none !important; transition: none !important; }
             .v4-card:hover .v4-logo::before, .v4-card:hover .v4-logo::after, .v4-card:hover .v4-logo__img,
             .v4-card:focus-within .v4-logo::before, .v4-card:focus-within .v4-logo::after, .v4-card:focus-within .v4-logo__img { animation: none !important; }
             .v4-card:hover .v4-logo::before { opacity: .55; }
@@ -1341,32 +1366,32 @@
     <div class="hero-accent"></div>
     <div class="hero-inner">
         <div class="hero-text-col">
-            <h1 class="hero-title">Sistem Magang Terbaik untuk <span>Kampus dan Sekolah</span></h1>
-            <p class="hero-desc">Nikmati pengalaman terbaik dengan mitra terpercaya. Ada Banyak Hal Besar yang Perlu dilakukan di Masa Depan. Saatnya tumbuh sebagai talenta profesional dan buktikan keahlianmu bersama BBLSDM Komdigi Makassar sekarang.</p>
+            <h1 class="hero-title">Magang Lebih Terarah untuk <span>Mahasiswa dan Siswa SMK</span></h1>
+            <p class="hero-desc">Bangun pengalaman kerja nyata bersama BBLSDM Komdigi Makassar. Dari pendaftaran, logbook, hingga sertifikat, semua proses magang kini tercatat dalam satu sistem.</p>
             <div class="hero-stats">
                 <div>
                     <div class="hero-stat-num text-center">{{ $totalPesertaAktif }}</div>
-                    <div class="hero-stat-label">Peserta Magang</div>
+                    <div class="hero-stat-label">Peserta Aktif</div>
                 </div>
                 <div class="hero-stat-divider"></div>
                 <div>
                     <div class="hero-stat-num text-center">11+</div>
-                    <div class="hero-stat-label">Mitra pendidikan dan industri</div>
+                    <div class="hero-stat-label">Mitra Pendidikan &amp; Industri</div>
                 </div>
                 <div class="hero-stat-divider"></div>
                 <div>
-                    <div class="hero-stat-num text-center">93.25</div>
+                    <div class="hero-stat-num text-center">93.25%</div>
                     <div class="hero-stat-label">Tingkat Kepuasan</div>
                 </div>
                 <div class="hero-stat-divider"></div>
                 <div>
                     <div class="hero-stat-num text-center">{{ number_format($visitorCount ?? 0, 0, ',', '.') }}</div>
-                    <div class="hero-stat-label">Jumlah Pengunjung</div>
+                    <div class="hero-stat-label">Pengunjung Situs</div>
                 </div>
             </div>
             <div class="hero-btns">
-                <a href="#daftar" class="btn-primary"><i class="fas fa-rocket" style="font-size:14px"></i> Daftar Sekarang</a>
-                <a href="#usage" class="btn-outline">Lihat Fitur <i class="fas fa-arrow-right" style="font-size:13px"></i></a>
+                <a href="#daftar" class="btn-primary"><i class="fas fa-rocket" style="font-size:14px"></i> Mulai Daftar Magang</a>
+                <a href="#usage" class="btn-outline">Lihat Cara Kerjanya <i class="fas fa-arrow-right" style="font-size:13px"></i></a>
             </div>
         </div>
     </div>
@@ -1952,48 +1977,43 @@
         <!-- ── TAB PANEL: SIMAGANG V4 (ACTIVE) ── -->
         @php
             $simagangV4 = [
-                ['name' => 'Indra Pranata', 'role' => 'Frontend', 'campus' => 'Universitas Dipa Makassar', 'logo' => 'partners/undipa.png',
-                 'logo_style' => 'round', 'theme' => 'gold', 'instagram' => 'indrapranata369'],
-                ['name' => 'Aan Syawaluddin Adi Putra', 'role' => 'Backend', 'campus' => 'Universitas Hasanuddin', 'logo' => 'partners/logo_unhas.png',
-                 'logo_style' => 'plain', 'theme' => 'red', 'instagram' => 'aansyawaluddinn'],
+                ['name' => 'Indra Pranata', 'campus' => 'Universitas Dipa Makassar', 'logo' => 'partners/undipa.png',
+                 'logo_style' => 'round', 'theme' => 'gold', 'instagram' => 'indrapranata369', 'photo' => 'profiles/v4-indra.webp'],
+                ['name' => 'Aan Syawaluddin Adi Putra', 'campus' => 'Universitas Hasanuddin', 'logo' => 'partners/logo_unhas.png',
+                 'logo_style' => 'plain', 'theme' => 'red', 'instagram' => 'aansyawaluddinn', 'photo' => 'profiles/v4-aan.webp'],
             ];
         @endphp
         <div class="team-tab-panel active" id="tab-v4">
-            <div class="v4-grid">
+            <div class="team-carousel-wrapper">
+            <div class="v4-grid" id="carousel-grid-v4">
                 @foreach ($simagangV4 as $m)
                     @php($igUrl = 'https://www.instagram.com/' . $m['instagram'])
                     <article class="v4-card v4-card--{{ $m['theme'] }}">
                         <div class="v4-photo">
-                            <svg class="v4-silhouette" viewBox="0 0 200 220" aria-hidden="true" focusable="false">
-                                <defs>
-                                    <linearGradient id="v4sil-{{ $loop->index }}" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0" stop-color="#6b7f9e"/><stop offset="1" stop-color="#3b4a63"/>
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="100" cy="62" r="44" fill="url(#v4sil-{{ $loop->index }})"/>
-                                <path d="M14 220 C14 150 52 116 100 116 C148 116 186 150 186 220 Z" fill="url(#v4sil-{{ $loop->index }})"/>
-                            </svg>
+                            <img class="v4-person" src="{{ asset('storage/' . $m['photo']) }}" alt="Foto {{ $m['name'] }}" width="600" height="630" loading="lazy" decoding="async">
 
                             <span class="v4-logo v4-logo--{{ $m['logo_style'] }}">
                                 <img class="v4-logo__img" src="{{ asset('storage/' . $m['logo']) }}" alt="Logo {{ $m['campus'] }}" loading="lazy">
                             </span>
 
-                            <button type="button" class="v4-ig" aria-label="Buka Instagram {{ $m['name'] }}"
-                                    onclick="openInstagramModal(@js($m['name']), @js($igUrl))">
-                                <i class="fab fa-instagram" aria-hidden="true"></i>
-                                <span>&#64;{{ $m['instagram'] }}</span>
-                                <i class="fas fa-arrow-up-right-from-square v4-ig__out" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                        <div class="v4-info">
-                            <span class="v4-role {{ $m['role'] === 'Frontend' ? 'v4-role--front' : 'v4-role--back' }}">{{ $m['role'] }}</span>
-                            <h3 class="v4-name">{{ $m['name'] }}</h3>
-                            <p class="v4-campus v4-campus--{{ $m['theme'] }}">{{ $m['campus'] }}</p>
-                            <p class="v4-program">Maganghub batch 2 | 2026</p>
+                            <div class="v4-info">
+                                <h3 class="v4-name">{{ $m['name'] }}</h3>
+                                <p class="v4-campus v4-campus--{{ $m['theme'] }}">{{ $m['campus'] }}</p>
+                                <p class="v4-program">Maganghub batch 2 | 2026</p>
+                                <button type="button" class="v4-ig" aria-label="Buka Instagram {{ $m['name'] }}"
+                                        onclick="openInstagramModal(@js($m['name']), @js($igUrl))">
+                                    <i class="fab fa-instagram" aria-hidden="true"></i>
+                                    <span>&#64;{{ $m['instagram'] }}</span>
+                                    <i class="fas fa-arrow-up-right-from-square v4-ig__out" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </article>
                 @endforeach
             </div>
+            </div>
+            <div class="team-carousel-dots" id="carousel-dots-v4"></div>
+            <div class="team-carousel-progress" id="carousel-progress-v4"><div class="team-carousel-progress-bar" id="carousel-bar-v4"></div></div>
         </div>
 
         <!-- ── TAB PANEL: SIMAGANG V3.5 / ANGKATAN 3 (BLUE ELEGAN CARD) ── -->
@@ -2417,7 +2437,7 @@ function initMobileCarousel(gridId, dotsId, barId) {
     if (existing && existing.active) return;
     if (existing && typeof existing.destroy === 'function') existing.destroy();
 
-    const cards = Array.from(grid.querySelectorAll('.tmember-card'));
+    const cards = Array.from(grid.querySelectorAll('.tmember-card, .v4-card'));
     const total = cards.length;
     let current = 0, timer = null;
     const DURATION = 5000;
@@ -2475,20 +2495,21 @@ function initMobileCarousel(gridId, dotsId, barId) {
 
 function setupCarousels() {
     if (window.innerWidth <= 480) {
+        initMobileCarousel('carousel-grid-v4', 'carousel-dots-v4', 'carousel-bar-v4');
         initMobileCarousel('carousel-grid-3', 'carousel-dots-3', 'carousel-bar-3');
         initMobileCarousel('carousel-grid-1', 'carousel-dots-1', 'carousel-bar-1');
         initMobileCarousel('carousel-grid-2', 'carousel-dots-2', 'carousel-bar-2');
     } else {
         destroyAllCarousels();
-        ['carousel-grid-3','carousel-grid-1','carousel-grid-2'].forEach(id => {
+        ['carousel-grid-v4','carousel-grid-3','carousel-grid-1','carousel-grid-2'].forEach(id => {
             const g = document.getElementById(id);
             if (g) g.style.transform = '';
         });
-        ['carousel-dots-3','carousel-dots-1','carousel-dots-2'].forEach(id => {
+        ['carousel-dots-v4','carousel-dots-3','carousel-dots-1','carousel-dots-2'].forEach(id => {
             const d = document.getElementById(id);
             if (d) d.innerHTML = '';
         });
-        ['carousel-bar-3','carousel-bar-1','carousel-bar-2'].forEach(id => {
+        ['carousel-bar-v4','carousel-bar-3','carousel-bar-1','carousel-bar-2'].forEach(id => {
             const b = document.getElementById(id);
             if (b) { b.style.transition = ''; b.style.width = ''; }
         });
