@@ -9,7 +9,6 @@ use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
 use App\Models\TaskComment;
-use App\Models\TaskTemplate;
 use App\Models\Workspace;
 use App\Services\AttachmentService;
 use App\Services\SprintService;
@@ -215,7 +214,6 @@ class TaskController extends Controller
 
     /**
      * Buat tugas. `separate_copies` dengan banyak assignee membuat satu salinan per intern.
-     * `template_id` hanya mencatat asal tugas (dan mengisi judul/deskripsi/checklist yang kosong).
      * Respons: array TaskCard.
      */
     public function store(Request $request, Workspace $workspace): JsonResponse
@@ -223,9 +221,8 @@ class TaskController extends Controller
         $this->authorize('create', [Task::class, $workspace]);
 
         $data = $request->validate($this->payloadRules() + [
-            'title' => ['required_without:template_id', 'nullable', 'string', 'max:150'],
+            'title' => ['required', 'string', 'max:150'],
             'due_at' => array_filter(['required', 'date', $request->filled('start_at') ? 'after_or_equal:start_at' : null]),
-            'template_id' => ['nullable', 'integer', 'exists:task_templates,id'],
             'separate_copies' => ['nullable', 'boolean'],
             'sprint_id' => ['nullable', 'integer'],
         ]);
@@ -233,30 +230,16 @@ class TaskController extends Controller
         $data['sprint_id'] = $this->resolveSprint($workspace, $data['sprint_id'] ?? null);
 
         $user = $request->user();
-        $template = null;
-
-        if (! empty($data['template_id'])) {
-            $template = TaskTemplate::findOrFail($data['template_id']);
-            $this->authorize('view', $template);
-
-            $data['title'] = $data['title'] ?? $template->title;
-            $data['description'] = $data['description'] ?? $template->description;
-
-            if (! array_key_exists('checklist_items', $data) && ! array_key_exists('checklist', $data)) {
-                $data['checklist'] = $template->checklist ?? [];
-            }
-        }
-
         $data['result_links'] = $this->links($data) ?: null;
 
         $internIds = $this->resolveAssignees($request, $workspace, $data['assignee_ids'] ?? []);
         $separate = ! empty($data['separate_copies']) && count($internIds) > 1;
 
-        $created = DB::transaction(function () use ($workspace, $user, $data, $internIds, $template, $separate) {
+        $created = DB::transaction(function () use ($workspace, $user, $data, $internIds, $separate) {
             $groups = $separate ? array_map(fn ($id) => [$id], $internIds) : [$internIds];
 
-            return collect($groups)->map(function (array $ids, int $i) use ($workspace, $user, $data, $template, $separate) {
-                $task = $this->tasks->create($workspace, $user, $data, $ids, $template ? ['source' => 'template'] : []);
+            return collect($groups)->map(function (array $ids, int $i) use ($workspace, $user, $data, $separate) {
+                $task = $this->tasks->create($workspace, $user, $data, $ids);
 
                 // Satu berkas hanya bisa menempel ke satu tugas: salinan pertama yang mendapatkannya.
                 if ($i === 0) {

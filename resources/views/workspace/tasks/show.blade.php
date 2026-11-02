@@ -6,8 +6,6 @@
       $members            UserMini[]
       $assignableInterns  InternMini[]  (form edit)
       $labels             {id,name,color}[]
-      $templates          Template[]  (opsional) template tim untuk form tugas
-      $can                ['create_template' => bool]  (opsional) menu "Simpan sebagai template"
 --}}
 @extends('workspace.layout')
 
@@ -32,23 +30,17 @@
         </a>
 
         <article class="ws-panel ws-anim-1" x-data="wsTaskDetail(@js(['mode' => 'page', 'task' => $task]))" aria-labelledby="ws-task-title">
-            @include('workspace.partials.task-detail', ['mode' => 'page', 'canTemplate' => $can['create_template'] ?? false])
+            @include('workspace.partials.task-detail', ['mode' => 'page'])
         </article>
     </div>
 
     @include('workspace.partials.task-modals')
 
-    @if (($can['create_template'] ?? false) && $workspace['team'])
-        @include('workspace.partials.template-modals', [
-            'tplTeams' => [$workspace['team']], 'canChooseTeam' => false, 'defaultTeamId' => $workspace['team']['id'], 'withAssign' => false,
-        ])
-    @endif
 @endsection
 
 @push('scripts')
     <script>
         if (WS.config.mock && WS.mock) {
-            WS.mock.seed('template-context', @js(['templates' => $templates ?? [], 'labels' => $labels, 'teams' => $workspace['team'] ? [$workspace['team']] : []]));
             WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
         }
     </script>

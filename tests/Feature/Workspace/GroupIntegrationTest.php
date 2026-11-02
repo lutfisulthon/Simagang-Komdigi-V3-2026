@@ -4,7 +4,6 @@ namespace Tests\Feature\Workspace;
 
 use App\Models\Sprint;
 use App\Models\Task;
-use App\Models\TaskTemplate;
 use App\Models\Workspace;
 use App\Notifications\DeadlineExtendedNotification;
 use App\Notifications\GroupJoinedNotification;
@@ -16,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Concerns\WorkspaceScenario;
 use Tests\TestCase;
 
-/** Kelompok di Monitoring, assign template, dan notifikasi email (in-app + email). */
+/** Kelompok di Monitoring dan notifikasi email (in-app + email). */
 class GroupIntegrationTest extends TestCase
 {
     use RefreshDatabase, WorkspaceScenario;
@@ -75,63 +74,6 @@ class GroupIntegrationTest extends TestCase
         $this->actingAs($this->rudy->user)->patchJson("/workspace/groups/{$group->id}", ['status' => 'finished'])->assertOk();
         $this->actingAs($this->admin)->getJson("/workspace/interns/{$this->ahmad->id}/tasks")
             ->assertJsonPath('group.id', $this->spAhmad->id);
-    }
-
-    // ------------------------------------------------------------------ Assign template
-
-    private function template(): int
-    {
-        return TaskTemplate::create(['team_id' => $this->gta->id, 'title' => 'Laporan mingguan', 'created_by' => $this->rudy->user_id])->id;
-    }
-
-    public function test_assign_template_membuat_tugas_di_kelompok_aktif_intern(): void
-    {
-        $group = $this->makeGroup([$this->ahmad->id]);
-        $template = $this->template();
-
-        $res = $this->actingAs($this->rudy->user)->postJson("/workspace/templates/{$template}/assign", [
-            'assignee_ids' => [$this->ahmad->id], 'due_at' => $this->due(),
-        ])->assertCreated();
-
-        $res->assertJsonPath('data.0.workspace.id', $group->id);
-        $this->assertSame($group->id, Task::latest('id')->first()->workspace_id);
-        $this->assertSame(0, Task::where('workspace_id', $this->spAhmad->id)->count());
-    }
-
-    public function test_assign_template_campuran_kelompok_dan_space_hanya_oleh_yang_berhak(): void
-    {
-        $group = $this->makeGroup([$this->ahmad->id]);
-        $template = $this->template();
-
-        // Rudy hanya anak bimbingan Ahmad; Siti di Space Tasmil: Rudy tidak boleh membuat tugas di sana.
-        $this->actingAs($this->rudy->user)->postJson("/workspace/templates/{$template}/assign", [
-            'assignee_ids' => [$this->ahmad->id, $this->siti->id], 'due_at' => $this->due(),
-        ])->assertForbidden();
-        $this->assertSame(0, Task::count());
-
-        // Admin boleh: Ahmad ke kelompoknya, Siti ke Space-nya.
-        $this->actingAs($this->admin)->postJson("/workspace/templates/{$template}/assign", [
-            'assignee_ids' => [$this->ahmad->id, $this->siti->id], 'due_at' => $this->due(),
-        ])->assertCreated()->assertJsonCount(2, 'data');
-        $this->assertSame([$group->id, $this->spSiti->id], Task::orderBy('id')->pluck('workspace_id')->all());
-    }
-
-    public function test_intern_tanpa_kelompok_atau_space_aktif_ditolak(): void
-    {
-        $this->spAhmad->update(['is_archived' => true]);
-        $template = $this->template();
-
-        $this->actingAs($this->admin)->postJson("/workspace/templates/{$template}/assign", [
-            'assignee_ids' => [$this->ahmad->id], 'due_at' => $this->due(),
-        ])->assertUnprocessable()->assertJsonValidationErrors('assignee_ids');
-    }
-
-    public function test_daftar_intern_untuk_assign_memakai_kelompok_sebagai_tujuan(): void
-    {
-        $group = $this->makeGroup([$this->ahmad->id]);
-
-        $this->actingAs($this->rudy->user)->get('/workspace/templates')->assertOk()
-            ->assertViewHas('assignableInterns', fn ($interns) => collect($interns)->firstWhere('id', $this->ahmad->id)['group']['id'] === $group->id);
     }
 
     // ------------------------------------------------------------------ Email

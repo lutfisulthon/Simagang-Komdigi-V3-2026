@@ -50,10 +50,6 @@
                     <template x-if="task.can.update">
                         <button type="button" class="ws-menu__item" x-on:click="menu = false; edit()"><i class="fas fa-pen w-4"></i>Edit tugas</button>
                     </template>
-                    @if ($canTemplate ?? false)
-                        {{-- Form template ada di partials/template-modals (disertakan halaman bila $can['create_template']). --}}
-                        <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-open-template-form', { fromTask: task })"><i class="far fa-copy w-4"></i>Simpan sebagai template</button>
-                    @endif
                     <template x-if="task.can.delete">
                         <button type="button" class="ws-menu__item ws-menu__item--danger" x-on:click="menu = false; remove()"><i class="fas fa-trash w-4"></i>Hapus tugas</button>
                     </template>

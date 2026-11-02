@@ -52,10 +52,10 @@
         },
     });
 
-    // Bentuk form kosong — template modal dirender sebelum form pertama kali dibuka.
+    // Bentuk form kosong — modal dirender sebelum form pertama kali dibuka.
     function blankForm() {
         return { title: '', description: '', priority: 'medium', assignee_ids: [], label_ids: [], start_at: '', due_at: '', checklist: [], result_links: [],
-            template_id: '', separate_copies: false };
+            separate_copies: false };
     }
 
     document.addEventListener('alpine:init', () => {
@@ -100,7 +100,7 @@
         }));
 
         // ---------- Form tugas ----------
-        // config: { workspaceId, interns: InternMini[], labels, selfInternId?: number, templates?: Template[],
+        // config: { workspaceId, interns: InternMini[], labels, selfInternId?: number,
         //          teamId?: number, canManageLabels?: bool }
         Alpine.data('wsTaskForm', (config) => ({
             open: false,
@@ -112,7 +112,6 @@
             saving: false,
             interns: config.interns,
             labels: config.labels,
-            templates: config.templates || [],
             selfOnly: !!config.selfInternId,
             sprintId: null,       // sprint tujuan tugas baru (null = backlog)
             canManageLabels: !!config.canManageLabels,
@@ -124,19 +123,8 @@
                     const ids = new Set(e.detail.labels.map((l) => l.id));
                     this.form.label_ids = this.form.label_ids.filter((id) => ids.has(id));
                 });
-                // Template yang baru disimpan ("Simpan sebagai template") langsung bisa dipakai.
-                window.addEventListener('ws-template-saved', (e) => {
-                    const t = e.detail.template;
-                    const i = this.templates.findIndex((x) => x.id === t.id);
-                    if (i === -1) this.templates.push(t);
-                    else this.templates.splice(i, 1, t);
-                });
                 // Setelah percobaan simpan pertama, error diperbarui langsung saat user mengetik.
                 this.$watch('form', () => { if (this.submitted) this.validate(); });
-                // Template + beberapa intern: default-nya salinan terpisah (seperti "Tugaskan" di halaman template).
-                this.$watch('form.assignee_ids.length', (n, old) => {
-                    if (!this.editing && this.form.template_id && n > 1 && old <= 1) this.form.separate_copies = true;
-                });
             },
 
             start({ task, sprint_id }) {
@@ -158,7 +146,6 @@
                     due_at: toLocalInput(t.due_at),
                     checklist: t.checklist_items ? t.checklist_items.map((c) => ({ id: c.id, content: c.content, is_done: c.is_done })) : [],
                     result_links: t.result_links ? t.result_links.map((l) => ({ url: l.url, label: l.label || '' })) : [],
-                    template_id: '',
                     separate_copies: false,
                 };
                 this.open = true;
@@ -167,24 +154,6 @@
 
             manageLabels() {
                 this.$dispatch('ws-open-labels', { teamId: config.teamId });
-            },
-
-            // "Pakai template": isi form dari template; assignee & lampiran tidak diubah.
-            applyTemplate(id) {
-                const tpl = this.templates.find((x) => x.id === Number(id));
-                this.form.template_id = tpl ? tpl.id : '';
-                if (!tpl) return;
-                const labelIds = new Set(this.labels.map((l) => l.id));
-                Object.assign(this.form, {
-                    title: tpl.title,
-                    description: tpl.description || '',
-                    priority: tpl.priority,
-                    label_ids: (tpl.labels || []).map((l) => l.id).filter((x) => labelIds.has(x)),
-                    due_at: WS.templates ? WS.templates.dueFromDays(tpl.due_in_days) : this.form.due_at,
-                    checklist: (tpl.checklist || []).map((c) => ({ id: null, content: c.content, is_done: false })),
-                });
-                // Template biasanya dipakai untuk beberapa intern sekaligus.
-                if (this.form.assignee_ids.length > 1) this.form.separate_copies = true;
             },
 
             get uploading() {
@@ -257,7 +226,6 @@
                     // Hanya saat membuat: satu salinan per assignee (respons tetap berupa array TaskCard).
                     ...(this.editing ? {} : {
                         sprint_id: this.sprintId,
-                        template_id: f.template_id || null,
                         separate_copies: f.separate_copies && f.assignee_ids.length > 1,
                     }),
                 };

@@ -32,7 +32,6 @@ class Task extends Model
         'feedback',
         'result_link',
         'result_links',
-        'template_id',
     ];
 
     protected $casts = [
@@ -65,11 +64,6 @@ class Task extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function template()
-    {
-        return $this->belongsTo(TaskTemplate::class, 'template_id');
     }
 
     public function assignees()

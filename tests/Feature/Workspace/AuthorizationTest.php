@@ -66,7 +66,6 @@ class AuthorizationTest extends TestCase
             $this->actingAs($user)->getJson("/workspace/{$this->wsGta->id}/tasks")->assertForbidden();
             $this->actingAs($user)->getJson('/workspace/channels')->assertForbidden();
             $this->actingAs($user)->getJson("/workspace/channels/{$this->announcement->id}/messages")->assertForbidden();
-            $this->actingAs($user)->getJson('/workspace/templates')->assertForbidden();
         }
     }
 
@@ -101,12 +100,11 @@ class AuthorizationTest extends TestCase
         $this->sendMessage($this->admin, $this->announcement, 'Libur')->assertCreated();
     }
 
-    public function test_intern_tidak_bisa_membuat_channel_atau_mengelola_template(): void
+    public function test_intern_tidak_bisa_membuat_channel(): void
     {
         $this->actingAs($this->ahmad->user)
             ->postJson("/workspace/{$this->wsGta->id}/channels", ['name' => 'proyek-web'])
             ->assertForbidden();
-        $this->actingAs($this->ahmad->user)->postJson('/workspace/templates', ['title' => 'x'])->assertForbidden();
     }
 
     public function test_intern_tidak_bisa_membuat_tugas_di_workspace_tim(): void

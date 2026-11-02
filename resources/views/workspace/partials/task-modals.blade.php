@@ -1,33 +1,15 @@
 {{--
     Modal tugas: form buat/edit, review (mentor), kirim hasil (intern), hapus.
-    Variabel: $workspace, $assignableInterns, $labels, $selfInternId (int|null — intern membuat to-do pribadi),
-              $templates (opsional, Template[] tim — untuk "Pakai template")
+    Variabel: $workspace, $assignableInterns, $labels, $selfInternId (int|null — intern membuat to-do pribadi)
 --}}
 
 {{-- ================= Form buat / edit ================= --}}
-<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'selfInternId' => $selfInternId ?? null, 'templates' => $templates ?? [], 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
+<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'selfInternId' => $selfInternId ?? null, 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
     <x-workspace.modal name="ws-task-form" max-width="lg" labelledby="ws-task-form-heading" x-model="open">
         <form x-on:submit.prevent="submit()" novalidate class="-mt-1">
             <h2 id="ws-task-form-heading" class="text-lg font-bold text-gray-800 mb-5" x-text="editing ? 'Edit ' + editing.code : 'Buat tugas baru'"></h2>
 
             <div class="space-y-5">
-                {{-- Pakai template (hanya saat membuat, bila tim punya template) --}}
-                <div class="ws-tpl-use" x-show="!editing && !selfOnly && templates.length">
-                    <label class="ws-label !mb-1" for="ws-f-template"><i class="fas fa-copy mr-1 text-indigo-500"></i>Pakai template</label>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <select id="ws-f-template" class="ws-input !py-2 !text-sm" :value="form.template_id" x-on:change="applyTemplate($event.target.value)">
-                            <option value="">Tanpa template</option>
-                            <template x-for="t in templates" :key="t.id">
-                                <option :value="t.id" x-text="t.title + (t.is_onboarding ? ' · onboarding' : '')"></option>
-                            </template>
-                        </select>
-                        @if (Route::has('workspace.templates.index'))
-                            <a href="{{ route('workspace.templates.index') }}" class="text-sm font-semibold text-indigo-600 hover:underline shrink-0 py-1">Kelola template</a>
-                        @endif
-                    </div>
-                    <p class="text-xs text-slate-500 mt-1.5" x-show="form.template_id">Judul, deskripsi, prioritas, label, checklist, dan deadline diisi dari template. Semua masih bisa diubah.</p>
-                </div>
-
                 {{-- Judul --}}
                 <div>
                     <div class="flex items-center justify-between">

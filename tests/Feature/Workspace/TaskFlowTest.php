@@ -5,7 +5,6 @@ namespace Tests\Feature\Workspace;
 use App\Models\Attachment;
 use App\Models\Task;
 use App\Models\TaskActivity;
-use App\Models\TaskTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -302,61 +301,6 @@ class TaskFlowTest extends TestCase
         $this->actingAs($this->siti->user)
             ->patchJson("/workspace/tasks/{$id}/checklist/{$items[2]->id}", ['is_done' => true])
             ->assertForbidden();
-    }
-
-    public function test_template_dan_assign_massal_membuat_salinan_per_intern(): void
-    {
-        $template = $this->actingAs($this->rudy->user)->postJson('/workspace/templates', [
-            'title' => 'Laporan mingguan',
-            'checklist' => ['tulis', 'kirim'],
-        ])->assertCreated();
-        $this->assertSame($this->gta->id, $template->json('data.team_id'));
-
-        $response = $this->postTask($this->rudy->user, $this->wsGta, [
-            'template_id' => $template->json('data.id'),
-            'title' => null,
-            'assignee_ids' => [$this->ahmad->id, $this->siti->id],
-            'separate_copies' => true,
-        ])->assertCreated();
-
-        $response->assertJsonCount(2, 'data');
-        $this->assertSame(['Laporan mingguan', 'Laporan mingguan'], $response->json('data.*.title'));
-        $this->assertSame([1, 1], array_map('count', $response->json('data.*.assignees')));
-        $this->assertCount(2, Task::first()->checklistItems);
-    }
-
-    public function test_hak_kelola_template(): void
-    {
-        $own = $this->actingAs($this->rudy->user)->postJson('/workspace/templates', ['title' => 'Milik GTA'])->json('data.id');
-        $global = TaskTemplate::create(['team_id' => null, 'title' => 'Global', 'is_onboarding' => true]);
-
-        // mentor tim sama boleh ubah; mentor tim lain dan template global tidak
-        $this->actingAs($this->tasmil->user)->putJson("/workspace/templates/{$own}", ['title' => 'Diubah'])->assertOk();
-        $this->actingAs($this->herman->user)->putJson("/workspace/templates/{$own}", ['title' => 'x'])->assertForbidden();
-        $this->actingAs($this->rudy->user)->putJson("/workspace/templates/{$global->id}", ['title' => 'x'])->assertForbidden();
-        $this->actingAs($this->rudy->user)->deleteJson("/workspace/templates/{$global->id}")->assertForbidden();
-
-        // admin boleh semuanya, termasuk membuat template global
-        $this->actingAs($this->admin)->putJson("/workspace/templates/{$global->id}", ['title' => 'Global baru'])->assertOk();
-        $created = $this->actingAs($this->admin)->postJson('/workspace/templates', ['title' => 'Untuk semua', 'is_onboarding' => true])->assertCreated();
-        $this->assertNull($created->json('data.team_id'));
-
-        // mentor melihat template global + timnya, tidak melihat tim lain
-        $titles = $this->actingAs($this->herman->user)->getJson('/workspace/templates')->json('data.*.title');
-        $this->assertContains('Untuk semua', $titles);
-        $this->assertNotContains('Milik GTA', $titles);
-    }
-
-    public function test_simpan_tugas_sebagai_template(): void
-    {
-        $id = $this->makeTaskForAhmad(['title' => 'Tugas contoh', 'checklist' => ['x', 'y']]);
-
-        $this->actingAs($this->rudy->user)->postJson("/workspace/tasks/{$id}/template")
-            ->assertCreated()
-            ->assertJsonPath('data.title', 'Tugas contoh')
-            ->assertJsonPath('data.checklist', [['content' => 'x'], ['content' => 'y']]);
-
-        $this->actingAs($this->ahmad->user)->postJson("/workspace/tasks/{$id}/template")->assertForbidden();
     }
 
     public function test_scheduler_menandai_terlambat_dan_pengingat_h1_masing_masing_sekali(): void

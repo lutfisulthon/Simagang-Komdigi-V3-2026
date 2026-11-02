@@ -11,7 +11,7 @@
       $ungrouped  Roster[]                  mentor: anak bimbingan yang belum punya kelompok
       $teams      {id,name}[]               admin: filter unit kerja
       $mentors    {id,name}[]               admin: filter mentor
-      $can        ['create_group', 'manage_templates' => bool]
+      $can        ['create_group' => bool]
 --}}
 @extends('workspace.layout')
 
@@ -41,11 +41,6 @@
                 <span class="inline-flex items-center gap-1.5"><i class="fas fa-flag-checkered"></i> {{ $counts['finished'] }} selesai magang</span>
             </x-slot:meta>
         @endunless
-        @if (($can['manage_templates'] ?? false) && Route::has('workspace.templates.index'))
-            <a href="{{ route('workspace.templates.index') }}" class="ws-hero-btn">
-                <i class="fas fa-copy"></i> Template tugas
-            </a>
-        @endif
         @if ($can['create_group'] ?? false)
             <button type="button" class="ws-hero-btn ws-hero-btn--solid" x-data x-on:click="$dispatch('ws-group-create', {})">
                 <i class="fas fa-plus"></i> Buat kelompok

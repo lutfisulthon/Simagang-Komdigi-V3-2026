@@ -11,7 +11,6 @@ use App\Http\Controllers\Workspace\NotificationController;
 use App\Http\Controllers\Workspace\SprintController;
 use App\Http\Controllers\Workspace\TaskCommentController;
 use App\Http\Controllers\Workspace\TaskController;
-use App\Http\Controllers\Workspace\TaskTemplateController;
 use App\Http\Controllers\Workspace\WorkspacePageController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,13 +37,6 @@ Route::middleware('auth')->prefix('workspace')->name('workspace.')->group(functi
     Route::get('progress', [InsightController::class, 'progress'])->name('progress');
     Route::get('recap', [InsightController::class, 'recap'])->name('recap');
     Route::get('interns/{intern}/tasks', [InsightController::class, 'internTasks'])->whereNumber('intern')->name('interns.tasks');
-
-    // Template tugas (onboarding dan assign massal)
-    Route::get('templates', [TaskTemplateController::class, 'index'])->name('templates.index');
-    Route::post('templates', [TaskTemplateController::class, 'store'])->name('templates.store');
-    Route::put('templates/{template}', [TaskTemplateController::class, 'update'])->whereNumber('template')->name('templates.update');
-    Route::post('templates/{template}/assign', [TaskTemplateController::class, 'assign'])->whereNumber('template')->name('templates.assign');
-    Route::delete('templates/{template}', [TaskTemplateController::class, 'destroy'])->whereNumber('template')->name('templates.destroy');
 
     // Tugas milik intern yang login (dropdown logbook); didaftarkan sebelum tasks/{task}
     Route::get('tasks/mine', [TaskController::class, 'mine'])->name('tasks.mine');
@@ -83,7 +75,6 @@ Route::middleware('auth')->prefix('workspace')->name('workspace.')->group(functi
         Route::patch('assignees', [TaskController::class, 'assignees'])->name('tasks.assignees');
         Route::patch('deadline', [TaskController::class, 'extendDeadline'])->name('tasks.deadline');
         Route::patch('checklist/{item}', [TaskController::class, 'toggleChecklistItem'])->whereNumber('item')->name('tasks.checklist');
-        Route::post('template', [TaskTemplateController::class, 'storeFromTask'])->name('tasks.save-template');
 
         // Komentar dan lampiran (batas unggah 10 file per menit dicek di AttachmentService)
         Route::post('comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');

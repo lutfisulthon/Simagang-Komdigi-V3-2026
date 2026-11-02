@@ -10,14 +10,12 @@ use App\Models\Logbook;
 use App\Models\Message;
 use App\Models\MicroSkillSubmission;
 use App\Models\Task;
-use App\Models\TaskTemplate;
 use App\Models\Workspace;
 use App\Policies\AttachmentPolicy;
 use App\Policies\AttendancePolicy;
 use App\Policies\ChannelPolicy;
 use App\Policies\MessagePolicy;
 use App\Policies\TaskPolicy;
-use App\Policies\TaskTemplatePolicy;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -36,7 +34,6 @@ class AuthServiceProvider extends ServiceProvider
         FinalReport::class => 'App\\Policies\\FinalReportPolicy',
         Workspace::class => WorkspacePolicy::class,
         Task::class => TaskPolicy::class,
-        TaskTemplate::class => TaskTemplatePolicy::class,
         Channel::class => ChannelPolicy::class,
         Message::class => MessagePolicy::class,
         Attachment::class => AttachmentPolicy::class,
@@ -51,7 +48,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Policy modul Workspace sudah memberi akses admin sendiri dan menegakkan status arsip,
         // jadi super admin tidak boleh melewatkannya lewat Gate::before.
-        $workspaceModels = [Workspace::class, Task::class, TaskTemplate::class, Channel::class, Message::class, Attachment::class];
+        $workspaceModels = [Workspace::class, Task::class, Channel::class, Message::class, Attachment::class];
 
         Gate::before(function ($user, $ability, $arguments = []) use ($workspaceModels) {
             $subject = $arguments[0] ?? null;

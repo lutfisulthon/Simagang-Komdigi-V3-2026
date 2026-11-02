@@ -47,10 +47,8 @@ class NotificationDashboardTest extends TestCase
 
     public function test_assign_massal_menotifikasi_setiap_intern(): void
     {
-        $template = $this->actingAs($this->rudy->user)->postJson('/workspace/templates', ['title' => 'Mingguan'])->json('data.id');
-
         $this->postTask($this->rudy->user, $this->wsGta, [
-            'template_id' => $template, 'title' => null, 'assignee_ids' => [$this->ahmad->id, $this->siti->id],
+            'title' => 'Mingguan', 'assignee_ids' => [$this->ahmad->id, $this->siti->id],
         ])->assertCreated();
 
         $this->assertSame(1, $this->notificationCount($this->ahmad->user, TaskAssignedNotification::class));

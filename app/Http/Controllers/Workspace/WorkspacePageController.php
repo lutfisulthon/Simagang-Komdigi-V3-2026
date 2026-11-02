@@ -10,7 +10,6 @@ use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskLabel;
-use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\Workspace;
 use App\Services\GroupService;
@@ -125,7 +124,6 @@ class WorkspacePageController extends Controller
                 : [],
             'can' => [
                 'create_group' => $gate->allows('createGroup', Workspace::class),
-                'manage_templates' => Gate::forUser($user)->allows('viewAny', TaskTemplate::class),
             ],
         ]);
     }
@@ -176,14 +174,9 @@ class WorkspacePageController extends Controller
             'initialTasks' => $this->initialTasks($workspace, $user),
             'sprints' => $workspace->sprints()->with('leader')->get()->map(fn ($s) => $this->presenter->sprint($s))->all(),
             'channels' => $this->presenter->channels($workspace, $user),
-            'templates' => $isManager && $teamId
-                ? TaskTemplate::with(['team', 'creator'])->where(fn ($q) => $q->where('team_id', $teamId)->orWhereNull('team_id'))
-                    ->orderBy('title')->get()->map(fn ($t) => $this->presenter->template($t, $user))->all()
-                : [],
             'can' => [
                 'create_task' => $gate->allows('create', [Task::class, $workspace]) && ! $user->isIntern(),
                 'manage_channels' => false,
-                'create_template' => $gate->allows('create', TaskTemplate::class),
                 'manage_labels' => $isManager && ! $workspace->is_archived,
                 'manage_sprints' => $canSprints,
             ],
@@ -246,8 +239,6 @@ class WorkspacePageController extends Controller
             'members' => $this->presenter->members($task->workspace),
             'assignableInterns' => $this->assignableInterns($task->workspace),
             'labels' => $teamId ? TaskLabel::where('team_id', $teamId)->orderBy('name')->get(['id', 'name', 'color'])->toArray() : [],
-            'templates' => [],
-            'can' => ['create_template' => $isManager && Gate::forUser($user)->allows('create', TaskTemplate::class)],
         ]);
     }
 

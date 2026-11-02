@@ -2,13 +2,10 @@
 
 namespace App\Services;
 
-use App\Enums\TaskStatus;
 use App\Models\Channel;
 use App\Models\Intern;
 use App\Models\Mentor;
 use App\Models\Task;
-use App\Models\TaskActivity;
-use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -37,7 +34,6 @@ class WorkspaceProvisioner
     public const WELCOME_SETTING_KEY = 'workspace_welcome_message';
 
     private const DEFAULT_WELCOME = 'Selamat datang {nama} di tim {tim}! Mentor kamu: {mentor}.';
-    private const ONBOARDING_DUE_DAYS = 7;
     private const ADMIN_ROLES = ['super_admin', 'admin_full'];
 
     private ?int $systemUserId = null;
@@ -79,9 +75,7 @@ class WorkspaceProvisioner
 
             $joined = $team && $this->syncTeamWorkspace($intern, $team, $mentorUser);
 
-            $space = $this->syncInternSpace($intern, $mentorUser);
-
-            $this->createOnboardingTasks($space, $intern, $mentorUser, $team);
+            $this->syncInternSpace($intern, $mentorUser);
 
             return $joined;
         });
@@ -384,57 +378,6 @@ class WorkspaceProvisioner
             'user_id' => $this->systemUserId() ?? $mentorUser->id,
             'body' => $body,
         ]);
-    }
-
-    private function createOnboardingTasks(Workspace $space, Intern $intern, User $mentorUser, ?Team $team): void
-    {
-        $templates = TaskTemplate::where('is_onboarding', true)
-            ->where(function ($q) use ($team) {
-                $q->whereNull('team_id');
-                if ($team) {
-                    $q->orWhere('team_id', $team->id);
-                }
-            })
-            ->get();
-
-        foreach ($templates as $template) {
-            $exists = $space->tasks()->withTrashed()->where('template_id', $template->id)->exists();
-            if ($exists) {
-                continue;
-            }
-
-            // Baris workspace sudah dikunci di syncInternSpace, jadi nomor tugas tidak bentrok.
-            $number = (int) Task::withTrashed()->where('workspace_id', $space->id)->max('number') + 1;
-
-            $task = Task::create([
-                'workspace_id' => $space->id,
-                'number' => $number,
-                'title' => $template->title,
-                'description' => $template->description,
-                'status' => TaskStatus::Todo,
-                'created_by' => $mentorUser->id,
-                'start_at' => now(),
-                'due_at' => now()->addDays(self::ONBOARDING_DUE_DAYS),
-                'position' => $number,
-                'template_id' => $template->id,
-            ]);
-
-            $task->assignees()->attach($intern->id);
-
-            foreach (array_values($template->checklist ?? []) as $i => $item) {
-                $task->checklistItems()->create([
-                    'content' => is_array($item) ? ($item['content'] ?? '') : (string) $item,
-                    'position' => $i,
-                ]);
-            }
-
-            TaskActivity::create([
-                'task_id' => $task->id,
-                'user_id' => $mentorUser->id,
-                'action' => 'created',
-                'meta' => ['source' => 'onboarding', 'template_id' => $template->id],
-            ]);
-        }
     }
 
     /** Magang selesai atau nonaktif: akses menjadi read-only, data tidak dihapus. */

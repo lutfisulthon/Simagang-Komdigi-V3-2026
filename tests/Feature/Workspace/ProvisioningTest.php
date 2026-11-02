@@ -36,8 +36,6 @@ class ProvisioningTest extends TestCase
         $admin = $this->makeAdmin();
         $team = $this->makeTeam('TIM GTA');
         $mentor = $this->makeMentor('Rudy', $team);
-        $this->makeOnboardingTemplate('Lengkapi profil');
-        $this->makeOnboardingTemplate('Baca panduan magang');
 
         $intern = $this->makeIntern('Ahmad Fauzi', $mentor, $team);
 
@@ -64,13 +62,6 @@ class ProvisioningTest extends TestCase
         $announcement = Channel::whereNull('workspace_id')->where('type', 'announcement')->firstOrFail();
         $this->assertEqualsCanonicalizing([$mentor->user_id, $intern->user_id], $announcement->members()->pluck('users.id')->all());
 
-        // Tugas onboarding dari template, di-assign ke intern
-        $tasks = $space->tasks()->orderBy('number')->get();
-        $this->assertCount(2, $tasks);
-        $this->assertSame([1, 2], $tasks->pluck('number')->all());
-        $this->assertTrue($tasks->every(fn (Task $t) => $t->assignees()->whereKey($intern->id)->exists()));
-        $this->assertSame(2, $tasks->first()->checklistItems()->count());
-
         // Mentor dan admin mendapat notifikasi intern baru
         $this->assertSame(1, $mentor->user->notifications()->where('type', InternJoinedTeamNotification::class)->count());
         $this->assertSame(1, $admin->notifications()->where('type', InternJoinedTeamNotification::class)->count());
@@ -81,7 +72,6 @@ class ProvisioningTest extends TestCase
         $this->makeAdmin();
         $team = $this->makeTeam('TIM GTA');
         $mentor = $this->makeMentor('Rudy', $team);
-        $this->makeOnboardingTemplate();
         $intern = $this->makeIntern('Ahmad Fauzi', $mentor, $team);
 
         $first = $this->snapshot();
@@ -98,7 +88,6 @@ class ProvisioningTest extends TestCase
         $this->makeAdmin();
         $team = $this->makeTeam('TIM GTA');
         $mentor = $this->makeMentor('Rudy', $team);
-        $this->makeOnboardingTemplate();
         $intern = $this->makeIntern('Ahmad Fauzi', $mentor, $team);
 
         // Simulasikan intern lama sebelum fitur rilis: workspace belum ada
@@ -155,7 +144,6 @@ class ProvisioningTest extends TestCase
         $team = $this->makeTeam('TIM GTA');
         $old = $this->makeMentor('Rudy', $team);
         $new = $this->makeMentor('Tasmil', $team);
-        $this->makeOnboardingTemplate();
         $intern = $this->makeIntern('Ahmad Fauzi', $old, $team);
 
         $space = $this->internSpace($intern);
@@ -197,7 +185,6 @@ class ProvisioningTest extends TestCase
         $teamA = $this->makeTeam('TIM GTA');
         $teamB = $this->makeTeam('TIM DEA');
         $mentor = $this->makeMentor('Rudy', $teamA);
-        $this->makeOnboardingTemplate();
         $intern = $this->makeIntern('Ahmad Fauzi', $mentor, $teamA);
         $space = $this->internSpace($intern);
         $tasksBefore = $space->tasks()->count();

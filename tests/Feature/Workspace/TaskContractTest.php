@@ -64,7 +64,7 @@ class TaskContractTest extends TestCase
         $this->assertSame($task->id, Attachment::find($attachment)->attachable_id);
     }
 
-    public function test_template_id_saja_tidak_membuat_salinan_dan_separate_copies_membuatnya(): void
+    public function test_banyak_assignee_satu_tugas_dan_separate_copies_membuat_salinan(): void
     {
         $payload = ['assignee_ids' => [$this->ahmad->id, $this->siti->id]];
 

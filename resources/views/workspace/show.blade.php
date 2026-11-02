@@ -9,10 +9,9 @@
       $assignableInterns  InternMini[]
       $labels             {id,name,color}[]
       $channels           Channel[]    channel workspace ini + #pengumuman
-      $templates          Template[]   template tim (untuk "Pakai template"); kosong untuk intern
       $sprints     Sprint[]    sprint kelompok (planned, active, completed) — tab Backlog & board
       $tab         'backlog'|'board'|'list'|'timeline'|'deadline'|'laporan'|'channel'|'activity'
-      $can         ['create_task', 'manage_channels', 'create_template', 'manage_labels' => bool]
+      $can         ['create_task', 'manage_channels', 'manage_labels' => bool]
 --}}
 @extends('workspace.layout')
 
@@ -318,7 +317,7 @@
     {{-- Detail tugas (slide-over) — URL ikut berubah: ?task=T-12 --}}
     <div x-data="wsTaskDetail({ mode: 'panel' })">
         <x-workspace.slide-over name="ws-task-detail" title="Detail tugas" x-model="$store.wsTasks.detailOpen">
-            @include('workspace.partials.task-detail', ['mode' => 'panel', 'canTemplate' => $can['create_template'] ?? false])
+            @include('workspace.partials.task-detail', ['mode' => 'panel'])
         </x-workspace.slide-over>
     </div>
 
@@ -336,11 +335,6 @@
         @include('workspace.partials.label-manager', ['labelTeams' => [$workspace['team']], 'labelsByTeam' => [$workspace['team']['id'] => $labels]])
     @endif
 
-    @if (($can['create_template'] ?? false) && $workspace['team'])
-        @include('workspace.partials.template-modals', [
-            'tplTeams' => [$workspace['team']], 'canChooseTeam' => false, 'defaultTeamId' => $workspace['team']['id'], 'withAssign' => false,
-        ])
-    @endif
 @endsection
 
 @push('scripts')
@@ -350,7 +344,6 @@
             WS.mock.seed('sprint-context', @js(['workspace_id' => $workspace['id'], 'sprints' => $sprints ?? [], 'members' => $assignableInterns]));
             WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
             WS.mock.seed('label-context', @js(['teams' => $workspace['team'] ? [$workspace['team']] : [], 'labels' => $labels]));
-            WS.mock.seed('template-context', @js(['templates' => $templates ?? [], 'labels' => $labels, 'teams' => $workspace['team'] ? [$workspace['team']] : []]));
             WS.mock.seed('channel-context', @js([
                 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'url' => $workspace['url']],
                 'members' => $members,

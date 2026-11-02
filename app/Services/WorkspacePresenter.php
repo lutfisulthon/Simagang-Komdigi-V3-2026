@@ -9,7 +9,6 @@ use App\Models\Sprint;
 use App\Models\Team;
 use App\Models\Task;
 use App\Models\TaskActivity;
-use App\Models\TaskTemplate;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
@@ -458,32 +457,6 @@ class WorkspacePresenter
                 'manage' => $gate->allows('archive', $c),
                 'pin' => $gate->allows('moderate', $c),
             ],
-        ];
-    }
-
-    public function template(TaskTemplate $t, User $viewer): array
-    {
-        $gate = Gate::forUser($viewer);
-        $labelIds = $t->label_ids ?? [];
-
-        return [
-            'id' => $t->id,
-            'team_id' => $t->team_id,
-            'team' => $t->team ? ['id' => $t->team->id, 'name' => $t->team->name] : null,
-            'title' => $t->title,
-            'description' => $t->description,
-            'description_html' => $this->markdown($t->description),
-            'priority' => $t->priority ?: 'medium',
-            'labels' => $labelIds
-                ? \App\Models\TaskLabel::whereIn('id', $labelIds)->orderBy('name')->get(['id', 'name', 'color'])->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color])->all()
-                : [],
-            'due_in_days' => (int) ($t->due_in_days ?? 7),
-            'checklist' => collect($t->checklist ?? [])->map(fn ($c) => ['content' => is_array($c) ? ($c['content'] ?? '') : (string) $c])->values()->all(),
-            'is_onboarding' => (bool) $t->is_onboarding,
-            'creator' => $this->user($t->creator),
-            'usage_count' => (int) DB::table('tasks')->where('template_id', $t->id)->count(),
-            'updated_at' => $this->iso($t->updated_at),
-            'can' => ['update' => $gate->allows('update', $t), 'delete' => $gate->allows('delete', $t), 'assign' => $gate->allows('update', $t)],
         ];
     }
 }

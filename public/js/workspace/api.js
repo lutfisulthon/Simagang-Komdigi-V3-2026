@@ -107,20 +107,6 @@
             downloadUrl: (attachmentId) => url(`/workspace/attachments/${attachmentId}`),
         },
 
-        // Usulan kontrak #9 (PRD: TaskTemplateController). payload template:
-        // { team_id, title, description?, priority, label_ids?, due_in_days, checklist?: [{content}], is_onboarding }
-        templates: {
-            create: (payload) => call('templates.create', [payload],
-                () => WS.http('POST', url('/workspace/templates'), { body: payload })),
-            update: (templateId, payload) => call('templates.update', [templateId, payload],
-                () => WS.http('PUT', url(`/workspace/templates/${templateId}`), { body: payload })),
-            remove: (templateId) => call('templates.remove', [templateId],
-                () => WS.http('DELETE', url(`/workspace/templates/${templateId}`))),
-            // payload: { assignee_ids: [internId], due_at, start_at? } — tugas dibuat di kelompok tiap intern
-            assign: (templateId, payload) => call('templates.assign', [templateId, payload],
-                () => WS.http('POST', url(`/workspace/templates/${templateId}/assign`), { body: payload })),
-        },
-
         // Label per tim (usulan kontrak #11). payload: { name, color }
         labels: {
             create: (teamId, payload) => call('labels.create', [teamId, payload],

@@ -4,12 +4,11 @@ namespace Tests\Feature\Workspace;
 
 use App\Models\Task;
 use App\Models\TaskLabel;
-use App\Models\TaskTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\WorkspaceScenario;
 use Tests\TestCase;
 
-/** Template, widget dashboard, Monitoring, detail intern, dan rekap sesuai kontrak frontend. */
+/** Widget dashboard, Monitoring, detail intern, dan rekap sesuai kontrak frontend. */
 class InsightContractTest extends TestCase
 {
     use RefreshDatabase, WorkspaceScenario;
@@ -18,116 +17,6 @@ class InsightContractTest extends TestCase
     {
         parent::setUp();
         $this->setUpScenario();
-    }
-
-    private function templatePayload(array $extra = []): array
-    {
-        return $extra + [
-            'title' => 'Laporan mingguan',
-            'description' => 'Rangkum **pekerjaan**',
-            'priority' => 'high',
-            'due_in_days' => 5,
-            'checklist' => [['content' => 'Ringkasan'], ['content' => 'Kendala']],
-            'is_onboarding' => false,
-        ];
-    }
-
-    // ------------------------------------------------------------------ template
-
-    public function test_buat_template_dengan_payload_frontend(): void
-    {
-        $label = TaskLabel::create(['team_id' => $this->gta->id, 'name' => 'dokumen', 'color' => '#f59e0b'])->id;
-        $foreign = TaskLabel::create(['team_id' => $this->dea->id, 'name' => 'dea', 'color' => '#111111'])->id;
-
-        $response = $this->actingAs($this->rudy->user)
-            ->postJson('/workspace/templates', $this->templatePayload(['label_ids' => [$label, $foreign]]))
-            ->assertCreated();
-
-        $response->assertJsonPath('data.priority', 'high')
-            ->assertJsonPath('data.due_in_days', 5)
-            ->assertJsonPath('data.team.id', $this->gta->id)
-            ->assertJsonPath('data.checklist', [['content' => 'Ringkasan'], ['content' => 'Kendala']])
-            ->assertJsonPath('data.description_html', '<p>Rangkum <strong>pekerjaan</strong></p>')
-            ->assertJsonPath('data.usage_count', 0)
-            ->assertJsonPath('data.can.assign', true);
-        $this->assertSame([$label], collect($response->json('data.labels'))->pluck('id')->all(), 'label tim lain dibuang');
-
-        $this->assertSame(['Ringkasan', 'Kendala'], TaskTemplate::first()->checklist);
-    }
-
-    public function test_validasi_template(): void
-    {
-        $post = fn (array $extra) => $this->actingAs($this->rudy->user)->postJson('/workspace/templates', $this->templatePayload($extra));
-
-        $post(['due_in_days' => 91])->assertUnprocessable();
-        $post(['due_in_days' => -1])->assertUnprocessable();
-        $post(['priority' => 'sangat'])->assertUnprocessable();
-        $post(['title' => ''])->assertUnprocessable();
-    }
-
-    public function test_halaman_kelola_template_dan_hak_akses(): void
-    {
-        $this->actingAs($this->rudy->user)->postJson('/workspace/templates', $this->templatePayload())->assertCreated();
-
-        $this->actingAs($this->rudy->user)->get('/workspace/templates')->assertOk()->assertSee('Laporan mingguan');
-        $this->actingAs($this->admin)->get('/workspace/templates')->assertOk();
-        $this->actingAs($this->ahmad->user)->get('/workspace/templates')->assertForbidden();
-
-        $list = $this->actingAs($this->rudy->user)->getJson('/workspace/templates')->assertOk()->json('data');
-        $this->assertSame('Laporan mingguan', $list[0]['title']);
-        $this->assertArrayHasKey('usage_count', $list[0]);
-    }
-
-    public function test_tugaskan_template_ke_banyak_intern_membuat_tugas_di_space_masing_masing(): void
-    {
-        $label = TaskLabel::create(['team_id' => $this->gta->id, 'name' => 'dokumen', 'color' => '#f59e0b'])->id;
-        $template = $this->actingAs($this->admin)->postJson('/workspace/templates', $this->templatePayload(['team_id' => $this->gta->id, 'label_ids' => [$label]]))->json('data.id');
-        $due = $this->due(4);
-
-        $response = $this->actingAs($this->admin)->postJson("/workspace/templates/{$template}/assign", [
-            'assignee_ids' => [$this->ahmad->id, $this->siti->id],
-            'due_at' => $due,
-        ])->assertCreated();
-
-        $response->assertJsonPath('meta.created', 2)->assertJsonPath('meta.template.usage_count', 2);
-        $this->assertEqualsCanonicalizing(
-            [$this->spAhmad->id, $this->spSiti->id],
-            collect($response->json('data'))->pluck('workspace.id')->all()
-        );
-        $this->assertSame('high', $response->json('data.0.priority'));
-        $this->assertSame($label, $response->json('data.0.labels.0.id'));
-        $this->assertSame(2, $response->json('data.0.checklist.total'));
-
-        $this->assertSame(1, $this->notificationCount($this->ahmad->user, 'App\Notifications\TaskAssignedNotification'));
-        $this->assertSame(1, $this->notificationCount($this->siti->user, 'App\Notifications\TaskAssignedNotification'));
-        $this->assertSame(2, Task::where('template_id', $template)->count());
-    }
-
-    public function test_tugaskan_template_ditolak_untuk_intern_tanpa_space_atau_di_luar_bimbingan(): void
-    {
-        $template = $this->actingAs($this->rudy->user)->postJson('/workspace/templates', $this->templatePayload())->json('data.id');
-        $assign = fn ($user, array $ids) => $this->actingAs($user)->postJson("/workspace/templates/{$template}/assign", ['assignee_ids' => $ids, 'due_at' => $this->due()]);
-
-        // Siti dibimbing Tasmil, bukan Rudy.
-        $assign($this->rudy->user, [$this->ahmad->id, $this->siti->id])->assertForbidden();
-        $this->assertSame(0, Task::count());
-
-        $this->spAhmad->update(['is_archived' => true]);
-        $assign($this->rudy->user, [$this->ahmad->id])->assertUnprocessable()->assertJsonValidationErrors('assignee_ids');
-
-        $assign($this->ahmad->user, [$this->ahmad->id])->assertForbidden();
-        $this->actingAs($this->admin)->postJson("/workspace/templates/{$template}/assign", ['assignee_ids' => [$this->siti->id]])->assertUnprocessable();
-    }
-
-    public function test_simpan_tugas_sebagai_template_membawa_prioritas_dan_label(): void
-    {
-        $label = TaskLabel::create(['team_id' => $this->gta->id, 'name' => 'api', 'color' => '#6366f1'])->id;
-        $id = $this->makeTaskForAhmad(['title' => 'Integrasi API', 'priority' => 'urgent', 'label_ids' => [$label]]);
-
-        $this->actingAs($this->rudy->user)->postJson("/workspace/tasks/{$id}/template")
-            ->assertCreated()
-            ->assertJsonPath('data.priority', 'urgent')
-            ->assertJsonPath('data.labels.0.id', $label);
     }
 
     // ------------------------------------------------------------------ widget dashboard

@@ -4,7 +4,6 @@ namespace Tests\Concerns;
 
 use App\Models\Intern;
 use App\Models\Mentor;
-use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -66,17 +65,6 @@ trait WorkspaceFixtures
             'mentor_id' => $mentor?->id,
             'team_id' => $team?->id,
         ])->load('user');
-    }
-
-    protected function makeOnboardingTemplate(string $title = 'Lengkapi profil', ?Team $team = null): TaskTemplate
-    {
-        return TaskTemplate::create([
-            'team_id' => $team?->id,
-            'title' => $title,
-            'description' => 'Template onboarding uji',
-            'checklist' => ['langkah 1', 'langkah 2'],
-            'is_onboarding' => true,
-        ]);
     }
 
     protected function teamWorkspace(Team $team): Workspace

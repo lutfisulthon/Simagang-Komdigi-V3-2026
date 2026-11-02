@@ -42,7 +42,6 @@ class TaskService
                 'start_at' => $data['start_at'] ?? null,
                 'due_at' => $data['due_at'],
                 'position' => $position,
-                'template_id' => $data['template_id'] ?? null,
                 'result_links' => $data['result_links'] ?? null,
             ]);
 

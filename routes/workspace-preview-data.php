@@ -532,67 +532,6 @@ return function (User $user, bool $forcePending = false): array {
         ];
     };
 
-    // ---------- Template tugas (per tim) ----------
-    // Id = (index tim + 1) * 10 + k. Mentor hanya melihat template timnya; admin semua tim.
-    $templateDefs = [
-        ['Lengkapi profil', "Lengkapi data profil di menu **Profil** supaya mentor dan admin mudah menghubungi Anda.", ['Unggah foto profil', 'Isi data kampus & jurusan', 'Isi kontak darurat'], 'medium', [3], 2, true],
-        ['Baca panduan magang', "Baca panduan magang sampai selesai. Tanyakan di channel tim bila ada yang belum jelas.", ['Aturan kehadiran', 'Tata cara mengisi logbook', 'Etika komunikasi'], 'medium', [3], 3, true],
-        ['Perkenalan di channel tim', "Perkenalkan diri di channel **#umum** tim: nama, kampus, dan minat bidang.", [], 'low', [], 1, true],
-        ['Absen hari pertama', "Lakukan absensi pada hari pertama magang sebelum pukul 08.30 WIB.", [], 'high', [], 1, true],
-        ['Laporan mingguan', "Rangkum pekerjaan minggu ini dan rencana minggu depan.\n\n- Lampirkan dalam format PDF\n- Maksimal 2 halaman", ['Ringkasan pekerjaan', 'Kendala', 'Rencana minggu depan'], 'medium', [3], 7, false],
-        ['Review kode pull request', "Review satu pull request rekan tim, beri minimal 3 komentar yang membangun.", ['Baca deskripsi PR', 'Jalankan di lokal', 'Tulis komentar'], 'medium', [1, 2], 3, false],
-        ['Riset kompetitor aplikasi', "Bandingkan 3 aplikasi sejenis: fitur utama, kelebihan, dan kekurangan.", ['Pilih 3 aplikasi', 'Buat tabel perbandingan', 'Tulis kesimpulan'], 'low', [5], 5, false],
-    ];
-    $templatesFor = function () use ($templateDefs, $teams, $labels, $mentors, $mentorMini, $role, $meMentor, $num, $markdown) {
-        $labelById = collect($labels)->keyBy('id');
-        $out = [];
-        foreach ($teams as $t => $team) {
-            if ($role === 'mentor' && $mentors[$meMentor]['team'] !== $t) continue;
-            if (! in_array($role, ['admin', 'mentor'], true)) continue;
-            $creatorIndex = collect($mentors)->search(fn ($m) => $m['team'] === $t);
-            foreach ($templateDefs as $k => [$title, $desc, $checklist, $priority, $labelIds, $days, $onboarding]) {
-                if ($k === 6 && $t !== 0) continue; // template tambahan hanya di tim pertama
-                $id = ($t + 1) * 10 + $k + 1;
-                $editable = $role === 'admin' || ($role === 'mentor' && $mentors[$meMentor]['team'] === $t);
-                $out[] = [
-                    'id' => $id,
-                    'team' => $team,
-                    'title' => $title,
-                    'description' => $desc,
-                    'description_html' => $markdown($desc),
-                    'priority' => $priority,
-                    'labels' => array_values(array_map(fn ($l) => $labelById[$l], $labelIds)),
-                    'due_in_days' => $days,
-                    'checklist' => array_map(fn ($c) => ['content' => $c], $checklist),
-                    'is_onboarding' => $onboarding,
-                    'creator' => $creatorIndex !== false ? $mentorMini($creatorIndex) : null,
-                    'usage_count' => $onboarding ? 3 + $num("tpl-use-$id", 9) : $num("tpl-use-$id", 14),
-                    'updated_at' => now()->subDays(1 + $num("tpl-upd-$id", 40))->toIso8601String(),
-                    'can' => ['update' => $editable, 'delete' => $editable, 'assign' => $editable],
-                ];
-            }
-        }
-        return $out;
-    };
-
-    // Intern yang boleh ditugaskan dari halaman template (meniru TaskPolicy@create): anak magang aktif
-    // yang sudah punya kelompok — tugas dibuat di kelompoknya. Admin semua, mentor anak bimbingannya.
-    $templateTargets = function () use ($people, $teams, $workspaces, $idOf, $role, $meMentor) {
-        $out = [];
-        foreach ($people as $p) {
-            if (! $p['group'] || ! in_array($role, ['admin', 'mentor'], true)) continue;
-            if ($role === 'mentor' && $p['mentor'] !== $meMentor) continue;
-            $ws = $workspaces[$idOf[$p['group']]];
-            if ($ws['is_read_only']) continue;
-            $out[] = [
-                'id' => $p['id'], 'user_id' => $p['user_id'], 'name' => $p['name'], 'avatar_url' => $p['avatar_url'],
-                'team' => $teams[$p['team']],
-                'group' => ['id' => $ws['id'], 'name' => $ws['name'], 'url' => $ws['url']],
-            ];
-        }
-        return $out;
-    };
-
     // ---------- Aktivitas workspace ----------
     $activities = function (array $ws) use ($num, $tasksFor) {
         $tasks = $tasksFor($ws);
@@ -751,8 +690,6 @@ return function (User $user, bool $forcePending = false): array {
         },
         'channels' => $channelsFor,
         'sprints' => fn (array $ws) => $ws['_sprints'],
-        'templates' => $templatesFor,
-        'templateTargets' => $templateTargets,
         'strip' => $strip,
         'sortGroups' => $sortGroups,
         'needsAttention' => $needsAttention,
