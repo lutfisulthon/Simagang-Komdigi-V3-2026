@@ -108,7 +108,7 @@
 </head>
 
 <body>
-<div class="bg-wrapper">
+<div class="bg-wrapper" data-dm-native>
 
     <div class="login-container">
         <a href="{{ url('/') }}" class="close-login-btn" title="Tutup">

@@ -1,5 +1,5 @@
 {{--
-    Halaman kelompok (workspace) dengan tab Backlog / Board / List / Timeline / Deadline / Laporan / Otomasi (staff) / Channel / Aktivitas.
+    Halaman kelompok (workspace) dengan tab Backlog / Board / List / Timeline / Deadline / Laporan / Channel / Aktivitas.
     Variabel (lihat docs/workspace/kontrak-frontend.md §5):
       $workspace   Workspace type=group (can: rename, add_members, finish)
       $candidates  Roster[]    anak bimbingan tanpa kelompok (untuk "Tambah anggota"; kosong bila tidak berhak)
@@ -11,7 +11,7 @@
       $channels           Channel[]    channel workspace ini + #pengumuman
       $templates          Template[]   template tim (untuk "Pakai template"); kosong untuk intern
       $sprints     Sprint[]    sprint kelompok (planned, active, completed) — tab Backlog & board
-      $tab         'backlog'|'board'|'list'|'timeline'|'deadline'|'laporan'|'otomasi'|'channel'|'activity'
+      $tab         'backlog'|'board'|'list'|'timeline'|'deadline'|'laporan'|'channel'|'activity'
       $can         ['create_task', 'manage_channels', 'create_template', 'manage_labels' => bool]
 --}}
 @extends('workspace.layout')
@@ -28,17 +28,14 @@
         $date = fn ($iso) => \Illuminate\Support\Carbon::parse($iso)->locale('id')->translatedFormat('j M Y');
         $initials = collect(preg_split('/\s+/', trim($workspace['name'])))->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
-        // Otomasi belum punya backend (keputusan: ditiadakan); tab, menu, dan panelnya tidak ditampilkan.
-        $canAutomate = false;
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
-            'backlog' => $isIntern || ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
+            'backlog' => $isIntern ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
             'timeline' => ['Timeline', 'fa-chart-gantt', null, false],
             'deadline' => ['Deadline', 'fa-calendar-days', null, true],
             'laporan' => ['Laporan', 'fa-chart-pie', null, false],
-            'otomasi' => $canAutomate ? ['Otomasi', 'fa-bolt', null, false] : null,
             'channel' => ['Channel', 'fa-hashtag', $workspace['unread_messages'] ?: null, true],
             'activity' => ['Aktivitas', 'fa-clock-rotate-left', null, false],
         ]);
@@ -51,9 +48,6 @@
             ['late', 'Terlambat', $s['late'], '#ef4444'],
         ];
         $mentorMembers = collect($members)->where('role', 'mentor')->values();
-        // Workspace tim punya banyak mentor: tampilkan dua nama pertama, sisanya sebagai hitungan.
-        $mentorNames = $mentorMembers->pluck('name');
-        $mentorLine = $mentorNames->take(2)->implode(', ') . ($mentorNames->count() > 2 ? ' +' . ($mentorNames->count() - 2) . ' lainnya' : '');
         $internMembers = collect($members)->where('role', 'intern')->values();
         $previewMembers = collect($members)->take(4);
     @endphp
@@ -70,17 +64,14 @@
         </nav>
 
         <x-workspace.hero class="ws-anim-1 mb-6"
-                          :eyebrow="'Kelompok' . ($workspace['team'] && ! ($workspace['is_personal'] ?? false) ? ' · ' . $workspace['team']['name'] : '')"
+                          :eyebrow="'Kelompok · ' . $workspace['team']['name']"
                           :title="$workspace['name']"
                           :subtitle="$workspace['description'] ?: 'Board tugas dan diskusi kelompok'">
             <x-slot:meta>
-                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: <span title="{{ $mentorNames->implode(', ') }}">{{ $mentorLine ?: $workspace['mentor']['name'] }}</span></span>
+                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: {{ $workspace['mentor']['name'] }}</span>
                 <span class="opacity-50 hidden sm:inline">·</span>
-                {{-- Space pribadi hanya berisi satu intern: jumlah anak magang tidak perlu ditampilkan. --}}
-                @unless ($workspace['is_personal'] ?? false)
-                    <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
-                    <span class="opacity-50 hidden sm:inline">·</span>
-                @endunless
+                <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
+                <span class="opacity-50 hidden sm:inline">·</span>
                 @if ($workspace['status'] === 'finished')
                     <span class="inline-flex items-center gap-1.5"><i class="fas fa-flag-checkered"></i> Selesai {{ $date($workspace['finished_at']) }}</span>
                 @elseif ($workspace['end_date'])
@@ -122,11 +113,6 @@
                         @if ($groupCan['add_members'] ?? false)
                             <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-group-add', { group: @js($groupMini) })">
                                 <i class="fas fa-user-plus text-xs ws-text-faint"></i> Tambah anggota
-                            </button>
-                        @endif
-                        @if ($canAutomate)
-                            <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-select-tab', 'otomasi')">
-                                <i class="fas fa-bolt text-xs ws-text-faint"></i> Otomasi
                             </button>
                         @endif
                         @if ($groupCan['finish'] ?? false)
@@ -221,13 +207,6 @@
                  x-show="tab === 'timeline'" @if ($tab !== 'timeline') x-cloak @endif>
             @include('workspace.partials.timeline')
         </section>
-
-        @if ($canAutomate)
-            <section id="ws-panel-otomasi" role="tabpanel" aria-labelledby="ws-tab-otomasi"
-                     x-show="tab === 'otomasi'" @if ($tab !== 'otomasi') x-cloak @endif>
-                @include('workspace.partials.automations')
-            </section>
-        @endif
 
         <section id="ws-panel-laporan" role="tabpanel" aria-labelledby="ws-tab-laporan"
                  x-show="tab === 'laporan'" @if ($tab !== 'laporan') x-cloak @endif>

@@ -465,7 +465,7 @@ Route::middleware('auth')->group(function () use ($fixtures) {
         $isStaff = in_array($data['role'], ['admin', 'mentor'], true);
         $readOnly = $ws['is_read_only'];
         $allowedTabs = $isStaff
-            ? array_values(array_filter(['backlog', 'board', 'list', 'timeline', 'deadline', 'laporan', $readOnly ? null : 'otomasi', 'channel', 'activity']))
+            ? array_values(array_filter(['backlog', 'board', 'list', 'timeline', 'deadline', 'laporan', 'channel', 'activity']))
             : ['board', 'list', 'timeline', 'deadline', 'laporan', 'channel', 'activity'];
         $tab = in_array(request('tab'), $allowedTabs, true) ? request('tab') : 'board';
         // Calon anggota baru: anak bimbingan mentor yang belum punya kelompok.

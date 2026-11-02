@@ -99,6 +99,10 @@ html[data-theme="dark"] .ws-msg__thread:hover {
     border-color: rgba(99, 140, 255, 0.20) !important;
 }
 
+/* Tab ber-badge merah berstatus mixed (tanpa filter), jadi warnanya perlu disamakan dengan tab lain */
+html[data-theme="dark"] .ws-tab[data-dm-mixed]:hover,
+html[data-theme="dark"] .ws-tab[data-dm-mixed][aria-selected="true"] { background: #1a1a1a !important; }
+
 /* ── Dashboard (inline <style> di tiap dashboard role) ── */
 html[data-theme="dark"] .intern-row:hover,
 html[data-theme="dark"] .att-tr:hover,
@@ -164,6 +168,39 @@ html[data-theme="dark"] #sharing-session .bg-white.text-gray-500 { color: #8b9ab
 html[data-theme="dark"] #sharing-session .bg-white .text-gray-300 { color: #3b4a63; }
 html[data-theme="dark"] #sharing-session .bg-white p.font-semibold { color: #cbd5e1; }
 html[data-theme="dark"] #sharing-session .bg-gray-200 { background: #1f2a3d; }
+
+/* ── Halaman auth: login, lupa & reset password (data-dm-native, palet gelap sendiri) ── */
+html[data-theme="dark"] body:has(> .bg-wrapper) { background: #0f1623; }
+html[data-theme="dark"] .bg-wrapper { background: linear-gradient(135deg, #0a1433 8%, #101c3d 42%, #0f1623 100%); }
+html[data-theme="dark"] .bg-wrapper::before,
+html[data-theme="dark"] .bg-wrapper::after { background: rgba(99, 140, 255, .06); }
+html[data-theme="dark"] .login-container {
+    background: #172033;
+    border: 1px solid rgba(148, 163, 184, .16);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, .5);
+}
+html[data-theme="dark"] .login-container img { padding: 6px; background: #f1f5f9; border-radius: 12px; box-sizing: content-box; }
+html[data-theme="dark"] .login-container h1 span { text-shadow: 0 0 1px rgba(255, 255, 255, .4), 0 0 6px rgba(255, 255, 255, .12); }
+html[data-theme="dark"] .login-container p[style*="#626161" i] { color: #94a3b8 !important; }
+html[data-theme="dark"] .close-login-btn { color: #cbd5e1; }
+html[data-theme="dark"] .close-login-btn:hover { color: #fff; }
+html[data-theme="dark"] .login-container .text-gray-800 { color: #f1f5f9; }
+html[data-theme="dark"] .login-container .text-gray-700,
+html[data-theme="dark"] .login-container .text-gray-600 { color: #cbd5e1; }
+html[data-theme="dark"] .login-container .text-gray-500 { color: #94a3b8; }
+html[data-theme="dark"] .login-container a.text-blue-600 { color: #93c5fd; }
+html[data-theme="dark"] .login-container input:not([type="checkbox"]) {
+    background: #0f1726;
+    border-color: rgba(148, 163, 184, .28);
+    color: #e2e8f0;
+}
+html[data-theme="dark"] .login-container input:not([type="checkbox"]):focus { background: #111b2e; border-color: #60a5fa; }
+html[data-theme="dark"] .login-container input::placeholder { color: #64748b; }
+html[data-theme="dark"] .login-container input:-webkit-autofill {
+    -webkit-text-fill-color: #e2e8f0;
+    box-shadow: 0 0 0 1000px #0f1726 inset;
+}
+html[data-theme="dark"] .login-container .bg-green-50 { background: rgba(34, 197, 94, .12); border-color: rgba(34, 197, 94, .3); color: #86efac; }
 
 /* ── Gear button (topbar gelap = area keep) ── */
 html[data-theme="dark"] .sm-theme__btn:hover,

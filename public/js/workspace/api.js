@@ -151,24 +151,6 @@
                 () => WS.http('DELETE', url(`/workspace/sprints/${sprintId}`))),
         },
 
-        // Otomasi pekerjaan berulang per kelompok (usulan kontrak #21). Hanya mentor pemilik/admin; kelompok selesai → 403.
-        // Rule: { id, workspace_id, name, enabled, trigger, conditions[], actions[], next_run_at, last_run_at, runs[] }
-        automations: {
-            list: (workspaceId) => call('automations.list', [workspaceId],
-                () => WS.http('GET', url(`/workspace/${workspaceId}/automations`))),
-            // payload: { name, enabled, trigger, conditions, actions } → 201 { data: Rule }. 422 per field ("actions.0.title").
-            create: (workspaceId, payload) => call('automations.create', [workspaceId, payload],
-                () => WS.http('POST', url(`/workspace/${workspaceId}/automations`), { body: payload })),
-            // Aturan penuh, atau hanya { enabled } untuk saklar aktif/nonaktif → { data: Rule }
-            update: (id, payload) => call('automations.update', [id, payload],
-                () => WS.http('PATCH', url(`/workspace/automations/${id}`), { body: payload })),
-            remove: (id) => call('automations.remove', [id],
-                () => WS.http('DELETE', url(`/workspace/automations/${id}`))),
-            // Jalankan sekarang (uji). Kondisi tetap dihormati. → { data: Rule, run: { at, ok, summary }, tasks: TaskCard[] }
-            run: (id) => call('automations.run', [id],
-                () => WS.http('POST', url(`/workspace/automations/${id}/run`))),
-        },
-
         // Kelompok buatan mentor (usulan kontrak #18). 1 anak magang = 1 kelompok; anggota tidak bisa dikeluarkan.
         groups: {
             // { interns: [{ id, name, avatar_url, end_date, group: {id,name,color,url}|null }], groups: [{ id, name, color, url, members_count }] }

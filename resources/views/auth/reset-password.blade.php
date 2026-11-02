@@ -76,7 +76,7 @@
 </head>
 
 <body>
-<div class="bg-wrapper">
+<div class="bg-wrapper" data-dm-native>
 
     <div class="login-container">
         <div class="text-center mb-6 space-y-3">
