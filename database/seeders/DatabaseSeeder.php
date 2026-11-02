@@ -202,6 +202,7 @@ class DatabaseSeeder extends Seeder
             TeamSeeder::class,
             TestimonialSeeder::class,
             MicroSkillsSeeder::class,
+            MentorLutfiInternSeeder::class,
         ]);
     }
 

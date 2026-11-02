@@ -1042,6 +1042,10 @@ a.ws-card:focus-visible {
     overflow: hidden;
 }
 
+/* Pembungkus modal (x-workspace.modal) hanya menampung konten yang di-teleport ke <body>:
+   jangan ikut menjadi item grid, kalau tidak terbentuk baris kedua dan kolom tidak sampai bawah. */
+.ws-chat > :not(.ws-chat__side):not(.ws-chat__main):not(.ws-chat__panel) { display: contents; }
+
 .ws-chat__side {
     display: flex;
     flex-direction: column;
