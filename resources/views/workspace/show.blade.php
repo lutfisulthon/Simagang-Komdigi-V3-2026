@@ -30,7 +30,7 @@
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
-            'backlog' => $isIntern ? null : ['Backlog', 'fa-layer-group', null, false],
+            'backlog' => $isIntern || ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
             'timeline' => ['Timeline', 'fa-chart-gantt', null, false],
@@ -48,6 +48,9 @@
             ['late', 'Terlambat', $s['late'], '#ef4444'],
         ];
         $mentorMembers = collect($members)->where('role', 'mentor')->values();
+        // Workspace tim punya banyak mentor: tampilkan dua nama pertama, sisanya sebagai hitungan.
+        $mentorNames = $mentorMembers->pluck('name');
+        $mentorLine = $mentorNames->take(2)->implode(', ') . ($mentorNames->count() > 2 ? ' +' . ($mentorNames->count() - 2) . ' lainnya' : '');
         $internMembers = collect($members)->where('role', 'intern')->values();
         $previewMembers = collect($members)->take(4);
     @endphp
@@ -64,14 +67,17 @@
         </nav>
 
         <x-workspace.hero class="ws-anim-1 mb-6"
-                          :eyebrow="'Kelompok · ' . $workspace['team']['name']"
+                          :eyebrow="'Kelompok' . ($workspace['team'] && ! ($workspace['is_personal'] ?? false) ? ' · ' . $workspace['team']['name'] : '')"
                           :title="$workspace['name']"
                           :subtitle="$workspace['description'] ?: 'Board tugas dan diskusi kelompok'">
             <x-slot:meta>
-                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: {{ $workspace['mentor']['name'] }}</span>
+                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: <span title="{{ $mentorNames->implode(', ') }}">{{ $mentorLine ?: $workspace['mentor']['name'] }}</span></span>
                 <span class="opacity-50 hidden sm:inline">·</span>
-                <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
-                <span class="opacity-50 hidden sm:inline">·</span>
+                {{-- Space pribadi hanya berisi satu intern: jumlah anak magang tidak perlu ditampilkan. --}}
+                @unless ($workspace['is_personal'] ?? false)
+                    <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
+                    <span class="opacity-50 hidden sm:inline">·</span>
+                @endunless
                 @if ($workspace['status'] === 'finished')
                     <span class="inline-flex items-center gap-1.5"><i class="fas fa-flag-checkered"></i> Selesai {{ $date($workspace['finished_at']) }}</span>
                 @elseif ($workspace['end_date'])
