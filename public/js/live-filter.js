@@ -23,6 +23,10 @@
         if (!(form instanceof HTMLFormElement)) return false;
         if ((form.method || 'get').toLowerCase() !== 'get') return false;
         if (form.hasAttribute('data-no-live')) return false;
+        // Form yang ditangani skrip (Alpine x-on:submit / @submit / onsubmit) atau membawa token CSRF bukan form filter:
+        // tanpa atribut method, browser menganggapnya GET, dan kirim otomatis akan menyimpan data yang belum selesai diisi.
+        if (form.hasAttribute('onsubmit') || form.querySelector('input[name="_token"]')) return false;
+        if (Array.from(form.attributes).some((a) => /^(x-on:submit|@submit)/.test(a.name))) return false;
         if (form.target && form.target !== '_self') return false;
         if (SKIP_ACTION.test(form.getAttribute('action') || '')) return false;
         return !!form.querySelector('select, textarea, input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=file])');

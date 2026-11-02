@@ -84,14 +84,15 @@
                             <option value="urgent">Urgent</option>
                         </select>
                     </div>
-                    <div>
+                    <div x-show="showDates">
                         <label class="ws-label" for="ws-f-start">Mulai</label>
                         <input id="ws-f-start" type="datetime-local" class="ws-input" x-model="form.start_at">
                     </div>
-                    <div>
-                        <label class="ws-label" for="ws-f-due">Deadline <span class="text-red-600">*</span></label>
+                    <div x-show="showDates">
+                        <label class="ws-label" for="ws-f-due">Deadline <span class="text-red-600" x-show="deadlineRequired">*</span><span class="font-normal text-slate-500" x-show="!deadlineRequired"> (opsional)</span></label>
                         <input id="ws-f-due" type="datetime-local" class="ws-input" x-model="form.due_at" :class="errors.due_at && 'ws-input--error'">
                         <p class="ws-field-error" x-show="errors.due_at" x-text="errors.due_at"></p>
+                        <p class="mt-1 text-xs text-slate-500" x-show="!deadlineRequired && !form.due_at">Kosong: tugas di sprint otomatis berakhir bersama sprint.</p>
                     </div>
                 </div>
 

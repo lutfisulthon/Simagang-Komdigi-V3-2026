@@ -115,7 +115,7 @@ class SprintTest extends TestCase
             ->assertViewHas('can', fn ($c) => $c['manage_sprints'] === true);
 
         $this->actingAs($this->ahmad->user)->get("/workspace/{$this->wsGta->id}?tab=backlog")
-            ->assertOk()->assertViewHas('tab', 'board')->assertViewHas('can', fn ($c) => $c['manage_sprints'] === false);
+            ->assertOk()->assertViewHas('tab', 'backlog')->assertViewHas('can', fn ($c) => $c['manage_sprints'] === false);
 
         $this->actingAs($this->mentor())->get("/workspace/{$this->wsGta->id}?tab=backlog")->assertViewHas('tab', 'backlog');
     }
@@ -423,5 +423,99 @@ class SprintTest extends TestCase
         $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/complete", ['move_to' => 'backlog'])->assertOk();
         $this->startSprint($second)->assertOk();
         $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/reopen")->assertUnprocessable()->assertJsonValidationErrors('sprint');
+    }
+
+    // ------------------------------------------------------------------ Deadline opsional di backlog
+
+    public function test_tugas_backlog_boleh_tanpa_deadline(): void
+    {
+        $this->actingAs($this->mentor())->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'Ide'])
+            ->assertCreated()->assertJsonPath('data.0.due_at', null)->assertJsonPath('data.0.sprint_id', null);
+    }
+
+    public function test_tugas_tanpa_deadline_masuk_sprint_mengikuti_akhir_sprint(): void
+    {
+        $id = $this->makeSprint()->json('data.id');
+        $end = $this->endDate();
+
+        // Dibuat langsung di sprint.
+        $this->actingAs($this->mentor())->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'A', 'sprint_id' => $id])
+            ->assertCreated()->assertJsonPath('data.0.due_at', fn ($v) => str_starts_with((string) $v, $end));
+
+        // Dipindah dari backlog ke sprint.
+        $taskId = $this->actingAs($this->mentor())->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'B'])->json('data.0.id');
+        $this->actingAs($this->mentor())->patchJson("/workspace/tasks/{$taskId}/sprint", ['sprint_id' => $id])
+            ->assertOk()->assertJsonPath('data.due_at', fn ($v) => str_starts_with((string) $v, $end));
+
+        // Deadline yang sudah diisi tidak ditimpa.
+        $own = $this->postTask($this->mentor(), $this->wsGta, ['title' => 'C'])->json('data.0.id');
+        $before = Task::find($own)->due_at->toIso8601String();
+        $this->actingAs($this->mentor())->patchJson("/workspace/tasks/{$own}/sprint", ['sprint_id' => $id])->assertOk();
+        $this->assertSame($before, Task::find($own)->due_at->toIso8601String());
+    }
+
+    public function test_deadline_tetap_wajib_di_space_pribadi(): void
+    {
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->spAhmad->id}/tasks", ['title' => 'Pribadi'])
+            ->assertUnprocessable()->assertJsonValidationErrors('due_at');
+    }
+
+    // ------------------------------------------------------------------ Ketua sprint (intern) menyusun tugas
+
+    public function test_intern_melihat_tab_backlog_dan_hanya_ketua_bisa_membuat_tugas(): void
+    {
+        $id = $this->makeSprint(['leader_id' => $this->ahmad->id])->json('data.id');
+
+        $this->actingAs($this->siti->user)->get("/workspace/{$this->wsGta->id}?tab=backlog")
+            ->assertOk()->assertViewHas('tab', 'backlog')->assertViewHas('can', fn ($c) => $c['create_task'] === false && $c['manage_sprints'] === false);
+
+        $this->actingAs($this->ahmad->user)->get("/workspace/{$this->wsGta->id}?tab=backlog")
+            ->assertOk()->assertViewHas('can', fn ($c) => $c['create_task'] === true && $c['manage_sprints'] === false);
+
+        $this->assertNotNull($id);
+    }
+
+    public function test_ketua_sprint_membuat_tugas_dan_membaginya_di_sprintnya(): void
+    {
+        $id = $this->makeSprint(['leader_id' => $this->ahmad->id])->json('data.id');
+        $other = $this->makeSprint(['name' => 'Sprint Lain', 'leader_id' => $this->siti->id])->json('data.id');
+
+        $res = $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", [
+            'title' => 'Rancang wireframe', 'sprint_id' => $id, 'assignee_ids' => [$this->ahmad->id, $this->siti->id],
+        ])->assertCreated();
+        $res->assertJsonCount(2, 'data.0.assignees')->assertJsonPath('data.0.sprint_id', $id);
+        $taskId = $res->json('data.0.id');
+
+        // Mengubah tugas di sprint sendiri boleh; menghapus hanya yang ia buat.
+        $this->actingAs($this->ahmad->user)->putJson("/workspace/tasks/{$taskId}", ['title' => 'Wireframe v2'])->assertOk();
+        $this->actingAs($this->ahmad->user)->deleteJson("/workspace/tasks/{$taskId}")->assertNoContent();
+
+        // Bukan di backlog, bukan di sprint yang dipimpin orang lain.
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'Liar'])
+            ->assertUnprocessable()->assertJsonValidationErrors('sprint_id');
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'Liar', 'sprint_id' => $other])
+            ->assertUnprocessable()->assertJsonValidationErrors('sprint_id');
+
+        // Siti memimpin sprint lain, bukan ini; intern tim lain sama sekali tidak boleh. Tugas di sprint lain tidak bisa diubah ketua ini.
+        $this->actingAs($this->siti->user)->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'x', 'sprint_id' => $id])->assertUnprocessable();
+        $this->actingAs($this->budi->user)->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'x', 'sprint_id' => $id])->assertForbidden();
+        $foreign = $this->actingAs($this->mentor())->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'Mentor', 'sprint_id' => $other])->json('data.0.id');
+        $this->actingAs($this->ahmad->user)->putJson("/workspace/tasks/{$foreign}", ['title' => 'x'])->assertForbidden();
+        $this->actingAs($this->ahmad->user)->deleteJson("/workspace/tasks/{$foreign}")->assertForbidden();
+    }
+
+    public function test_ketua_tidak_bisa_membagi_ke_intern_tim_lain_dan_kehilangan_hak_setelah_sprint_selesai(): void
+    {
+        $id = $this->makeSprint(['leader_id' => $this->ahmad->id])->json('data.id');
+
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", [
+            'title' => 'Tim lain', 'sprint_id' => $id, 'assignee_ids' => [$this->budi->id],
+        ])->assertUnprocessable()->assertJsonValidationErrors('assignee_ids');
+
+        $this->startSprint($id)->assertOk();
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/complete", ['move_to' => 'backlog'])->assertOk();
+
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", ['title' => 'Terlambat', 'sprint_id' => $id])
+            ->assertStatus(403);
     }
 }

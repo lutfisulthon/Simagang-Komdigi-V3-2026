@@ -9,7 +9,8 @@
                :class="{
                    'fa-circle-check text-emerald-500': t.type === 'success',
                    'fa-circle-exclamation text-red-500': t.type === 'error',
-                   'fa-circle-info text-indigo-500': t.type !== 'success' && t.type !== 'error'
+                   'fa-spinner fa-spin text-indigo-500': t.type === 'loading',
+                   'fa-circle-info text-indigo-500': t.type !== 'success' && t.type !== 'error' && t.type !== 'loading'
                }"></i>
             <p class="flex-1 text-gray-700" x-text="t.message"></p>
             <button type="button" class="ws-text-faint hover:text-slate-600" x-on:click="$store.wsToast.dismiss(t.id)" aria-label="Tutup">

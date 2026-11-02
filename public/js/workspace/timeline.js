@@ -111,6 +111,7 @@
             get filtered() {
                 const q = this.q.trim().toLowerCase();
                 return this.$store.wsTasks.tasks.filter((t) => {
+                    if (!t.due_at) return false;
                     if (!this.showDone && t.status === 'done') return false;
                     if (this.status && t.status !== this.status) return false;
                     if (this.mine && !this.isMine(t)) return false;

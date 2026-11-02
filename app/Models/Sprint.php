@@ -47,4 +47,10 @@ class Sprint extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    /** Deadline bawaan tugas di sprint ini: akhir hari terakhir sprint. */
+    public function defaultDeadline(): ?\Illuminate\Support\Carbon
+    {
+        return $this->end_date?->copy()->setTime(23, 59);
+    }
 }

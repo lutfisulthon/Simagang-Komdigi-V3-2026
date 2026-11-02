@@ -203,13 +203,25 @@
                 });
             },
 
+            // Deadline wajib hanya di Space pribadi. Di kelompok boleh kosong: backlog tanpa tanggal, di sprint mengikuti akhir sprint.
+            get deadlineRequired() {
+                return !this.$store.wsTasks.usesSprints;
+            },
+
+            // Tanggal mulai/deadline disembunyikan untuk tugas di backlog: belum dijadwalkan, tanggalnya ditentukan sprint.
+            get showDates() {
+                if (!this.$store.wsTasks.usesSprints) return true;
+                return !!(this.editing ? this.editing.sprint_id : this.sprintId);
+            },
+
             validate() {
                 const f = this.form;
                 const errors = {};
                 if (!f.title.trim()) errors.title = 'Judul wajib diisi.';
                 else if (f.title.length > 150) errors.title = 'Judul maksimal 150 karakter.';
                 if (f.story_points !== '' && !(/^\d{1,3}$/.test(String(f.story_points)) && Number(f.story_points) <= 100)) errors.story_points = 'Story point 0–100 (bilangan bulat).';
-                if (!f.due_at) errors.due_at = 'Deadline wajib diisi.';
+                if (!this.showDates) { /* backlog: tanggal tidak diisi di sini */ }
+                else if (!f.due_at) { if (this.deadlineRequired) errors.due_at = 'Deadline wajib diisi.'; }
                 else if (f.start_at && new Date(f.start_at) > new Date(f.due_at)) errors.due_at = 'Deadline harus setelah tanggal mulai.';
                 f.result_links.forEach((l, i) => {
                     if (l.url.trim() && !/^https?:\/\/\S+$/.test(l.url.trim())) errors['result_links.' + i + '.url'] = 'URL harus diawali http:// atau https://';

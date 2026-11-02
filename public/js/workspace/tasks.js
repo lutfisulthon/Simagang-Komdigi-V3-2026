@@ -50,7 +50,15 @@
     // Sprint tujuan default tugas baru: sprint berjalan (supaya langsung tampil di board), selain itu backlog.
     const defaultSprintId = () => {
         const store = window.Alpine && window.Alpine.store('wsTasks');
-        return store && store.activeSprint ? store.activeSprint.id : null;
+        if (!store) return null;
+        // Ketua sprint (intern) membuat tugas di sprint yang ia pimpin: yang berjalan dulu, lalu yang direncanakan.
+        const me = WS.config && WS.config.user;
+        if (me && me.role === 'intern') {
+            const mine = store.sprints.filter((sp) => sp.status !== 'completed' && store.leads(sp));
+            const pick = mine.find((sp) => sp.status === 'active') || mine[0];
+            return pick ? pick.id : null;
+        }
+        return store.activeSprint ? store.activeSprint.id : null;
     };
 
     WS.tasks = Object.assign(WS.tasks || {}, { STATUSES, allowedTargets, dialogFor, dueInfo, priorityIcon, defaultSprintId });
@@ -186,8 +194,12 @@
                 card.sprint_id = sprintId;
                 ids.forEach((id, i) => { const t = this.byId(id); if (t) t.rank = i + 1; });
                 this.busy[card.id] = true;
+                const startedAt = Date.now();
                 try {
                     await WS.api.tasks.plan(card.id, { sprint_id: sprintId, rank_order: ids });
+                    // Penanda "Memindahkan…" tampil minimal sebentar supaya prosesnya terlihat.
+                    const wait = 700 - (Date.now() - startedAt);
+                    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
                     if (from !== sprintId) {
                         const sp = this.sprintById(sprintId);
                         WS.toast(`${card.code} dipindah ke ${sp ? sp.name : 'Backlog'}.`, 'success');
@@ -251,7 +263,7 @@
 
             // Tugas terdekat yang belum lewat deadline.
             get nextDue() {
-                const open = this.tasks.filter((t) => ['todo', 'in_progress', 'revision'].includes(t.status) && !WS.tasks.unfinished(t));
+                const open = this.tasks.filter((t) => t.due_at && ['todo', 'in_progress', 'revision'].includes(t.status) && !WS.tasks.unfinished(t));
                 return open.sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0] || null;
             },
 
@@ -469,6 +481,7 @@
                     if (this.priority && t.priority !== this.priority) return false;
                     if (this.assignee && !t.assignees.some((a) => String(a.id) === this.assignee)) return false;
                     if (this.label && !t.labels.some((l) => String(l.id) === this.label)) return false;
+                    if ((from || to) && !t.due_at) return false;
                     const due = new Date(t.due_at).getTime();
                     if (from && due < from) return false;
                     if (to && due > to) return false;
@@ -480,7 +493,7 @@
                     title: (t) => t.title.toLowerCase(),
                     status: (t) => STATUSES.indexOf(t.status),
                     priority: (t) => PRIORITY_RANK[t.priority],
-                    due_at: (t) => new Date(t.due_at).getTime(),
+                    due_at: (t) => (t.due_at ? new Date(t.due_at).getTime() : Infinity),
                 }[this.sortKey];
                 return rows.sort((a, b) => (value(a) > value(b) ? dir : value(a) < value(b) ? -dir : 0));
             },

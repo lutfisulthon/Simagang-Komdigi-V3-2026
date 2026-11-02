@@ -7,7 +7,7 @@
  *  2. Transisi tema: SimagangSplash.transition('dark'|'light', fn) menutupi layar selama tema diganti.
  *
  *  3. Aktivitas: layar yang sama tampil saat pengguna berpindah halaman (klik tautan / kirim form) dan saat permintaan
- *     AJAX yang mengubah data berjalan lebih lama dari ~0,45 detik. Progres merayap sampai selesai, lalu penuh dan menghilang.
+ *     AJAX yang mengubah data berjalan lebih lama dari ~1,5 detik. Progres merayap sampai selesai, lalu penuh dan menghilang.
  *
  * API: SimagangSplash.available(), .show(), .transition(theme, applyFn), .loadingDone(), .begin(label), .end(), .navigate()
  */
@@ -30,7 +30,7 @@
     const meter = el.querySelector('[role="progressbar"]');
     const MIN_MS = 900;       // lama tampil minimum untuk layar pemuatan, supaya tidak berkedip
     const MAX_MS = 7000;      // jaring pengaman
-    const ACTIVITY_DELAY = 450;   // permintaan AJAX yang lebih cepat dari ini tidak menampilkan layar
+    const ACTIVITY_DELAY = 1500;  // permintaan AJAX yang lebih cepat dari ini tidak menampilkan layar
     const ACTIVITY_MIN_MS = 500;  // setelah tampil, minimal selama ini supaya tidak berkedip
     const NAV_MAX_MS = 12000;     // berpindah halaman yang tidak jadi (mis. unduhan): layar dilepas otomatis
     const NAV_FLAG = 'simagang-splash-nav';

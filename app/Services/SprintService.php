@@ -41,9 +41,15 @@ class SprintService
         $rank = $this->nextRank($workspace->id, $sprintId);
 
         $tasks = Task::where('workspace_id', $workspace->id)->whereIn('id', $taskIds)->orderBy('rank')->orderBy('id')->get();
+        $due = $sprintId ? Sprint::find($sprintId)?->defaultDeadline() : null;
 
         foreach ($tasks as $task) {
-            $task->forceFill(['sprint_id' => $sprintId, 'rank' => $rank++])->save();
+            $task->forceFill(['sprint_id' => $sprintId, 'rank' => $rank++]);
+            // Masuk sprint tanpa deadline: ikuti akhir sprint.
+            if ($due && $task->due_at === null) {
+                $task->due_at = $due;
+            }
+            $task->save();
         }
     }
 

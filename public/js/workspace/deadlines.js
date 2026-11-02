@@ -106,6 +106,7 @@
             get base() {
                 const uid = WS.config.user && WS.config.user.id;
                 return this.$store.wsTasks.tasks.filter((t) => {
+                    if (!t.due_at) return false;
                     if (t.status === 'done' && !this.showDone) return false;
                     if (this.mine && !t.assignees.some((a) => a.user_id === uid)) return false;
                     return true;

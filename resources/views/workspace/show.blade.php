@@ -29,7 +29,7 @@
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
-            'backlog' => $isIntern || ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
+            'backlog' => ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
             'timeline' => ['Timeline', 'fa-chart-gantt', null, false],

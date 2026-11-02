@@ -41,9 +41,7 @@
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-            @unless (auth()->user()->isIntern())
-                <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-on:click="$dispatch('ws-select-tab', 'backlog')"><i class="fas fa-layer-group"></i> Backlog</button>
-            @endunless
+            <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-on:click="$dispatch('ws-select-tab', 'backlog')"><i class="fas fa-layer-group"></i> Backlog</button>
             @if ($can['manage_sprints'] ?? false)
                 <button type="button" class="ws-btn ws-btn--soft ws-btn--sm" x-on:click="$dispatch('ws-sprint-complete', { sprint: sp })">Selesaikan sprint</button>
             @endif
@@ -54,7 +52,8 @@
     <p class="ws-sprint-bar ws-sprint-bar--idle text-sm text-slate-600">
         <i class="fas fa-circle-info text-indigo-500" aria-hidden="true"></i>
         <span>Belum ada sprint berjalan, jadi board kosong. Board hanya menampilkan tugas dari sprint yang sedang berjalan.@unless (auth()->user()->isIntern()) Susun tugas dan mulai sprint dari tab
-            <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'backlog')">Backlog</button>.@else Tunggu mentor memulai sprint.@endunless</span>
+            <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'backlog')">Backlog</button>.@else Tunggu mentor memulai sprint. Lihat rencananya di tab
+            <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'backlog')">Backlog</button>.@endunless</span>
     </p>
 </template>
 

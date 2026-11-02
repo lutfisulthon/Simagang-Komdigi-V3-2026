@@ -224,13 +224,24 @@ class TaskController extends Controller
 
         $data = $request->validate($this->payloadRules() + [
             'title' => ['required', 'string', 'max:150'],
-            'due_at' => array_filter(['required', 'date', $request->filled('start_at') ? 'after_or_equal:start_at' : null]),
+            // Deadline wajib hanya di Space pribadi; di kelompok boleh kosong (backlog) dan mengikuti akhir sprint saat masuk sprint.
+            'due_at' => array_filter([$workspace->type === 'intern' ? 'required' : 'nullable', 'date', $request->filled('start_at') ? 'after_or_equal:start_at' : null]),
             'separate_copies' => ['nullable', 'boolean'],
             'sprint_id' => ['nullable', 'integer'],
         ]);
 
         $data['sprint_id'] = $this->resolveSprint($workspace, $data['sprint_id'] ?? null);
         $data['epic_id'] = $this->resolveEpic($workspace, $data['epic_id'] ?? null);
+
+        // Ketua sprint (intern) hanya boleh membuat tugas di sprint yang ia pimpin, bukan di backlog atau sprint lain.
+        if ($request->user()->isIntern() && $workspace->type !== 'intern') {
+            $led = $data['sprint_id'] && $workspace->sprints()->whereKey($data['sprint_id'])
+                ->where('leader_intern_id', optional($request->user()->intern)->id)->exists();
+
+            if (! $led) {
+                throw ValidationException::withMessages(['sprint_id' => 'Ketua sprint hanya bisa membuat tugas di sprint yang ia pimpin.']);
+            }
+        }
 
         $user = $request->user();
         $data['result_links'] = $this->links($data) ?: null;
@@ -314,12 +325,12 @@ class TaskController extends Controller
         $rules['assignee_ids'] = ['sometimes', 'array'];
         $data = $request->validate($rules + [
             'title' => ['sometimes', 'required', 'string', 'max:150'],
-            'due_at' => ['sometimes', 'required', 'date'],
+            'due_at' => ['sometimes', $task->workspace->type === 'intern' ? 'required' : 'nullable', 'date'],
             'result_link' => ['sometimes', 'nullable', 'url', 'max:500'],
         ]);
 
         $start = array_key_exists('start_at', $data) ? $data['start_at'] : $task->start_at;
-        $due = $data['due_at'] ?? $task->due_at;
+        $due = array_key_exists('due_at', $data) ? $data['due_at'] : $task->due_at;
         if ($start && $due && Carbon::parse($due)->lt(Carbon::parse($start))) {
             throw ValidationException::withMessages(['due_at' => 'Deadline tidak boleh sebelum tanggal mulai.']);
         }
@@ -337,6 +348,11 @@ class TaskController extends Controller
             }
 
             $task->fill(collect($data)->only(['title', 'description', 'priority', 'story_points', 'epic_id', 'start_at', 'due_at'])->all());
+
+            // Deadline dikosongkan pada tugas yang ada di sprint: kembali ke akhir sprint.
+            if ($task->due_at === null && $task->sprint_id) {
+                $task->due_at = $task->sprint?->defaultDeadline();
+            }
 
             // PUT mengganti seluruh daftar tautan hasil bila dikirim.
             if (array_key_exists('result_links', $data) || array_key_exists('result_link', $data)) {
@@ -528,7 +544,12 @@ class TaskController extends Controller
             $this->sprints->lock($workspace);
 
             if ($task->sprint_id !== $target) {
-                $task->forceFill(['sprint_id' => $target, 'rank' => $this->sprints->nextRank($workspace->id, $target)])->save();
+                $task->forceFill(['sprint_id' => $target, 'rank' => $this->sprints->nextRank($workspace->id, $target)]);
+                // Masuk sprint tanpa deadline: ikuti akhir sprint.
+                if ($target && $task->due_at === null) {
+                    $task->due_at = $workspace->sprints()->whereKey($target)->first()?->defaultDeadline();
+                }
+                $task->save();
             }
 
             $this->sprints->applyOrder($workspace, $target, $data['rank_order'] ?? [$task->id]);
@@ -648,7 +669,8 @@ class TaskController extends Controller
     {
         $user = $request->user();
 
-        if ($user->isIntern()) {
+        // To-do pribadi: assignee selalu intern itu sendiri. Ketua sprint di tim membagi tugas seperti staf.
+        if ($user->isIntern() && $workspace->type === 'intern') {
             return [$user->intern->id];
         }
 

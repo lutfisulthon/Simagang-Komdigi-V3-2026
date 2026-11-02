@@ -152,11 +152,14 @@ class WorkspacePageController extends Controller
 
         $canSprints = $gate->allows('manageSprints', $workspace);
 
-        // Backlog hanya untuk staf di workspace tim (Space pribadi dan intern tidak memakainya).
+        // Backlog untuk semua anggota workspace tim (Space pribadi tidak memakainya); intern membacanya, ketua sprint menyusun tugas.
         $tabs = ['board', 'list', 'timeline', 'deadline', 'laporan', 'channel', 'activity'];
-        if (! $user->isIntern() && $workspace->type !== 'intern') {
+        if ($workspace->type !== 'intern') {
             array_unshift($tabs, 'backlog');
         }
+
+        $leadsSprint = $user->isIntern() && $user->intern && $workspace->type !== 'intern'
+            && $workspace->sprints()->where('leader_intern_id', $user->intern->id)->whereIn('status', ['planned', 'active'])->exists();
         $tab = in_array($request->query('tab'), $tabs, true) ? $request->query('tab') : 'board';
 
         $teamId = $this->labelTeamId($workspace);
@@ -176,7 +179,7 @@ class WorkspacePageController extends Controller
             'sprints' => $workspace->sprints()->with('leader')->get()->map(fn ($s) => $this->presenter->sprint($s))->all(),
             'channels' => $this->presenter->channels($workspace, $user),
             'can' => [
-                'create_task' => $gate->allows('create', [Task::class, $workspace]) && ! $user->isIntern(),
+                'create_task' => $gate->allows('create', [Task::class, $workspace]) && (! $user->isIntern() || $leadsSprint),
                 'manage_channels' => false,
                 'manage_labels' => $isManager && ! $workspace->is_archived,
                 'manage_sprints' => $canSprints,

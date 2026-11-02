@@ -66,10 +66,25 @@
             body = JSON.stringify(options.body);
         }
 
+        // Aksi yang tampilannya sudah berubah lebih dulu (optimistic): pindah status/sprint, bagi tugas, centang checklist.
+        const OPTIMISTIC_URL = /\/tasks\/\d+\/(status|sprint|assignees|checklist\/\d+)(\/|\?|$)/;
         // Permintaan yang mengubah data memakai layar pemuatan bila lambat (chat dan penanda baca dikecualikan).
         const splash = window.SimagangSplash;
-        const track = !!splash && String(method).toUpperCase() !== 'GET' && !options.silent && !/\/(messages|read|typing)(\/|\?|$)/.test(url);
+        const mutating = String(method).toUpperCase() !== 'GET' && !options.silent && !/\/(messages|read|typing)(\/|\?|$)/.test(url);
+        const track = !!splash && mutating && !OPTIMISTIC_URL.test(url);
         if (track) splash.begin('Memproses…');
+
+        // Penanda proses yang langsung terlihat untuk setiap aksi simpan/ubah/hapus: toast "…" dengan spinner,
+        // tampil minimal sebentar supaya tidak berkedip walau server cepat.
+        let loaderId = null;
+        const loaderAt = Date.now();
+        if (mutating && window.Alpine && window.Alpine.store('wsToast')) {
+            const verb = /\/tasks\/\d+\/sprint/.test(url) ? 'Memindahkan tugas…'
+                : /\/tasks\/\d+\/status/.test(url) ? 'Mengubah status…'
+                : /\/assignees/.test(url) ? 'Membagi tugas…'
+                : String(method).toUpperCase() === 'DELETE' ? 'Menghapus…' : 'Menyimpan…';
+            loaderId = window.Alpine.store('wsToast').push(verb, 'loading');
+        }
 
         try {
             let response;
@@ -93,6 +108,10 @@
             return payload;
         } finally {
             if (track) splash.end();
+            if (loaderId !== null) {
+                const id = loaderId;
+                setTimeout(() => window.Alpine.store('wsToast').dismiss(id), Math.max(0, 700 - (Date.now() - loaderAt)));
+            }
         }
     }
 
@@ -280,7 +299,7 @@
     }
 
     function toast(message, type = 'info') {
-        if (window.Alpine) window.Alpine.store('wsToast').push(message, type);
+        return window.Alpine ? window.Alpine.store('wsToast').push(message, type) : null;
     }
 
     // ---------- Dialog: fokus & keyboard ----------
@@ -361,7 +380,9 @@
             push(message, type = 'info') {
                 const id = ++this.seq;
                 this.items.push({ id, message, type });
-                setTimeout(() => this.dismiss(id), type === 'error' ? 6000 : 4000);
+                // 'loading' ditutup oleh pemanggilnya; batas 20 dtk hanya jaring pengaman.
+                setTimeout(() => this.dismiss(id), type === 'loading' ? 20000 : type === 'error' ? 6000 : 4000);
+                return id;
             },
             dismiss(id) {
                 this.items = this.items.filter((t) => t.id !== id);

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Models\Intern;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskLabel;
@@ -27,6 +28,8 @@ class TaskService
                 ->max('position') + 1;
 
             $sprintId = $data['sprint_id'] ?? null;
+            // Tanpa deadline: tugas di backlog dibiarkan kosong, tugas di sprint mengikuti akhir sprint.
+            $due = $data['due_at'] ?? ($sprintId ? Sprint::find($sprintId)?->defaultDeadline() : null);
             $rank = (int) Task::where('workspace_id', $workspace->id)->where('sprint_id', $sprintId)->max('rank') + 1;
 
             $task = Task::create([
@@ -42,7 +45,7 @@ class TaskService
                 'priority' => $data['priority'] ?? TaskPriority::Medium,
                 'created_by' => $creator->id,
                 'start_at' => $data['start_at'] ?? null,
-                'due_at' => $data['due_at'],
+                'due_at' => $due,
                 'position' => $position,
                 'result_links' => $data['result_links'] ?? null,
             ]);

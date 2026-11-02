@@ -37,7 +37,12 @@ class TaskPolicy
             return true;
         }
 
-        return $this->isOwnSpace($user, $workspace) && $this->canWrite($user, $workspace);
+        if ($this->isOwnSpace($user, $workspace) && $this->canWrite($user, $workspace)) {
+            return true;
+        }
+
+        // Ketua sprint (intern) menyusun tugas di sprint yang ia pimpin; sprint tujuannya dicek di TaskController::store.
+        return $this->leadsOpenSprint($user, $workspace) && $this->canWrite($user, $workspace);
     }
 
     public function update(User $user, Task $task): bool
@@ -52,7 +57,11 @@ class TaskPolicy
             return true;
         }
 
-        // Intern hanya mengubah to-do pribadi yang ia buat sendiri.
+        // Intern mengubah to-do pribadi yang ia buat sendiri, atau tugas di sprint yang ia pimpin.
+        if ($this->isSprintLeader($user, $task) && $this->canWrite($user, $workspace)) {
+            return true;
+        }
+
         return $this->isOwnSpace($user, $workspace)
             && $task->created_by === $user->id
             && $this->canWrite($user, $workspace);
@@ -65,8 +74,14 @@ class TaskPolicy
             return true;
         }
 
-        return $this->isWorkspaceMentor($user, $task->workspace)
-            && $task->created_by === $user->id;
+        if ($this->isWorkspaceMentor($user, $task->workspace) && $task->created_by === $user->id) {
+            return true;
+        }
+
+        // Ketua sprint hanya menghapus tugas yang ia buat sendiri di sprint yang ia pimpin.
+        return $task->created_by === $user->id
+            && $this->isSprintLeader($user, $task)
+            && $this->canWrite($user, $task->workspace);
     }
 
     /**
@@ -188,6 +203,22 @@ class TaskPolicy
         }
 
         return $this->canUseWorkspace($user) && $this->isMember($user, $workspace);
+    }
+
+    /** Intern ini memimpin sprint yang belum selesai di workspace tim ini. */
+    private function leadsOpenSprint(User $user, Workspace $workspace): bool
+    {
+        $internId = optional($user->intern)->id;
+
+        if (! $internId || $workspace->type === 'intern') {
+            return false;
+        }
+
+        return $this->leaderCache['ws:' . $internId . ':' . $workspace->id] ??= DB::table('sprints')
+            ->where('workspace_id', $workspace->id)
+            ->where('leader_intern_id', $internId)
+            ->whereIn('status', ['planned', 'active'])
+            ->exists();
     }
 
     private function isSprintLeader(User $user, Task $task): bool
