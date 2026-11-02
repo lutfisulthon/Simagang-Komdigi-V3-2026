@@ -161,7 +161,19 @@ class WorkspacePresenter
             'end_date' => $sprint->end_date?->toDateString(),
             'leader' => $sprint->leader ? $this->intern($sprint->leader) : null,
             'completed_at' => $this->iso($sprint->completed_at),
+            // Hitungan saat sprint ditutup (null selama belum selesai); tugas yang dipindah tidak ikut terhitung ulang.
+            'closed' => $sprint->status === Sprint::COMPLETED && $sprint->closed_total_tasks !== null ? [
+                'total' => (int) $sprint->closed_total_tasks,
+                'done' => (int) $sprint->closed_done_tasks,
+                'points_total' => (int) $sprint->closed_total_points,
+                'points_done' => (int) $sprint->closed_done_points,
+            ] : null,
         ];
+    }
+
+    public function epic(\App\Models\Epic $epic): array
+    {
+        return ['id' => $epic->id, 'workspace_id' => $epic->workspace_id, 'name' => $epic->name, 'color' => $epic->color];
     }
 
     public function workspace(Workspace $workspace, User $viewer): array
@@ -274,6 +286,8 @@ class WorkspacePresenter
             'id' => $task->id,
             'workspace_id' => $task->workspace_id,
             'sprint_id' => $task->sprint_id,
+            'epic_id' => $task->epic_id,
+            'story_points' => $task->story_points,
             'rank' => (int) $task->rank,
             'code' => $task->code,
             'title' => $task->title,
@@ -310,7 +324,10 @@ class WorkspacePresenter
 
         $card = $this->taskCard($task, $viewer);
 
+        $task->loadMissing('epic');
+
         return array_merge($card, [
+            'epic' => $task->epic ? $this->epic($task->epic) : null,
             'description' => $task->description,
             'description_html' => $this->markdown($task->description),
             'creator' => $this->user($task->creator),

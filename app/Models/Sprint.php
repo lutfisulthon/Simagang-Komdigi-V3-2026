@@ -20,6 +20,10 @@ class Sprint extends Model
         'leader_intern_id',
         'completed_at',
         'divide_reminded_at',
+        'closed_total_tasks',
+        'closed_done_tasks',
+        'closed_total_points',
+        'closed_done_points',
     ];
 
     protected $casts = [

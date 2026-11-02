@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Workspace;
 
+use App\Models\Epic;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Notifications\DeadlineExtendedNotification;
@@ -341,5 +342,86 @@ class SprintTest extends TestCase
         Sprint::whereKey($id)->update(['divide_reminded_at' => now()->subHours(25)]);
         $this->artisan('workspace:check-deadlines')->assertSuccessful();
         $this->assertSame(2, $this->notificationCount($this->ahmad->user, SprintToDivideNotification::class));
+    }
+
+    // ------------------------------------------------------------------ Story point, epic, snapshot, buka kembali
+
+    private function makeEpic(string $name = 'Autentikasi', $workspace = null, $as = null)
+    {
+        return $this->actingAs($as ?? $this->mentor())
+            ->postJson('/workspace/' . ($workspace ?? $this->wsGta)->id . '/epics', ['name' => $name, 'color' => '#10b981']);
+    }
+
+    public function test_tugas_menyimpan_story_point_dan_epic(): void
+    {
+        $epic = $this->makeEpic()->assertCreated()->json('data.id');
+
+        $card = $this->postTask($this->mentor(), $this->wsGta, ['title' => 'Login', 'story_points' => 5, 'epic_id' => $epic])
+            ->assertCreated()->assertJsonPath('data.0.story_points', 5)->assertJsonPath('data.0.epic_id', $epic);
+
+        $id = $card->json('data.0.id');
+        $this->actingAs($this->mentor())->putJson("/workspace/tasks/{$id}", ['story_points' => 8, 'epic_id' => null])
+            ->assertOk()->assertJsonPath('data.story_points', 8)->assertJsonPath('data.epic_id', null);
+
+        $this->postTask($this->mentor(), $this->wsGta, ['title' => 'x', 'story_points' => 101])->assertUnprocessable();
+        $this->postTask($this->mentor(), $this->wsGta, ['title' => 'x', 'story_points' => -1])->assertUnprocessable();
+    }
+
+    public function test_epic_hanya_boleh_milik_workspace_yang_sama(): void
+    {
+        $foreign = Epic::create(['workspace_id' => $this->spAhmad->id, 'name' => 'Lain', 'color' => '#111111'])->id;
+
+        $this->postTask($this->mentor(), $this->wsGta, ['title' => 'x', 'epic_id' => $foreign])
+            ->assertUnprocessable()->assertJsonValidationErrors('epic_id');
+    }
+
+    public function test_kelola_epic_hanya_mentor_nama_unik_dan_hapus_melepas_tugas(): void
+    {
+        $epic = $this->makeEpic('Backend')->assertCreated()->json('data.id');
+
+        $this->makeEpic('backend')->assertUnprocessable()->assertJsonValidationErrors('name');
+        $this->makeEpic('Frontend', null, $this->ahmad->user)->assertForbidden();
+
+        $this->actingAs($this->mentor())->patchJson("/workspace/epics/{$epic}", ['name' => 'API'])->assertOk()->assertJsonPath('data.name', 'API');
+        $this->actingAs($this->ahmad->user)->patchJson("/workspace/epics/{$epic}", ['name' => 'x'])->assertForbidden();
+
+        $taskId = $this->postTask($this->mentor(), $this->wsGta, ['title' => 'T', 'epic_id' => $epic])->json('data.0.id');
+        $this->actingAs($this->mentor())->deleteJson("/workspace/epics/{$epic}")->assertNoContent();
+        $this->assertNull(Task::find($taskId)->epic_id);
+    }
+
+    public function test_selesaikan_sprint_menyimpan_hitungan_saat_ditutup(): void
+    {
+        $id = $this->makeSprint(['tasks' => [['title' => 'A'], ['title' => 'B']]])->json('data.id');
+        $this->startSprint($id)->assertOk();
+        [$a, $b] = Task::orderBy('id')->get();
+        $a->update(['story_points' => 3, 'status' => 'done']);
+        $b->update(['story_points' => 5]);
+
+        $res = $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/complete", ['move_to' => 'backlog'])->assertOk();
+
+        // Tugas B pindah ke backlog, tetapi hitungan sprint tetap 1 dari 2 tugas dan 3 dari 8 poin.
+        $res->assertJsonPath('data.closed', ['total' => 2, 'done' => 1, 'points_total' => 8, 'points_done' => 3]);
+        $this->assertNull($b->fresh()->sprint_id);
+    }
+
+    public function test_buka_kembali_sprint_selesai(): void
+    {
+        $id = $this->makeSprint(['tasks' => [['title' => 'A']]])->json('data.id');
+        $this->startSprint($id)->assertOk();
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/complete", ['move_to' => 'backlog'])->assertOk();
+
+        $this->actingAs($this->ahmad->user)->postJson("/workspace/sprints/{$id}/reopen")->assertForbidden();
+
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/reopen")
+            ->assertOk()->assertJsonPath('data.status', 'active')->assertJsonPath('data.closed', null);
+
+        // Hanya sprint selesai yang bisa dibuka; tidak boleh ada dua sprint berjalan.
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/reopen")->assertUnprocessable();
+
+        $second = $this->makeSprint()->json('data.id');
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/complete", ['move_to' => 'backlog'])->assertOk();
+        $this->startSprint($second)->assertOk();
+        $this->actingAs($this->mentor())->postJson("/workspace/sprints/{$id}/reopen")->assertUnprocessable()->assertJsonValidationErrors('sprint');
     }
 }

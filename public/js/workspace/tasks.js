@@ -64,6 +64,7 @@
             workspace: null,
             tasks: [],
             sprints: [],       // Sprint[] kelompok ini (planned, active, completed)
+            epics: [],         // Epic[] kelompok ini { id, name, color }
             interns: [],       // anggota yang bisa di-assign (assign di board)
             initialDone: 0,
             readOnly: false,
@@ -75,6 +76,7 @@
                 this.workspace = config.workspace;
                 this.tasks = config.tasks;
                 this.sprints = config.sprints || [];
+                this.epics = config.epics || [];
                 this.interns = config.interns || [];
                 this.readOnly = !!config.workspace.is_read_only;
                 this.initialDone = config.tasks.filter((t) => t.status === 'done').length;
@@ -107,10 +109,45 @@
                 return this.sprints.find((sp) => sp.status === 'active') || null;
             },
 
-            // Board hanya menampilkan sprint berjalan. Tanpa sprint aktif: semua tugas (kelompok tanpa sprint).
+            // Board hanya menampilkan sprint berjalan; tanpa sprint berjalan board kosong (seperti Jira).
+            // Space pribadi intern tidak memakai sprint, jadi semua tugasnya tampil.
+            get usesSprints() {
+                return !(this.workspace && this.workspace.is_personal);
+            },
+
             onBoard(t) {
+                if (!this.usesSprints) return true;
                 const active = this.activeSprint;
-                return active ? t.sprint_id === active.id : true;
+                return !!active && t.sprint_id === active.id;
+            },
+
+            // ---------- Epic ----------
+
+            epicById(id) {
+                return id ? this.epics.find((e) => e.id === id) || null : null;
+            },
+
+            upsertEpic(epic) {
+                const i = this.epics.findIndex((e) => e.id === epic.id);
+                if (i === -1) this.epics.push(epic);
+                else this.epics.splice(i, 1, Object.assign({}, this.epics[i], epic));
+                this.epics.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+                window.dispatchEvent(new CustomEvent('ws-epics-changed', { detail: { epics: this.epics } }));
+            },
+
+            removeEpic(id) {
+                this.epics = this.epics.filter((e) => e.id !== id);
+                this.tasks.forEach((t) => { if (t.epic_id === id) t.epic_id = null; });
+                window.dispatchEvent(new CustomEvent('ws-epics-changed', { detail: { epics: this.epics } }));
+            },
+
+            // Total story point satu sprint/backlog (tugas tanpa poin dihitung 0).
+            points(sprintId) {
+                return this.section(sprintId).reduce((sum, t) => sum + (t.story_points || 0), 0);
+            },
+
+            pointsDone(sprintId) {
+                return this.section(sprintId).filter((t) => t.status === 'done').reduce((sum, t) => sum + (t.story_points || 0), 0);
             },
 
             // Isi satu bagian backlog (sprintId null = Backlog), urut rank.

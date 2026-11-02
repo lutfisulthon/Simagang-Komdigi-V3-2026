@@ -32,6 +32,8 @@ class TaskService
             $task = Task::create([
                 'workspace_id' => $workspace->id,
                 'sprint_id' => $sprintId,
+                'epic_id' => $data['epic_id'] ?? null,
+                'story_points' => $data['story_points'] ?? null,
                 'rank' => $rank,
                 'number' => $number,
                 'title' => $data['title'],

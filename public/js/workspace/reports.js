@@ -58,7 +58,9 @@
     }
 
     document.addEventListener('alpine:init', () => {
-        window.Alpine.data('wsReports', () => ({
+        // config: { fullScope: bool } — true bila memakai seluruh tugas kelompok (mentor/admin).
+        window.Alpine.data('wsReports', (config = {}) => ({
+            fullScope: !!config.fullScope,
             sprintId: null,
             w: 560,
             observer: null,
@@ -179,6 +181,23 @@
                     label: sp.name,
                     value: this.scope.filter((t) => t.sprint_id === sp.id && t.status === 'done').length,
                 })));
+            },
+
+            // Velocity: story point yang selesai per sprint (sprint berjalan & selesai). Poin "selesai" dihitung dari tugas Selesai
+            // yang tetap tercatat di sprintnya; "komitmen" memakai hitungan saat sprint ditutup (mentor/admin).
+            get pointsVelocity() {
+                const store = this.$store.wsTasks;
+                const sprints = store.sprints.filter((sp) => sp.status !== 'planned');
+                const sum = (list) => list.reduce((n, t) => n + (t.story_points || 0), 0);
+                const rows = sprints.map((sp) => {
+                    const inSprint = this.scope.filter((t) => t.sprint_id === sp.id);
+                    const done = sum(inSprint.filter((t) => t.status === 'done'));
+                    const committed = sp.closed && this.fullScope ? sp.closed.points_total : sum(inSprint);
+                    return { label: sp.name, value: done, committed, status: sp.status };
+                });
+                const finished = rows.filter((r) => r.status === 'completed').slice(-3);
+                const avg = finished.length ? Math.round(finished.reduce((n, r) => n + r.value, 0) / finished.length * 10) / 10 : null;
+                return { ...bars(rows), avg, sample: finished.length, rows };
             },
 
             // Tugas selesai per minggu, 8 minggu terakhir.

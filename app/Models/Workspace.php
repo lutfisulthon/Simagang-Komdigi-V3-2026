@@ -73,6 +73,11 @@ class Workspace extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function epics()
+    {
+        return $this->hasMany(Epic::class)->orderBy('name');
+    }
+
     public function sprints()
     {
         return $this->hasMany(Sprint::class)->orderBy('id');

@@ -28,6 +28,8 @@ class Task extends Model
         'reminded_at',
         'position',
         'rank',
+        'story_points',
+        'epic_id',
         'score',
         'feedback',
         'result_link',
@@ -54,6 +56,11 @@ class Task extends Model
     public function workspace()
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    public function epic()
+    {
+        return $this->belongsTo(Epic::class);
     }
 
     public function sprint()

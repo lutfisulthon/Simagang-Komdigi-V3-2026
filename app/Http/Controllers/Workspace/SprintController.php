@@ -259,13 +259,24 @@ class SprintController extends Controller
                 $targetId = $target->id;
             }
 
+            // Simpan hitungan sebelum tugas dipindah: kartu sprint selesai menampilkan "selesai dari total" saat ditutup.
+            $all = $sprint->tasks()->get(['status', 'story_points']);
+            $done = $all->where('status', TaskStatus::Done);
+
             // Tugas Selesai tetap tercatat di sprint ini (riwayat laporan); sisanya dipindah.
             $movedIds = $sprint->tasks()->where('status', '!=', TaskStatus::Done->value)
                 ->orderBy('rank')->orderBy('id')->pluck('id')->all();
 
             $this->sprints->moveTasks($workspace, $movedIds, $targetId);
 
-            $sprint->forceFill(['status' => Sprint::COMPLETED, 'completed_at' => now()])->save();
+            $sprint->forceFill([
+                'status' => Sprint::COMPLETED,
+                'completed_at' => now(),
+                'closed_total_tasks' => $all->count(),
+                'closed_done_tasks' => $done->count(),
+                'closed_total_points' => (int) $all->sum('story_points'),
+                'closed_done_points' => (int) $done->sum('story_points'),
+            ])->save();
         });
 
         $extra = ['moved' => ['task_ids' => $movedIds, 'sprint_id' => $targetId], 'created_sprint' => null];
@@ -276,6 +287,39 @@ class SprintController extends Controller
         }
 
         return $this->body($sprint, $extra);
+    }
+
+    /**
+     * Buka kembali sprint yang sudah selesai (hanya bila tidak ada sprint berjalan).
+     * Tugas yang sudah dipindah saat sprint ditutup tetap di tempat barunya.
+     */
+    public function reopen(Sprint $sprint): JsonResponse
+    {
+        $workspace = $sprint->workspace;
+        $this->authorize('manageSprints', $workspace);
+
+        DB::transaction(function () use ($workspace, $sprint) {
+            $this->sprints->lock($workspace);
+            $sprint->refresh();
+
+            if ($sprint->status !== Sprint::COMPLETED) {
+                throw ValidationException::withMessages(['sprint' => 'Hanya sprint yang sudah selesai yang bisa dibuka kembali.']);
+            }
+            if ($workspace->sprints()->where('status', Sprint::ACTIVE)->exists()) {
+                throw ValidationException::withMessages(['sprint' => 'Selesaikan sprint yang sedang berjalan terlebih dahulu.']);
+            }
+
+            $sprint->forceFill([
+                'status' => Sprint::ACTIVE,
+                'completed_at' => null,
+                'closed_total_tasks' => null,
+                'closed_done_tasks' => null,
+                'closed_total_points' => null,
+                'closed_done_points' => null,
+            ])->save();
+        });
+
+        return $this->body($sprint);
     }
 
     /** Hanya sprint yang belum dimulai; tugasnya kembali ke backlog. */

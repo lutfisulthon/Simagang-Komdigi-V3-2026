@@ -16,9 +16,14 @@
             @endif
         </p>
         @if ($canManage)
-            <button type="button" class="ws-btn ws-btn--soft ws-btn--sm" x-on:click="$dispatch('ws-sprint-form', {})">
-                <i class="fas fa-plus"></i> Buat sprint
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-on:click="$dispatch('ws-epics-open')">
+                    <i class="fas fa-bolt"></i> Epic <span class="text-slate-500" x-text="'(' + $store.wsTasks.epics.length + ')'"></span>
+                </button>
+                <button type="button" class="ws-btn ws-btn--soft ws-btn--sm" x-on:click="$dispatch('ws-sprint-form', {})">
+                    <i class="fas fa-plus"></i> Buat sprint
+                </button>
+            </div>
         @endif
     </div>
 
@@ -34,6 +39,7 @@
                         <span class="ws-badge ws-status--in_progress !text-[11px] !px-2 !py-0" x-show="sec.sprint && sec.sprint.status === 'active'">Berjalan</span>
                         <span class="text-xs text-slate-500" x-show="sec.sprint && dateRange(sec.sprint)" x-text="sec.sprint ? dateRange(sec.sprint) : ''"></span>
                         <span class="text-xs text-slate-500" x-text="'(' + counts(sec.id).total + ' tugas)'"></span>
+                        <span class="ws-points" x-show="$store.wsTasks.points(sec.id)" x-text="$store.wsTasks.points(sec.id) + ' poin'" title="Total story point"></span>
                     </button>
                     <span class="flex flex-wrap items-center gap-1.5">
                         <span class="ws-leader-chip" x-show="sec.sprint && sec.sprint.leader" :title="sec.sprint && sec.sprint.leader ? 'Ketua tim: ' + sec.sprint.leader.name : ''">
@@ -97,7 +103,8 @@
                                     <span class="ws-mono text-xs ws-text-faint shrink-0 w-11" x-text="t.code"></span>
                                     <span class="min-w-0 flex-1">
                                         <span class="block text-sm font-medium text-gray-800 truncate" x-text="t.title"></span>
-                                        <span class="ws-bl-row__labels" x-show="t.labels.length">
+                                        <span class="ws-bl-row__labels" x-show="t.labels.length || t.epic_id">
+                                            <span class="ws-label-chip" x-show="epic(t)"><span class="ws-label-chip__dot" :style="{ background: (epic(t) || {}).color }"></span><span x-text="(epic(t) || {}).name"></span></span>
                                             <template x-for="label in t.labels" :key="label.id">
                                                 <span class="ws-label-chip"><span class="ws-label-chip__dot" :style="{ background: label.color }"></span><span x-text="label.name"></span></span>
                                             </template>
@@ -105,6 +112,7 @@
                                     </span>
                                 </button>
                                 <div class="ws-bl-row__meta">
+                                    <span class="ws-points" x-show="t.story_points !== null" x-text="t.story_points" title="Story point"></span>
                                     <span class="ws-badge !text-[11px] !px-2 !py-0" :class="'ws-status--' + t.status"><span x-text="WS.STATUS[t.status]"></span></span>
                                     <span class="ws-bl-row__prio" :class="'ws-priority--' + t.priority" :title="'Prioritas ' + WS.PRIORITY[t.priority]">
                                         <i class="fas" :class="priorityIcon(t.priority)" aria-hidden="true"></i><span class="sr-only" x-text="'Prioritas ' + WS.PRIORITY[t.priority]"></span>
@@ -157,7 +165,13 @@
                 <li class="ws-bl-done">
                     <span class="font-semibold text-gray-800" x-text="sp.name"></span>
                     <span class="text-xs text-slate-500" x-text="dateRange(sp)"></span>
-                    <span class="text-xs text-slate-600 sm:ml-auto" x-text="counts(sp.id).done + '/' + counts(sp.id).total + ' tugas selesai'"></span>
+                    <span class="text-xs text-slate-600 sm:ml-auto" x-text="closed(sp).done + '/' + closed(sp).total + ' tugas selesai'"></span>
+                    <span class="ws-points" x-show="closed(sp).points_total" x-text="closed(sp).points_done + '/' + closed(sp).points_total + ' poin'"></span>
+                    @if ($canManage)
+                        <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" :disabled="hasActive"
+                                :title="hasActive ? 'Selesaikan sprint yang sedang berjalan terlebih dahulu' : 'Buka kembali sprint ini'"
+                                x-on:click="$dispatch('ws-sprint-reopen', { sprint: sp })"><i class="fas fa-rotate-left"></i> Buka kembali</button>
+                    @endif
                 </li>
             </template>
         </ul>

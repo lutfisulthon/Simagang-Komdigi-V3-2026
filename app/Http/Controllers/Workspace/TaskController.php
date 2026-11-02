@@ -191,6 +191,8 @@ class TaskController extends Controller
         return [
             'description' => ['nullable', 'string', 'max:10000'],
             'priority' => ['nullable', Rule::enum(TaskPriority::class)],
+            'story_points' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'epic_id' => ['nullable', 'integer'],
             'start_at' => ['nullable', 'date'],
             'assignee_ids' => ['nullable', 'array'],
             'assignee_ids.*' => ['integer', 'distinct'],
@@ -228,6 +230,7 @@ class TaskController extends Controller
         ]);
 
         $data['sprint_id'] = $this->resolveSprint($workspace, $data['sprint_id'] ?? null);
+        $data['epic_id'] = $this->resolveEpic($workspace, $data['epic_id'] ?? null);
 
         $user = $request->user();
         $data['result_links'] = $this->links($data) ?: null;
@@ -258,6 +261,20 @@ class TaskController extends Controller
         return response()->json([
             'data' => $created->map(fn (Task $t) => $this->card($t, $request))->values(),
         ], 201);
+    }
+
+    /** Epic harus milik workspace ini; null = tanpa epic. */
+    private function resolveEpic(Workspace $workspace, mixed $epicId): ?int
+    {
+        if ($epicId === null || $epicId === '') {
+            return null;
+        }
+
+        if (! $workspace->epics()->whereKey((int) $epicId)->exists()) {
+            throw ValidationException::withMessages(['epic_id' => 'Pilih epic dari kelompok ini.']);
+        }
+
+        return (int) $epicId;
     }
 
     /** Sprint tujuan harus milik workspace ini dan belum selesai; null = backlog. */
@@ -315,7 +332,11 @@ class TaskController extends Controller
         $addedInternIds = [];
 
         DB::transaction(function () use ($task, $data, $request, &$addedInternIds) {
-            $task->fill(collect($data)->only(['title', 'description', 'priority', 'start_at', 'due_at'])->all());
+            if (array_key_exists('epic_id', $data)) {
+                $data['epic_id'] = $this->resolveEpic($task->workspace, $data['epic_id']);
+            }
+
+            $task->fill(collect($data)->only(['title', 'description', 'priority', 'story_points', 'epic_id', 'start_at', 'due_at'])->all());
 
             // PUT mengganti seluruh daftar tautan hasil bila dikirim.
             if (array_key_exists('result_links', $data) || array_key_exists('result_link', $data)) {

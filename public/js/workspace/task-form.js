@@ -54,7 +54,7 @@
 
     // Bentuk form kosong — modal dirender sebelum form pertama kali dibuka.
     function blankForm() {
-        return { title: '', description: '', priority: 'medium', assignee_ids: [], label_ids: [], start_at: '', due_at: '', checklist: [], result_links: [],
+        return { title: '', description: '', priority: 'medium', assignee_ids: [], label_ids: [], start_at: '', due_at: '', checklist: [], result_links: [], story_points: '', epic_id: '',
             separate_copies: false };
     }
 
@@ -112,12 +112,17 @@
             saving: false,
             interns: config.interns,
             labels: config.labels,
+            epics: config.epics || [],
             selfOnly: !!config.selfInternId,
             sprintId: null,       // sprint tujuan tugas baru (null = backlog)
             canManageLabels: !!config.canManageLabels,
 
             init() {
                 window.addEventListener('ws-open-task-form', (e) => this.start(e.detail || {}));
+                window.addEventListener('ws-epics-changed', (e) => {
+                    this.epics = e.detail.epics;
+                    if (!this.epics.some((x) => String(x.id) === String(this.form.epic_id))) this.form.epic_id = '';
+                });
                 window.addEventListener('ws-labels-changed', (e) => {
                     this.labels = e.detail.labels;
                     const ids = new Set(e.detail.labels.map((l) => l.id));
@@ -146,6 +151,8 @@
                     due_at: toLocalInput(t.due_at),
                     checklist: t.checklist_items ? t.checklist_items.map((c) => ({ id: c.id, content: c.content, is_done: c.is_done })) : [],
                     result_links: t.result_links ? t.result_links.map((l) => ({ url: l.url, label: l.label || '' })) : [],
+                    story_points: t.story_points === null || t.story_points === undefined ? '' : String(t.story_points),
+                    epic_id: t.epic_id ? String(t.epic_id) : '',
                     separate_copies: false,
                 };
                 this.open = true;
@@ -201,6 +208,7 @@
                 const errors = {};
                 if (!f.title.trim()) errors.title = 'Judul wajib diisi.';
                 else if (f.title.length > 150) errors.title = 'Judul maksimal 150 karakter.';
+                if (f.story_points !== '' && !(/^\d{1,3}$/.test(String(f.story_points)) && Number(f.story_points) <= 100)) errors.story_points = 'Story point 0–100 (bilangan bulat).';
                 if (!f.due_at) errors.due_at = 'Deadline wajib diisi.';
                 else if (f.start_at && new Date(f.start_at) > new Date(f.due_at)) errors.due_at = 'Deadline harus setelah tanggal mulai.';
                 f.result_links.forEach((l, i) => {
@@ -216,6 +224,8 @@
                     title: f.title.trim(),
                     description: f.description,
                     priority: f.priority,
+                    story_points: f.story_points === '' ? null : Number(f.story_points),
+                    epic_id: f.epic_id ? Number(f.epic_id) : null,
                     assignee_ids: f.assignee_ids,
                     label_ids: f.label_ids,
                     start_at: fromLocalInput(f.start_at),

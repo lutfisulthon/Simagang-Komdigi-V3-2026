@@ -172,6 +172,7 @@ class WorkspacePageController extends Controller
                 ? TaskLabel::where('team_id', $teamId)->orderBy('name')->get(['id', 'name', 'color'])->toArray()
                 : [],
             'initialTasks' => $this->initialTasks($workspace, $user),
+            'epics' => $workspace->epics()->get()->map(fn ($e) => $this->presenter->epic($e))->all(),
             'sprints' => $workspace->sprints()->with('leader')->get()->map(fn ($s) => $this->presenter->sprint($s))->all(),
             'channels' => $this->presenter->channels($workspace, $user),
             'can' => [
@@ -239,6 +240,7 @@ class WorkspacePageController extends Controller
             'members' => $this->presenter->members($task->workspace),
             'assignableInterns' => $this->assignableInterns($task->workspace),
             'labels' => $teamId ? TaskLabel::where('team_id', $teamId)->orderBy('name')->get(['id', 'name', 'color'])->toArray() : [],
+            'epics' => $task->workspace->epics()->get()->map(fn ($e) => $this->presenter->epic($e))->all(),
         ]);
     }
 

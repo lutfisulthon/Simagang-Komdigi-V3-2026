@@ -3211,3 +3211,20 @@ a.ws-chip.ws-chip--late[aria-current="true"],
     .ws-wl__row { grid-template-columns: 88px 1fr 24px; gap: 8px; }
 }
 
+
+
+/* ---------- Story point (estimasi tugas) ---------- */
+.ws-points {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+}

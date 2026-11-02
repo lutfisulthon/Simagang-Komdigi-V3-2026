@@ -55,7 +55,7 @@
     @endphp
 
     {{-- Boot store tugas sebelum board/list diinisialisasi (urutan DOM). --}}
-    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks, 'sprints' => $sprints ?? [], 'interns' => $assignableInterns]))"></div>
+    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks, 'sprints' => $sprints ?? [], 'epics' => $epics ?? [], 'interns' => $assignableInterns]))"></div>
     <div hidden x-data x-init="$store.wsChat.boot(@js(['workspaceId' => $workspace['id'], 'channels' => $channels, 'readOnly' => $workspace['is_read_only']]))"></div>
 
     <div x-data="wsWorkspaceShow(@js(['tab' => $tab, 'tabs' => array_keys($tabs)]))">

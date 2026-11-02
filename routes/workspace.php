@@ -8,6 +8,7 @@ use App\Http\Controllers\Workspace\InsightController;
 use App\Http\Controllers\Workspace\LabelController;
 use App\Http\Controllers\Workspace\MessageController;
 use App\Http\Controllers\Workspace\NotificationController;
+use App\Http\Controllers\Workspace\EpicController;
 use App\Http\Controllers\Workspace\SprintController;
 use App\Http\Controllers\Workspace\TaskCommentController;
 use App\Http\Controllers\Workspace\TaskController;
@@ -58,11 +59,16 @@ Route::middleware('auth')->prefix('workspace')->name('workspace.')->group(functi
 
     // Sprint dan backlog
     Route::post('{workspace}/sprints', [SprintController::class, 'store'])->whereNumber('workspace')->name('sprints.store');
+    // Epic per kelompok
+    Route::post('{workspace}/epics', [EpicController::class, 'store'])->whereNumber('workspace')->name('epics.store');
+    Route::patch('epics/{epic}', [EpicController::class, 'update'])->whereNumber('epic')->name('epics.update');
+    Route::delete('epics/{epic}', [EpicController::class, 'destroy'])->whereNumber('epic')->name('epics.destroy');
     Route::prefix('sprints/{sprint}')->whereNumber('sprint')->group(function () {
         Route::patch('/', [SprintController::class, 'update'])->name('sprints.update');
         Route::delete('/', [SprintController::class, 'destroy'])->name('sprints.destroy');
         Route::post('start', [SprintController::class, 'start'])->name('sprints.start');
         Route::post('complete', [SprintController::class, 'complete'])->name('sprints.complete');
+        Route::post('reopen', [SprintController::class, 'reopen'])->name('sprints.reopen');
     });
 
     Route::prefix('tasks/{task}')->whereNumber('task')->group(function () {

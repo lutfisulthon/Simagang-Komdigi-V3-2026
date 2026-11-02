@@ -4,7 +4,7 @@
 --}}
 
 {{-- ================= Form buat / edit ================= --}}
-<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'selfInternId' => $selfInternId ?? null, 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
+<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'epics' => $epics ?? [], 'selfInternId' => $selfInternId ?? null, 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
     <x-workspace.modal name="ws-task-form" max-width="lg" labelledby="ws-task-form-heading" x-model="open">
         <form x-on:submit.prevent="submit()" novalidate class="-mt-1">
             <h2 id="ws-task-form-heading" class="text-lg font-bold text-gray-800 mb-5" x-text="editing ? 'Edit ' + editing.code : 'Buat tugas baru'"></h2>
@@ -55,6 +55,22 @@
                             <span class="block text-xs text-slate-600" x-text="form.separate_copies ? 'Setiap intern mengerjakan dan dinilai sendiri-sendiri.' : 'Tidak dicentang: satu tugas dikerjakan bersama oleh semua assignee.'"></span>
                         </span>
                     </label>
+                </div>
+
+                {{-- Story point & epic (perencanaan sprint) --}}
+                <div class="grid sm:grid-cols-2 gap-4" x-show="!selfOnly">
+                    <div>
+                        <label class="ws-label" for="ws-f-points">Story point <span class="font-normal text-slate-500">(estimasi, opsional)</span></label>
+                        <input id="ws-f-points" type="number" min="0" max="100" step="1" inputmode="numeric" class="ws-input" x-model="form.story_points" placeholder="mis. 3">
+                        <p class="ws-field-error" x-show="errors.story_points" x-text="errors.story_points"></p>
+                    </div>
+                    <div>
+                        <label class="ws-label" for="ws-f-epic">Epic <span class="font-normal text-slate-500">(opsional)</span></label>
+                        <select id="ws-f-epic" class="ws-input" x-model="form.epic_id" :disabled="!epics.length">
+                            <option value="" x-text="epics.length ? 'Tanpa epic' : 'Belum ada epic (buat di tab Backlog)'"></option>
+                            <template x-for="e in epics" :key="e.id"><option :value="String(e.id)" x-text="e.name"></option></template>
+                        </select>
+                    </div>
                 </div>
 
                 {{-- Prioritas & waktu --}}

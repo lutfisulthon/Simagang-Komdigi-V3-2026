@@ -47,7 +47,15 @@
         };
     }
 
-    WS.sprints = { dateRange, remaining, counts };
+    // Hitungan sprint selesai: angka saat ditutup (dari server) supaya tidak berubah walau tugas dipindah.
+    function closedCounts(sp, tasks) {
+        if (sp.closed) return sp.closed;
+        const c = counts(tasks);
+        const pts = (list) => list.reduce((sum, t) => sum + (t.story_points || 0), 0);
+        return { total: c.total, done: c.done, points_total: pts(tasks), points_done: pts(tasks.filter((t) => t.status === 'done')) };
+    }
+
+    WS.sprints = { dateRange, remaining, counts, closedCounts };
 
     document.addEventListener('alpine:init', () => {
         const Alpine = window.Alpine;
@@ -126,6 +134,14 @@
                 return counts(this.tasks(id));
             },
 
+            closed(sp) {
+                return closedCounts(sp, this.tasks(sp.id));
+            },
+
+            epic(t) {
+                return this.$store.wsTasks.epicById(t.epic_id);
+            },
+
             // Tujuan "Pindah ke" untuk satu tugas: semua bagian lain (kecuali sprint selesai).
             targets(card) {
                 return this.sections.filter((s) => s.id !== (card.sprint_id || null));
@@ -154,6 +170,86 @@
             priorityIcon: WS.tasks.priorityIcon,
         }));
 
+        // ---------- Epic (kelola) ----------
+        // config: { workspaceId }. Dibuka lewat event ws-epics-open.
+        Alpine.data('wsEpics', (config) => ({
+            open: false,
+            form: { name: '', color: '#6366f1' },
+            editingId: null,
+            confirmId: null,
+            errors: {},
+            saving: false,
+            colors: ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#64748b'],
+
+            init() {
+                window.addEventListener('ws-epics-open', () => { this.reset(); this.open = true; });
+            },
+
+            get store() {
+                return this.$store.wsTasks;
+            },
+
+            get epics() {
+                return this.store.epics;
+            },
+
+            usage(id) {
+                return this.store.tasks.filter((t) => t.epic_id === id).length;
+            },
+
+            reset() {
+                this.editingId = null;
+                this.confirmId = null;
+                this.errors = {};
+                this.form = { name: '', color: this.colors[this.epics.length % this.colors.length] };
+            },
+
+            edit(e) {
+                this.editingId = e.id;
+                this.confirmId = null;
+                this.errors = {};
+                this.form = { name: e.name, color: e.color };
+                this.$nextTick(() => this.$refs.name && this.$refs.name.focus());
+            },
+
+            async save() {
+                const name = this.form.name.trim();
+                if (!name) { this.errors = { name: 'Nama epic wajib diisi.' }; return; }
+                if (name.length > 60) { this.errors = { name: 'Nama epic maksimal 60 karakter.' }; return; }
+                this.errors = {};
+                this.saving = true;
+                try {
+                    const payload = { name, color: this.form.color };
+                    const editing = !!this.editingId;
+                    const res = editing
+                        ? await WS.api.epics.update(this.editingId, payload)
+                        : await WS.api.epics.create(config.workspaceId, payload);
+                    this.store.upsertEpic(res.data);
+                    WS.toast(editing ? 'Epic disimpan.' : `Epic "${res.data.name}" dibuat.`, 'success');
+                    this.reset();
+                } catch (err) {
+                    if (err.status === 422 && err.errors) this.errors = Object.fromEntries(Object.entries(err.errors).map(([k, v]) => [k, v[0]]));
+                    else WS.toast(err.message, 'error');
+                } finally {
+                    this.saving = false;
+                }
+            },
+
+            async remove(e) {
+                this.saving = true;
+                try {
+                    await WS.api.epics.remove(e.id);
+                    this.store.removeEpic(e.id);
+                    WS.toast(`Epic "${e.name}" dihapus. Tugasnya kini tanpa epic.`, 'success');
+                    this.confirmId = null;
+                } catch (err) {
+                    WS.toast(err.message, 'error');
+                } finally {
+                    this.saving = false;
+                }
+            },
+        }));
+
         // ---------- Dialog sprint ----------
         // config: { workspaceId }
         Alpine.data('wsSprintDialogs', (config) => ({
@@ -173,6 +269,7 @@
                 window.addEventListener('ws-sprint-form', (e) => this.openForm((e.detail || {}).sprint || null));
                 window.addEventListener('ws-sprint-start', (e) => this.openStart(e.detail.sprint));
                 window.addEventListener('ws-sprint-complete', (e) => this.openComplete(e.detail.sprint));
+                window.addEventListener('ws-sprint-reopen', (e) => this.reopen(e.detail.sprint));
                 window.addEventListener('ws-sprint-delete', (e) => { this.sprint = e.detail.sprint; this.errors = {}; this.deleteOpen = true; });
                 this.$watch('form.weeks', () => this.syncEnd());
                 this.$watch('form.start_date', () => this.syncEnd());
@@ -318,6 +415,14 @@
                     const target = res.moved.sprint_id ? (this.store.sprintById(res.moved.sprint_id) || {}).name : 'Backlog';
                     WS.toast(`${res.data.name} selesai.` + (res.moved.task_ids.length ? ` ${res.moved.task_ids.length} tugas belum selesai dipindah ke ${target}.` : ''), 'success');
                     this.completeOpen = false;
+                });
+            },
+
+            async reopen(sprint) {
+                await this.run(async () => {
+                    const res = await WS.api.sprints.reopen(sprint.id);
+                    this.store.upsertSprint(Object.assign({}, res.data, { closed: null }));
+                    WS.toast(`${res.data.name} dibuka kembali. Tugas yang sudah dipindah tetap di tempat barunya.`, 'success');
                 });
             },
 

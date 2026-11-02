@@ -132,9 +132,22 @@
             // payload: { move_to: 'backlog' | 'new' | sprintId } → { data: Sprint, moved: { task_ids, sprint_id }, created_sprint?: Sprint }
             complete: (sprintId, payload) => call('sprints.complete', [sprintId, payload],
                 () => WS.http('POST', url(`/workspace/sprints/${sprintId}/complete`), { body: payload })),
+            // Buka kembali sprint selesai (tidak ada sprint berjalan) → { data: Sprint } (status active)
+            reopen: (sprintId) => call('sprints.reopen', [sprintId],
+                () => WS.http('POST', url(`/workspace/sprints/${sprintId}/reopen`))),
             // Hanya sprint planned; tugasnya kembali ke backlog. → 204
             remove: (sprintId) => call('sprints.remove', [sprintId],
                 () => WS.http('DELETE', url(`/workspace/sprints/${sprintId}`))),
+        },
+
+        // Epic per kelompok. payload: { name, color? } → { data: Epic }. remove → 204 (tugasnya jadi tanpa epic)
+        epics: {
+            create: (workspaceId, payload) => call('epics.create', [workspaceId, payload],
+                () => WS.http('POST', url(`/workspace/${workspaceId}/epics`), { body: payload })),
+            update: (epicId, payload) => call('epics.update', [epicId, payload],
+                () => WS.http('PATCH', url(`/workspace/epics/${epicId}`), { body: payload })),
+            remove: (epicId) => call('epics.remove', [epicId],
+                () => WS.http('DELETE', url(`/workspace/epics/${epicId}`))),
         },
 
         // Kelompok buatan mentor (usulan kontrak #18). 1 anak magang = 1 kelompok; anggota tidak bisa dikeluarkan.

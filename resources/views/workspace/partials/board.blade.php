@@ -37,6 +37,7 @@
                     <div class="ws-progress__bar" :style="{ width: (c.total ? Math.round(c.done / c.total * 100) : 0) + '%' }"></div>
                 </div>
                 <span class="text-xs text-slate-600 whitespace-nowrap" x-text="c.done + '/' + c.total + ' selesai'"></span>
+                <span class="ws-points" x-show="$store.wsTasks.points(sp.id)" x-text="$store.wsTasks.pointsDone(sp.id) + '/' + $store.wsTasks.points(sp.id) + ' poin'"></span>
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
@@ -49,11 +50,11 @@
         </div>
     </div>
 </template>
-<template x-if="!$store.wsTasks.activeSprint && $store.wsTasks.sprints.length">
+<template x-if="$store.wsTasks.usesSprints && !$store.wsTasks.activeSprint">
     <p class="ws-sprint-bar ws-sprint-bar--idle text-sm text-slate-600">
         <i class="fas fa-circle-info text-indigo-500" aria-hidden="true"></i>
-        <span>Tidak ada sprint berjalan, jadi semua tugas ditampilkan.@unless (auth()->user()->isIntern()) Mulai sprint dari tab
-            <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'backlog')">Backlog</button>.@endunless</span>
+        <span>Belum ada sprint berjalan, jadi board kosong. Board hanya menampilkan tugas dari sprint yang sedang berjalan.@unless (auth()->user()->isIntern()) Susun tugas dan mulai sprint dari tab
+            <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'backlog')">Backlog</button>.@else Tunggu mentor memulai sprint.@endunless</span>
     </p>
 </template>
 
@@ -138,6 +139,11 @@
                         <div class="ws-unfinished" x-show="WS.tasks.unfinished(card)">
                             <span class="ws-badge ws-badge--late !text-[11px] !px-2 !py-0"><i class="fas fa-hourglass-end text-[9px]"></i>Belum diselesaikan</span>
                             <span class="ws-unfinished__lock" x-show="WS.tasks.submitLocked(card)" :title="WS.tasks.LOCK_NOTE"><i class="fas fa-lock"></i>Upload dikunci</span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1 mt-2" x-show="card.epic_id || card.story_points !== null">
+                            <span class="ws-label-chip" x-show="$store.wsTasks.epicById(card.epic_id)"><span class="ws-label-chip__dot" :style="{ background: ($store.wsTasks.epicById(card.epic_id) || {}).color }"></span><span x-text="($store.wsTasks.epicById(card.epic_id) || {}).name"></span></span>
+                            <span class="ws-points" x-show="card.story_points !== null" x-text="card.story_points + ' poin'"></span>
                         </div>
 
                         <div class="flex flex-wrap gap-1 mt-2" x-show="card.labels.length">
