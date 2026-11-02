@@ -64,7 +64,7 @@
                 @if ($viewerIsAdmin)
                     <label class="order-last sm:order-none basis-[calc(50%-4px)] sm:basis-auto sm:w-52 min-w-0">
                         <span class="sr-only">Filter unit kerja</span>
-                        <select name="team" class="ws-input" onchange="this.form.submit()">
+                        <select name="team" class="ws-input">
                             <option value="">Semua unit</option>
                             @foreach ($teams as $team)
                                 <option value="{{ $team['id'] }}" @selected((string) request('team') === (string) $team['id'])>{{ $team['name'] }}</option>
@@ -73,7 +73,7 @@
                     </label>
                     <label class="order-last sm:order-none basis-[calc(50%-4px)] sm:basis-auto sm:w-52 min-w-0">
                         <span class="sr-only">Filter mentor</span>
-                        <select name="mentor" class="ws-input" onchange="this.form.submit()">
+                        <select name="mentor" class="ws-input">
                             <option value="">Semua mentor</option>
                             @foreach ($mentors as $m)
                                 <option value="{{ $m['id'] }}" @selected((string) request('mentor') === (string) $m['id'])>{{ $m['name'] }}</option>
