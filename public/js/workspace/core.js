@@ -66,25 +66,34 @@
             body = JSON.stringify(options.body);
         }
 
-        let response;
-        try {
-            response = await fetch(buildUrl(url, options.query), {
-                method,
-                headers,
-                body,
-                credentials: 'same-origin',
-                signal: options.signal,
-            });
-        } catch (err) {
-            if (err.name === 'AbortError') throw err;
-            throw new HttpError(0, 'Tidak dapat terhubung ke server. Periksa koneksi Anda.');
-        }
+        // Permintaan yang mengubah data memakai layar pemuatan bila lambat (chat dan penanda baca dikecualikan).
+        const splash = window.SimagangSplash;
+        const track = !!splash && String(method).toUpperCase() !== 'GET' && !options.silent && !/\/(messages|read|typing)(\/|\?|$)/.test(url);
+        if (track) splash.begin('Memproses…');
 
-        const payload = response.status === 204 ? null : await response.json().catch(() => null);
-        if (!response.ok) {
-            throw new HttpError(response.status, messageForStatus(response.status, payload), payload && payload.errors);
+        try {
+            let response;
+            try {
+                response = await fetch(buildUrl(url, options.query), {
+                    method,
+                    headers,
+                    body,
+                    credentials: 'same-origin',
+                    signal: options.signal,
+                });
+            } catch (err) {
+                if (err.name === 'AbortError') throw err;
+                throw new HttpError(0, 'Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+            }
+
+            const payload = response.status === 204 ? null : await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new HttpError(response.status, messageForStatus(response.status, payload), payload && payload.errors);
+            }
+            return payload;
+        } finally {
+            if (track) splash.end();
         }
-        return payload;
     }
 
     // fetch tidak menyediakan progres upload, jadi upload memakai XHR.

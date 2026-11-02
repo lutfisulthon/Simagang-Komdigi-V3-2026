@@ -8,7 +8,6 @@
       $counts     ['active' => int, 'finished' => int, 'attention' => int]
       $sort       'deadline'|'newest'       urutan kelompok aktif (default deadline tugas terdekat)
       $attention  bool                      hanya kelompok yang perlu perhatian (lewat deadline / jatuh tempo ≤ 3 hari)
-      $ungrouped  Roster[]                  mentor: anak bimbingan yang belum punya kelompok
       $teams      {id,name}[]               admin: filter unit kerja
       $mentors    {id,name}[]               admin: filter mentor
       $can        ['create_group' => bool]
@@ -55,34 +54,6 @@
                                      :description="'Mentor Anda' . ($mentor ? ' (' . $mentor['name'] . ')' : '') . ' akan memasukkan Anda ke sebuah kelompok. Setelah itu, tugas dan diskusi kelompok muncul di sini.'" />
         </div>
     @else
-        {{-- Anak bimbingan yang belum punya kelompok --}}
-        @if (count($ungrouped))
-            <div class="ws-anim-2 mb-6 ws-callout" role="status">
-                <span class="ws-callout__icon" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
-                <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-sm text-gray-800">{{ count($ungrouped) }} anak bimbingan belum punya kelompok</p>
-                    <ul class="mt-2 flex flex-wrap gap-2">
-                        @foreach ($ungrouped as $intern)
-                            <li class="ws-chip-person">
-                                <x-workspace.avatar :name="$intern['name']" :src="$intern['avatar_url']" size="xs" />
-                                <span class="text-sm font-medium text-gray-800">{{ $intern['name'] }}</span>
-                                <button type="button" class="ws-chip-person__action" x-data
-                                        x-on:click="$dispatch('ws-group-assign', { intern: @js(['id' => $intern['id'], 'name' => $intern['name']]) })">
-                                    Masukkan<span class="sr-only"> {{ $intern['name'] }} ke kelompok</span>
-                                </button>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-                @if (count($ungrouped) > 1)
-                    <button type="button" class="ws-btn ws-btn--primary ws-btn--sm shrink-0 self-start" x-data
-                            x-on:click="$dispatch('ws-group-create', { intern_ids: @js(array_column($ungrouped, 'id')) })">
-                        <i class="fas fa-plus"></i> Kelompokkan semua
-                    </button>
-                @endif
-            </div>
-        @endif
-
         @if ($showFilter)
             <form method="GET" action="{{ route('workspace.index') }}" class="ws-anim-2 mb-6 flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3" role="search">
                 <label class="relative flex-1 min-w-0">
