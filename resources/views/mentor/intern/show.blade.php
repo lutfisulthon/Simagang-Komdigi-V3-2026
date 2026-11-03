@@ -309,6 +309,19 @@
                                 <p class="text-sm font-semibold text-gray-900">{{ $intern->finalReport->admin_note ?? '-' }}</p>
                             </div>
                         </div>
+
+                        @if($intern->finalReport->include_task_recap)
+                            <div class="flex items-start md:col-span-2 lg:col-span-3">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fas fa-tasks text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Rekap Tugas Workspace</p>
+                                    <a href="{{ route('workspace.recap', ['intern_id' => $intern->id]) }}" target="_blank" rel="noopener"
+                                       class="text-sm font-semibold text-indigo-600 hover:underline">Lihat rekap tugas selesai</a>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center py-8 text-gray-500">

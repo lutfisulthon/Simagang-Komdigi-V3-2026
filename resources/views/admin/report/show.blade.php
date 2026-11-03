@@ -231,6 +231,17 @@
                         @endif
                     </div>
 
+                    @if ($report->include_task_recap && $report->intern_id)
+                        <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-200 flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-900">Rekap tugas Workspace disertakan</p>
+                                <p class="text-xs text-indigo-700">Intern melampirkan rekap tugas selesai bersama laporan ini.</p>
+                            </div>
+                            <a href="{{ route('workspace.recap', ['intern_id' => $report->intern_id]) }}" target="_blank" rel="noopener"
+                                class="text-sm font-semibold text-indigo-700 hover:underline whitespace-nowrap">Lihat rekap</a>
+                        </div>
+                    @endif
+
                     <!-- Admin Note -->
                     @if ($report->admin_note)
                         <div>
