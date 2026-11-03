@@ -30,7 +30,7 @@
     @endphp
 
     <x-workspace.hero class="ws-anim-1 mb-6"
-                      eyebrow="Workspace"
+                      eyebrow="Workspace" icon="layer-group"
                       :title="$noGroup ? 'Kelompok Magang' : ($viewerIsAdmin ? 'Semua Kelompok' : 'Kelompok Bimbingan')"
                       :subtitle="$noGroup ? 'Tugas dan diskusi bersama kelompokmu' : ($viewerIsAdmin ? 'Pantau kelompok kerja semua mentor' : 'Kelompokkan anak bimbingan, beri tugas, dan pantau progresnya')">
         @unless ($noGroup)

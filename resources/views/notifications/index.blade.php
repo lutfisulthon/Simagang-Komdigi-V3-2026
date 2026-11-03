@@ -23,7 +23,7 @@
 
     <div class="max-w-4xl mx-auto"
          x-data="wsNotificationsPage(@js(['initial' => $notifications, 'filter' => $filter, 'category' => $category]))">
-        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Pusat notifikasi" title="Notifikasi"
+        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Pusat notifikasi" icon="bell" color="#3b82f6" title="Notifikasi"
                           subtitle="Pemberitahuan tugas, mention, dan pengumuman dari semua workspace Anda.">
             <x-slot:meta>
                 <span class="inline-flex items-center gap-1.5">

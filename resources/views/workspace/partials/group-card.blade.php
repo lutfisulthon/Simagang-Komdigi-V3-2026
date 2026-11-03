@@ -24,7 +24,7 @@
     }
 @endphp
 
-<a href="{{ $ws['url'] }}" class="ws-card group {{ $finished ? 'ws-card--finished' : '' }}">
+<a href="{{ $ws['url'] }}" class="ws-card group {{ $finished ? 'ws-card--finished' : '' }}" style="--group-color: {{ $ws['color'] }}">
     <div class="flex items-start gap-3">
         <span class="ws-group-icon" style="--group-color: {{ $ws['color'] }}" aria-hidden="true">{{ $initials }}</span>
         <div class="min-w-0 flex-1">
@@ -53,7 +53,7 @@
         <div class="mt-5">
             <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-slate-500">Progres tugas</span>
-                <span class="ws-mono text-slate-600">{{ $s['done'] }}/{{ $total }} selesai</span>
+                <span class="ws-mono text-slate-600">{{ $s['done'] }}/{{ $total }} selesai<b class="ws-card__pct">{{ $percent }}%</b></span>
             </div>
             <div class="ws-progress mt-2" role="progressbar" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progres tugas {{ $percent }}%">
                 <div class="ws-progress__bar" style="width: {{ $percent }}%"></div>
@@ -107,7 +107,7 @@
             @if ($finished)
                 <span class="ws-badge shrink-0 ml-auto !bg-slate-100 !text-slate-600 !border-slate-200"><i class="fas fa-flag-checkered text-[10px]"></i>Selesai</span>
             @endif
-            <span class="text-sm font-semibold text-indigo-600 flex items-center gap-1.5 shrink-0">
+            <span class="ws-card__open text-sm font-semibold text-indigo-600 flex items-center gap-1.5 shrink-0">
                 Buka <i class="fas fa-arrow-right text-xs transition-transform group-hover:translate-x-0.5"></i>
             </span>
         </div>

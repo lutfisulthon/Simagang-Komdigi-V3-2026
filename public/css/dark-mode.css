@@ -210,6 +210,35 @@ html[data-theme="dark"] .sm-theme__btn[aria-expanded="true"] {
     border-color: rgba(99, 140, 255, 0.25);
 }
 
+/* ── Shell baru (app-shell.css): hover top bar & sidebar tidak boleh terang di dark mode ──
+   Area ini bukan area berfilter (mixed/keep), jadi warna hover terang dari app-shell.css harus diganti eksplisit. */
+html[data-theme="dark"] .tb .ws-icon-btn:hover,
+html[data-theme="dark"] .tb .ws-icon-btn[aria-expanded="true"],
+html[data-theme="dark"] .tb .sm-theme__btn:hover,
+html[data-theme="dark"] .tb .sm-theme__btn[aria-expanded="true"] {
+    background: rgba(99, 140, 255, 0.15) !important;
+    color: #a5b4fc !important;
+    border-color: transparent !important;
+}
+html[data-theme="dark"] .tb-user:hover,
+html[data-theme="dark"] .tb-user[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme="dark"] .tb-menu__item:hover { background: var(--dm-hover) !important; color: #e2e8f0 !important; }
+html[data-theme="dark"] .tb-menu__item--danger:hover { background: var(--dm-hover-danger) !important; color: #fca5a5 !important; }
+html[data-theme="dark"] .tb-menu__item--danger:hover i { color: #fca5a5 !important; }
+html[data-theme="dark"] .sb-link:hover,
+html[data-theme="dark"] a.sb-user:hover { background: rgba(255, 255, 255, 0.06) !important; color: #f1f5f9 !important; }
+html[data-theme="dark"] .sb-logout:hover { background: rgba(239, 68, 68, 0.14) !important; color: #fca5a5 !important; }
+html[data-theme="dark"] .sb-drawer__close:hover { background: rgba(255, 255, 255, 0.08) !important; color: #f1f5f9 !important; }
+html[data-theme="dark"] .tb-m button:hover,
+html[data-theme="dark"] .tb-m a:hover { background: rgba(255, 255, 255, 0.08) !important; }
+
+/* ── Baris tabel di halaman (page-ui.css): hover redup; baris "kosong" tidak perlu hover sama sekali ── */
+html[data-theme="dark"] main tbody tr:hover { background: var(--dm-hover) !important; }
+html[data-theme="dark"] main tbody tr:has(> td[colspan]:only-child):hover { background: transparent !important; }
+
 /* ---------- Menu pengaturan (ikon gerigi) ---------- */
 
 .sm-theme { position: relative; display: inline-flex; flex-shrink: 0; }

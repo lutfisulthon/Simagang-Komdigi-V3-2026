@@ -40,6 +40,7 @@
         ];
     @endphp
     <link rel="stylesheet" href="{{ $wsAsset('css/workspace.css') }}">
+    <link rel="stylesheet" href="{{ $wsAsset('css/workspace-ui.css') }}">
     <script>
         window.SimagangWorkspace = @json($wsConfig);
     </script>

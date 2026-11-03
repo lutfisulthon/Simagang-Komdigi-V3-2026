@@ -401,7 +401,7 @@
         </div>
 
         {{-- ── FILTER PANEL ────────────────────────────── --}}
-        <div class="panel a2">
+        <div class="panel panel-filter a2">
             <div class="panel-header">
                 <i class="fas fa-sliders-h text-blue-200"></i>
                 <h2>Filter Data</h2>

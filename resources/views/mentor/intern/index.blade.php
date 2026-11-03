@@ -329,7 +329,7 @@
         </div>
 
         {{-- ── SEARCH & FILTER PANEL ────────────────────── --}}
-        <div class="panel a2">
+        <div class="panel panel-filter a2">
             <div class="panel-header">
                 <i class="fas fa-search text-blue-200"></i>
                 <h2>Cari Anak Magang</h2>
@@ -523,41 +523,6 @@
         @if ($wsGroups)
             @include('workspace.partials.group-modals')
         @endif
-
-        {{-- ── QUICK ACTION CARDS ────────────────────────– --}}
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-top:28px;" class="a2">
-
-            <a href="{{ route('mentor.attendance.index') }}" class="action-card attendance">
-                <div class="action-card-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div>
-                    <h3>Absensi</h3>
-                    <p>Lihat dan kelola data kehadiran anak magang</p>
-                </div>
-            </a>
-
-            <a href="{{ route('mentor.logbook.index') }}" class="action-card logbook">
-                <div class="action-card-icon">
-                    <i class="fas fa-book"></i>
-                </div>
-                <div>
-                    <h3>Logbook</h3>
-                    <p>Pantau catatan harian dan aktivitas</p>
-                </div>
-            </a>
-
-            <a href="{{ route('mentor.report.index') }}" class="action-card report">
-                <div class="action-card-icon">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div>
-                    <h3>Laporan</h3>
-                    <p>Lihat dan nilai laporan akhir</p>
-                </div>
-            </a>
-
-        </div>
 
     </div>
 </div>

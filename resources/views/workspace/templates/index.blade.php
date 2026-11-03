@@ -23,7 +23,7 @@
             <span class="font-medium text-slate-700" aria-current="page">Template tugas</span>
         </nav>
 
-        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Workspace" title="Template Tugas"
+        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Workspace" icon="copy" color="#06b6d4" title="Template Tugas"
                           subtitle="Simpan tugas yang sering diberikan, lalu tugaskan ke banyak intern sekaligus.">
             <x-slot:meta>
                 <span class="inline-flex items-center gap-1.5"><i class="fas fa-copy"></i> <span x-text="templates.length + ' template'">{{ count($templates) }} template</span></span>

@@ -160,50 +160,45 @@
                         [
                             'label' => 'Total Pengajuan',
                             'value' => $totalPengajuan,
-                            'bg' => 'bg-blue-500',
+                            'bg' => 'bg-blue-500', 'hex' => '#3b82f6',
                             'icon' => 'fa-folder-open',
                         ],
                         [
                             'label' => 'Disetujui',
                             'value' => $totalDiterima,
-                            'bg' => 'bg-emerald-500',
+                            'bg' => 'bg-emerald-500', 'hex' => '#10b981',
                             'icon' => 'fa-check-circle',
                         ],
                         [
                             'label' => 'Menunggu Approval',
                             'value' => $totalMenunggu,
-                            'bg' => 'bg-amber-500',
+                            'bg' => 'bg-amber-500', 'hex' => '#f59e0b',
                             'icon' => 'fa-clock',
                         ],
                         [
                             'label' => 'Revisi',
                             'value' => $totalRevisi,
-                            'bg' => 'bg-orange-500',
+                            'bg' => 'bg-orange-500', 'hex' => '#f97316',
                             'icon' => 'fa-exclamation-circle',
                         ],
                         [
                             'label' => 'Ditolak', 
                             'value' => $totalDitolak, 
-                            'bg' => 'bg-red-500', 
+                            'bg' => 'bg-red-500', 'hex' => '#ef4444', 
                             'icon' => 'fa-times-circle'
                         ],
                     ];
                 @endphp
 
                 @foreach ($stats as $stat)
-                    <div
-                        class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                        <div class="p-4 sm:p-6 flex items-center justify-between gap-3">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1 truncate">{{ $stat['label'] }}</p>
-                                <p class="text-2xl font-black text-gray-800 truncate">{{ $stat['value'] }}</p>
+                    <div class="stat-tile" style="--stat-color: {{ $stat['hex'] }};">
+                        <div class="flex items-start justify-between">
+                            <div class="min-w-0">
+                                <p class="stat-label">{{ $stat['label'] }}</p>
+                                <p class="stat-value">{{ $stat['value'] }}</p>
                             </div>
-                            <div
-                                class="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 {{ $stat['bg'] }} rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                                <i class="fas {{ $stat['icon'] }} text-white text-xl sm:text-2xl"></i>
-                            </div>
+                            <div class="stat-icon"><i class="fas {{ $stat['icon'] }}"></i></div>
                         </div>
-                        <div class="h-1 {{ $stat['bg'] }}"></div>
                     </div>
                 @endforeach
 

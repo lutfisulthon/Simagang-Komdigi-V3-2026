@@ -40,12 +40,13 @@
             'activity' => ['Aktivitas', 'fa-clock-rotate-left', null, false],
         ]);
         $statTiles = [
-            ['todo', 'To Do', $s['todo'], '#94a3b8'],
-            ['in_progress', 'In Progress', $s['in_progress'], '#3b82f6'],
-            ['review', 'Review', $s['review'], '#8b5cf6'],
-            ['revision', 'Revisi', $s['revision'], '#f97316'],
-            ['done', 'Selesai', $s['done'], '#10b981'],
-            ['late', 'Terlambat', $s['late'], '#ef4444'],
+            // [key, label, nilai, warna, ikon, latar tint, garis tint]
+            ['todo', 'To Do', $s['todo'], '#64748b', 'list-check', '#f4f6f9', '#e3e8ef'],
+            ['in_progress', 'In Progress', $s['in_progress'], '#3b82f6', 'bolt', '#eff5ff', '#d3e2ff'],
+            ['review', 'Review', $s['review'], '#8b5cf6', 'magnifying-glass', '#f6f2ff', '#e3d8fc'],
+            ['revision', 'Revisi', $s['revision'], '#f97316', 'rotate-left', '#fff6ee', '#fbddc4'],
+            ['done', 'Selesai', $s['done'], '#10b981', 'circle-check', '#edfaf4', '#c9eedc'],
+            ['late', 'Terlambat', $s['late'], '#ef4444', 'triangle-exclamation', '#fff1f1', '#fbd0d0'],
         ];
         $mentorMembers = collect($members)->where('role', 'mentor')->values();
         $internMembers = collect($members)->where('role', 'intern')->values();
@@ -66,6 +67,7 @@
         <x-workspace.hero class="ws-anim-1 mb-6"
                           :eyebrow="'Kelompok · ' . $workspace['team']['name']"
                           :title="$workspace['name']"
+                          :color="$workspace['color']" :initials="$initials"
                           :subtitle="$workspace['description'] ?: 'Board tugas dan diskusi kelompok'">
             <x-slot:meta>
                 <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: {{ $workspace['mentor']['name'] }}</span>
@@ -139,11 +141,14 @@
 
         {{-- Statistik --}}
         <div class="ws-anim-2 ws-stats grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-5 sm:mb-6">
-            @foreach ($statTiles as [$key, $label, $value, $color])
-                <div class="ws-stat" style="--stat-color: {{ $color }}">
-                    <p class="ws-stat__label">{{ $label }}</p>
-                    <p class="ws-stat__value" x-text="$store.wsTasks.booted ? $store.wsTasks.stat('{{ $key }}', {{ $value }}) : {{ $value }}"
-                       @if ($key === 'late') :style="$store.wsTasks.stat('late', 0) > 0 && 'color:#dc2626'" @endif>{{ $value }}</p>
+            @foreach ($statTiles as [$key, $label, $value, $color, $statIcon, $tint, $tintLine])
+                <div class="ws-stat" style="--stat-color: {{ $color }}; --stat-s: {{ $tint }}; --stat-b: {{ $tintLine }}">
+                    <span class="ws-stat__icon" aria-hidden="true"><i class="fas fa-{{ $statIcon }}"></i></span>
+                    <div class="ws-stat__body">
+                        <p class="ws-stat__label">{{ $label }}</p>
+                        <p class="ws-stat__value" x-text="$store.wsTasks.booted ? $store.wsTasks.stat('{{ $key }}', {{ $value }}) : {{ $value }}"
+                           @if ($key === 'late') :style="$store.wsTasks.stat('late', 0) > 0 && 'color:#dc2626'" @endif>{{ $value }}</p>
+                    </div>
                 </div>
             @endforeach
         </div>

@@ -16,7 +16,7 @@
             <span class="font-medium text-slate-700" aria-current="page">Pengaturan</span>
         </nav>
 
-        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Pusat notifikasi" title="Pengaturan Notifikasi"
+        <x-workspace.hero class="ws-anim-1 mb-6" eyebrow="Pusat notifikasi" icon="sliders" color="#3b82f6" title="Pengaturan Notifikasi"
                           subtitle="Pilih pemberitahuan yang ingin Anda terima di aplikasi dan lewat email." />
 
         {{-- Memuat / gagal --}}

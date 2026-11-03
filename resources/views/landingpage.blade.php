@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <link rel="shortcut icon" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
         @font-face {
             font-family: 'Etna';
@@ -271,9 +271,9 @@
         .hero {
             position: relative;
             overflow: hidden;
-            min-height: 90vh;
-            display: flex;
-            align-items: center;
+            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+            color: #fff;
+            background: #071a46;
         }
         .hero-bg-image {
             position: absolute;
@@ -287,67 +287,89 @@
         .hero-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(105deg, rgba(8, 28, 70, 0.53) 0%, rgba(12, 52, 120, 0.70) 50%, rgba(8, 60, 100, 0.347) 100%);
+            background: linear-gradient(105deg, rgba(8, 28, 70, 0.78) 0%, rgba(12, 52, 120, 0.66) 48%, rgba(8, 60, 100, 0.35) 100%);
             z-index: 1;
-        }
-        .hero-accent {
-            position: absolute;
-            bottom: -120px;
-            left: -80px;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(34,211,238,0.18) 0%, transparent 70%);
-            z-index: 2;
-            pointer-events: none;
-            animation: pulseAccent 6s ease-in-out infinite alternate;
-        }
-        @keyframes pulseAccent {
-            from { transform: scale(1); opacity: 0.8; }
-            to   { transform: scale(1.15); opacity: 1; }
         }
         .hero-inner {
             position: relative;
-            z-index: 3;
-            max-width: 1280px;
+            z-index: 2;
+            max-width: 1240px;
             margin: 0 auto;
-            padding: 5rem 1.5rem;
+            padding: 5.5rem 1.5rem 3rem;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
+            min-height: 78vh;
             align-items: center;
-            width: 100%;
         }
-        .hero-text-col { display: flex; flex-direction: column; }
+        .hero-text-col { display: flex; flex-direction: column; align-items: flex-start; max-width: 40rem; }
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #bae6fd;
+            background: rgba(125, 211, 252, 0.10);
+            border: 1px solid rgba(125, 211, 252, 0.28);
+        }
+        .hero-chip__dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.22); }
         .hero-title {
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: clamp(2.2rem, 4.4vw, 3.6rem);
             font-weight: 800;
-            line-height: 1.15;
-            color: white;
-            margin: 0 0 1.25rem;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            color: #fff;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            margin: 1.15rem 0 1.05rem;
         }
-        .hero-title span { color: #7dd3fc; }
+        .hero-title span {
+            display: block;
+            background: linear-gradient(90deg, #7dd3fc, #22d3ee 60%, #a5f3fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
         .hero-desc {
-            font-size: 1rem;
-            line-height: 1.75;
-            color: rgba(255,255,255,0.82);
+            font-size: 1.075rem;
+            line-height: 1.7;
+            color: rgba(226, 238, 255, 0.84);
+            max-width: 30rem;
             margin: 0;
-            max-width: 480px;
-            text-shadow: 0 1px 8px rgba(0,0,0,0.25);
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
         }
-        .hero-stats {
+        .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.9rem; }
+        .hero-points {
+            list-style: none;
+            padding: 0;
+            margin: 1.6rem 0 0;
             display: flex;
-            gap: 2rem;
-            margin-top: 1.5rem;
-            padding-bottom: 1.75rem;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            flex-wrap: wrap;
+            gap: 10px 22px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: rgba(226, 238, 255, 0.78);
         }
-        .hero-stat-num { font-size: 1.75rem; font-weight: 800; color: white; line-height: 1; text-shadow: 0 2px 12px rgba(0,0,0,0.2); }
-        .hero-stat-label { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 4px; }
-        .hero-stat-divider { width: 1px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
-        
-        .hero-btns { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 1.75rem; }
+        .hero-points li { display: inline-flex; align-items: center; gap: 8px; }
+        .hero-points i { color: #34d399; font-size: 13px; }
+
+        /* Bar statistik */
+        .hero-statbar { position: relative; z-index: 2; max-width: 1240px; margin: 0 auto; padding: 0 1.5rem 2.75rem; }
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+        .hero-stat { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-right: 1px solid rgba(255, 255, 255, 0.10); }
+        .hero-stat:last-child { border-right: 0; }
+        .hero-stat__ico { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 13px; font-size: 16px; background: rgba(125, 211, 252, 0.14); color: #7dd3fc; }
+        .hero-stat-num { font-size: 1.55rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #fff; }
+        .hero-stat-label { margin-top: 5px; font-size: 12px; font-weight: 500; color: rgba(226, 238, 255, 0.72); }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -831,12 +853,10 @@
             .navbar-actions { margin-left: auto; gap: 10px; }
             .nav-toggle { display: inline-flex; }
             .btn-login { display: none; }
-            .hero { min-height: auto; }
-            .hero-inner { grid-template-columns: 1fr; padding: 3.5rem 1.5rem; gap: 2.5rem; text-align: center; }
-            .hero-desc { margin-left: auto; margin-right: auto; }
-            .hero-stats { justify-content: center; }
-            .hero-btns { justify-content: center; }
-            .hero-image-wrap { justify-content: center; max-width: 520px; margin: 0 auto; order: -1; }
+            .hero-inner { min-height: 0; padding: 4rem 1.5rem 2rem; }
+            .hero-stats { grid-template-columns: repeat(2, 1fr); }
+            .hero-stat:nth-child(2) { border-right: 0; }
+            .hero-stat:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, 0.10); }
             .process-grid { grid-template-columns: 1fr; }
             .step-block { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 0; }
             .step-block .order-swap { order: 0; }
@@ -847,11 +867,16 @@
             .nav-links { display: none; }
         }
         @media (max-width: 640px) {
-            .hero-inner { padding: 2.5rem 1rem; gap: 1.5rem; }
-            .hero-title { font-size: 1.8rem; }
-            .hero-image-wrap { max-width: 100%; }
-            .hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; justify-items: center; border-bottom: none; padding-bottom: 0; }
-            .hero-stat-divider { display: none; }
+            .hero-inner { padding: 3.5rem 1rem 1.5rem; gap: 2rem; }
+            .hero-title { font-size: 2.15rem; }
+            .hero-desc { font-size: 1rem; }
+            .hero-btns { width: 100%; }
+            .hero-btns a { flex: 1 1 100%; justify-content: center; }
+            .hero-statbar { padding: 0 1rem 2rem; }
+            .hero-stat { padding: 14px 14px; gap: 10px; }
+            .hero-stat__ico { width: 34px; height: 34px; font-size: 13px; border-radius: 10px; }
+            .hero-stat-num { font-size: 1.2rem; }
+            .hero-stat-label { font-size: 11px; }
             .partners-grid { grid-template-columns: 1fr 1fr; }
             .process-grid { display: none; }
             .process-carousel { display: block; }
@@ -1360,39 +1385,32 @@
 <main>
 
 <!-- ===== HERO ===== -->
-<section id="hero" class="hero">
+<section id="hero" class="hero" data-dm-keep>
     <img src="{{ asset('storage/photos-landingpage/hero-bg.png') }}" alt="" class="hero-bg-image" aria-hidden="true">
     <div class="hero-overlay"></div>
-    <div class="hero-accent"></div>
     <div class="hero-inner">
         <div class="hero-text-col">
-            <h1 class="hero-title">Magang Lebih Terarah untuk <span>Mahasiswa dan Siswa SMK</span></h1>
-            <p class="hero-desc">Bangun pengalaman kerja nyata bersama BBLSDM Komdigi Makassar. Dari pendaftaran, logbook, hingga sertifikat, semua proses magang kini tercatat dalam satu sistem.</p>
-            <div class="hero-stats">
-                <div>
-                    <div class="hero-stat-num text-center">{{ $totalPesertaAktif }}</div>
-                    <div class="hero-stat-label">Peserta Aktif</div>
-                </div>
-                <div class="hero-stat-divider"></div>
-                <div>
-                    <div class="hero-stat-num text-center">11+</div>
-                    <div class="hero-stat-label">Mitra Pendidikan &amp; Industri</div>
-                </div>
-                <div class="hero-stat-divider"></div>
-                <div>
-                    <div class="hero-stat-num text-center">93.25%</div>
-                    <div class="hero-stat-label">Tingkat Kepuasan</div>
-                </div>
-                <div class="hero-stat-divider"></div>
-                <div>
-                    <div class="hero-stat-num text-center">{{ number_format($visitorCount ?? 0, 0, ',', '.') }}</div>
-                    <div class="hero-stat-label">Pengunjung Situs</div>
-                </div>
-            </div>
+            <span class="hero-chip"><span class="hero-chip__dot"></span> Program Magang BBLSDM Komdigi Makassar</span>
+            <h1 class="hero-title">Magang Terarah, <span>Tercatat Rapi.</span></h1>
+            <p class="hero-desc">Dari daftar, absensi, dan logbook hingga sertifikat. Satu sistem untuk mahasiswa dan siswa SMK.</p>
             <div class="hero-btns">
-                <a href="#daftar" class="btn-primary"><i class="fas fa-rocket" style="font-size:14px"></i> Mulai Daftar Magang</a>
-                <a href="#usage" class="btn-outline">Lihat Cara Kerjanya <i class="fas fa-arrow-right" style="font-size:13px"></i></a>
+                <a href="#daftar" class="btn-primary"><i class="fas fa-rocket" style="font-size:14px"></i> Daftar Magang</a>
+                <a href="#usage" class="btn-outline">Lihat Cara Kerja <i class="fas fa-arrow-right" style="font-size:13px"></i></a>
             </div>
+            <ul class="hero-points">
+                <li><i class="fas fa-circle-check"></i> Absensi digital</li>
+                <li><i class="fas fa-circle-check"></i> Logbook harian</li>
+                <li><i class="fas fa-circle-check"></i> Sertifikat resmi</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="hero-statbar">
+        <div class="hero-stats">
+            <div class="hero-stat"><span class="hero-stat__ico"><i class="fas fa-user-graduate"></i></span><div><div class="hero-stat-num">{{ $totalPesertaAktif }}</div><div class="hero-stat-label">Peserta aktif</div></div></div>
+            <div class="hero-stat"><span class="hero-stat__ico"><i class="fas fa-handshake"></i></span><div><div class="hero-stat-num">11+</div><div class="hero-stat-label">Mitra pendidikan &amp; industri</div></div></div>
+            <div class="hero-stat"><span class="hero-stat__ico"><i class="fas fa-face-smile"></i></span><div><div class="hero-stat-num">93.25%</div><div class="hero-stat-label">Tingkat kepuasan</div></div></div>
+            <div class="hero-stat"><span class="hero-stat__ico"><i class="fas fa-eye"></i></span><div><div class="hero-stat-num">{{ number_format($visitorCount ?? 0, 0, ',', '.') }}</div><div class="hero-stat-label">Pengunjung situs</div></div></div>
         </div>
     </div>
 </section>

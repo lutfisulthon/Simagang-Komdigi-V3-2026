@@ -1,0 +1,259 @@
+/*
+ * Workspace — skin selaras gaya UI baru (banner lembut ber-tint, kartu bersih, warna tipis).
+ * Dimuat setelah workspace.css (lihat layouts/partials/workspace-head.blade.php).
+ * Warna hero datang dari komponen <x-workspace.hero> (--hc, --hs, --hb, --hx); warna tab dari token tone <main data-tone>.
+ * Mode gelap ditangani mesin public/js/dark-mode.js.
+ */
+
+/* ---------- Halaman ---------- */
+.ws-page { background: transparent; }
+
+/* ---------- Hero ---------- */
+.ws-hero {
+    --hc: #8b5cf6; --hs: #f5f1ff; --hb: #e0d6fb; --hx: #4c1d95;
+    background: linear-gradient(115deg, var(--hs) 0%, #fbfcfe 85%);
+    border: 1px solid var(--hb);
+    box-shadow: none;
+    color: #1e293b;
+}
+.ws-hero::before {
+    top: -80px; right: -60px; width: 320px; height: 320px;
+    background: radial-gradient(circle, var(--hb) 0%, transparent 68%);
+    opacity: .55;
+}
+.ws-hero::after { display: none; }
+html[data-theme="dark"] .ws-hero::before { display: none; }
+
+.ws-hero > div { padding: 20px 24px; }
+.ws-hero .text-white { color: #0f172a; }
+.ws-hero [class*="text-blue-"] { color: #55637a; }
+.ws-hero p.uppercase { color: var(--hx); opacity: .8; }
+.ws-hero h1 { font-size: 1.6rem; letter-spacing: -.015em; }
+@media (min-width: 640px) { .ws-hero h1 { font-size: 1.75rem; } }
+.ws-hero .text-xs.sm\:text-sm[class*="text-blue-100"],
+.ws-hero [class*="text-blue-100"] { color: #475569; }
+
+.ws-hero__chip {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    background: var(--hc);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    box-shadow: 0 10px 18px -10px var(--hc);
+}
+.ws-hero__chip--icon {
+    background: #fff;
+    border: 1px solid var(--hb);
+    color: var(--hc);
+    font-size: 20px;
+    box-shadow: 0 8px 16px -10px var(--hc);
+}
+
+.ws-hero-btn {
+    background: #fff;
+    border: 1px solid var(--hb);
+    color: #334155;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+.ws-hero-btn:hover { background: #fbfcfe; border-color: var(--hc); }
+.ws-hero-btn--solid { background: var(--hc); color: #fff; border-color: var(--hc); }
+.ws-hero-btn--solid:hover { background: var(--hc); filter: brightness(.95); }
+
+.ws-hero-deadline { background: #fff; border-color: var(--hb); color: var(--hx); }
+.ws-hero-deadline:hover { background: #fbfcfe; }
+.ws-hero-deadline--late { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+/* ---------- Kartu statistik (agregat) ---------- */
+.ws-stats .ws-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: var(--stat-s, #fff);
+    border: 1px solid var(--stat-b, #e8eeff);
+    box-shadow: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.ws-stats .ws-stat::after { display: none; }
+.ws-stats .ws-stat:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -14px var(--stat-color, #3b82f6); }
+
+.ws-stat__icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--stat-color, #3b82f6);
+    font-size: 15px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 6px 12px -8px var(--stat-color, #3b82f6);
+}
+.ws-stat__body { display: flex; flex-direction: column-reverse; min-width: 0; }
+.ws-stats .ws-stat__value {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+}
+.ws-stats .ws-stat__label {
+    margin: 2px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #55637a;
+    white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+    .ws-stats .ws-stat { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }
+    .ws-stat__icon { width: 30px; height: 30px; border-radius: 9px; font-size: 12px; }
+    .ws-stats .ws-stat__value { font-size: 1.2rem; }
+    .ws-stats .ws-stat__label { font-size: 10px; letter-spacing: .02em; }
+}
+
+/* ---------- Tab & tombol ---------- */
+.ws-tabs {
+    background: #fff;
+    border: 1px solid #e6ebf3;
+    box-shadow: 0 1px 2px rgba(15, 30, 80, .04);
+}
+.ws-tab:hover { background: #f6f8fc; }
+.ws-tab[aria-selected="true"] {
+    background: var(--ts, #eef2ff);
+    color: var(--tx, #3730a3);
+    box-shadow: inset 0 0 0 1px var(--tb, #e0e7ff);
+}
+
+.ws-btn--primary { background: #2563eb; }
+.ws-btn--primary:hover { box-shadow: 0 8px 18px -8px rgba(37, 99, 235, .6); }
+
+@media (max-width: 639px) {
+    .ws-hero__chip { align-self: flex-start; width: 44px; height: 44px; font-size: 15px; border-radius: 13px; }
+}
+
+/* ---------- Hero lebih tegas (light mode) ---------- */
+.ws-hero {
+    background: linear-gradient(115deg, var(--hb) 0%, var(--hs) 62%, #fbfcfe 100%);
+    border-left: 5px solid var(--hc);
+}
+.ws-hero h1 { color: #0b1220; font-weight: 800; }
+.ws-hero .text-white { color: #0b1220; }
+.ws-hero [class*="text-blue-"] { color: #3f4d63; }
+.ws-hero__chip--icon { background: var(--hc); border-color: var(--hc); color: #fff; box-shadow: 0 10px 18px -10px var(--hc); }
+
+/* ---------- Kartu statistik: label tidak terpotong ---------- */
+.ws-stats .ws-stat { padding: 12px 14px; gap: 10px; min-width: 0; }
+.ws-stat__icon { width: 38px; height: 38px; }
+.ws-stats .ws-stat__label {
+    white-space: normal;
+    font-size: 10.5px;
+    letter-spacing: .02em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+/* =====================================================================
+ * Kartu kelompok (daftar workspace): aksen warna kelompok, hover berlapis, progres berwarna
+ * ===================================================================== */
+a.ws-card {
+    --group-color: #6366f1;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e6ebf3;
+    box-shadow: 0 1px 2px rgba(15, 30, 80, .04), 0 8px 24px -12px rgba(15, 30, 80, .10);
+    transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s ease, border-color .28s ease;
+    animation: wsCardIn .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+/* tint halus warna kelompok di seluruh kartu */
+a.ws-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--group-color);
+    opacity: .045;
+    pointer-events: none;
+    transition: opacity .28s ease;
+}
+/* garis aksen atas */
+a.ws-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--group-color);
+    opacity: .9;
+}
+a.ws-card > * { position: relative; z-index: 1; }
+a.ws-card:hover,
+a.ws-card:focus-visible {
+    transform: translateY(-5px);
+    border-color: var(--group-color);
+    box-shadow: 0 2px 4px rgba(15, 30, 80, .05), 0 22px 40px -18px var(--group-color);
+}
+a.ws-card:hover::before { opacity: .085; }
+a.ws-card:active { transform: translateY(-2px); }
+
+a.ws-card .ws-group-icon { transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s ease; box-shadow: 0 10px 18px -10px var(--group-color); }
+a.ws-card:hover .ws-group-icon { transform: scale(1.08) rotate(-4deg); }
+
+a.ws-card .ws-progress { height: 8px; background: #e9edf4; }
+a.ws-card .ws-progress__bar { background: var(--group-color); box-shadow: 0 0 10px -2px var(--group-color); transition: width .8s cubic-bezier(.4, 0, .2, 1); }
+a.ws-card .ws-card__pct { font-weight: 800; color: #0f172a; margin-left: 6px; }
+
+/* pil "Buka" */
+a.ws-card .ws-card__open {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    transition: background .25s ease, color .25s ease;
+}
+a.ws-card:hover .ws-card__open { background: #4f46e5; color: #fff; }
+
+/* kelompok selesai: datar & redup */
+a.ws-card.ws-card--finished { box-shadow: none; animation-name: wsCardIn; }
+a.ws-card.ws-card--finished::before { opacity: .02; }
+a.ws-card.ws-card--finished::after { background: #cbd5e1; }
+a.ws-card.ws-card--finished:hover { border-color: #cbd5e1; box-shadow: 0 14px 28px -18px rgba(15, 30, 80, .25); }
+
+@keyframes wsCardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+a.ws-card:nth-child(2) { animation-delay: .05s; }
+a.ws-card:nth-child(3) { animation-delay: .10s; }
+a.ws-card:nth-child(4) { animation-delay: .15s; }
+a.ws-card:nth-child(5) { animation-delay: .20s; }
+a.ws-card:nth-child(6) { animation-delay: .25s; }
+@media (prefers-reduced-motion: reduce) { a.ws-card { animation: none; transition: none; } }
+
+/* =====================================================================
+ * Fase 4 — Kartu kelompok bergaya kartu pastel (selaras kartu statistik): tanpa garis atas
+ * ===================================================================== */
+a.ws-card::after { display: none; }
+a.ws-card {
+    background: color-mix(in srgb, var(--group-color) 9%, #fff);
+    border: 1px solid color-mix(in srgb, var(--group-color) 26%, #fff);
+    box-shadow: none;
+}
+a.ws-card::before { display: none; }
+a.ws-card:hover,
+a.ws-card:focus-visible {
+    border-color: color-mix(in srgb, var(--group-color) 55%, #fff);
+    box-shadow: 0 14px 28px -16px var(--group-color);
+    transform: translateY(-3px);
+}
+a.ws-card .ws-group-icon { border-radius: 14px; }
+a.ws-card .ws-progress { background: color-mix(in srgb, var(--group-color) 16%, #fff); }
+a.ws-card .ws-card__foot > div { border-top-color: color-mix(in srgb, var(--group-color) 18%, #fff); }
+a.ws-card .ws-card__open { background: #fff; color: var(--group-color); box-shadow: 0 1px 2px rgba(15, 23, 42, .06); }
+a.ws-card:hover .ws-card__open { background: var(--group-color); color: #fff; }
+a.ws-card .ws-card__open { filter: saturate(1); }
+a.ws-card.ws-card--finished { background: #f6f8fb; border-color: #e2e8f0; box-shadow: none; }
+a.ws-card.ws-card--finished:hover { border-color: #cbd5e1; box-shadow: 0 12px 24px -18px rgba(15, 30, 80, .3); }
