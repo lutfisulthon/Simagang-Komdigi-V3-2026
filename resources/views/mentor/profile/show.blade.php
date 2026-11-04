@@ -178,6 +178,8 @@
         border: 1.5px solid #e5e7eb;
         border-radius: 10px;
         transition: all .2s ease;
+        overflow-wrap: anywhere;
+        min-width: 0;
     }
     .info-value:hover {
         background: #f3f4f6;

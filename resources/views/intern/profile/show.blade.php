@@ -35,7 +35,7 @@
     .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
     .info-item { display: flex; flex-direction: column; gap: 6px; }
     .info-label { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
-    .info-value { font-size: 14px; font-weight: 600; color: #1f2937; padding: 10px 12px; background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px; transition: all .2s ease; }
+    .info-value { font-size: 14px; font-weight: 600; color: #1f2937; padding: 10px 12px; background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px; transition: all .2s ease; overflow-wrap: anywhere; min-width: 0; }
     .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; }
     .status-active { background: #dcfce7; color: #15803d; }
     .status-inactive { background: #fee2e2; color: #b91c1c; }

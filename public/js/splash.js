@@ -135,11 +135,14 @@
     function startLoading() {
         variantFromTheme();
         // Datang dari berpindah halaman: lanjutan layar yang sama, tampil lebih singkat.
-        if (root.classList.contains('sm-splash-nav')) { minMs = 350; label = 'Memuat halaman…'; }
+        const resumed = root.classList.contains('sm-splash-nav');
+        if (resumed) { minMs = 350; label = 'Memuat halaman…'; }
         el.classList.add('is-active');
         el.setAttribute('aria-hidden', 'false');
         startedAt = performance.now();
         goal = 20; cap = 40;
+        // Lanjutan: progres meneruskan posisi layar di halaman lama (±88%), bukan mulai dari 0 lagi.
+        if (resumed) { value = 88; goal = 88; cap = 92; }
         paint();
         raf = requestAnimationFrame(tick);
 

@@ -111,6 +111,11 @@ html.sm-splash-on { overflow: hidden; }
 .sm-splash__word span:nth-child(3) { animation-delay: .24s; }
 .sm-splash__word span:nth-child(4) { animation-delay: .32s; }
 
+/* Lanjutan dari berpindah halaman: layar yang sama diteruskan tanpa mengulang animasi masuk. */
+html.sm-splash-nav .sm-splash__logo,
+html.sm-splash-nav .sm-splash__word span,
+html.sm-splash-nav .sm-splash__tag { animation: none; }
+
 .sm-splash[data-variant="dark"] .sm-splash__word span,
 html[data-theme="dark"] .sm-splash:not([data-variant="light"]) .sm-splash__word span {
     text-shadow: 0 0 1px rgba(255, 255, 255, .4), 0 0 10px rgba(255, 255, 255, .1);
