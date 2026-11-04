@@ -21,9 +21,10 @@
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
-        <!-- Database khusus tes (MySQL, karena sebagian migrasi memakai SQL khusus MySQL). Jangan arahkan ke database dev. -->
+        <!-- Database khusus test (MySQL, karena migration proyek memakai sintaks khusus MySQL).
+             Jangan arahkan ke database development: RefreshDatabase menghapus semua tabel. -->
         <env name="DB_CONNECTION" value="mysql" force="true"/>
-        <env name="DB_DATABASE" value="simagang_testing" force="true"/>
+        <env name="DB_DATABASE" value="simagang_test" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

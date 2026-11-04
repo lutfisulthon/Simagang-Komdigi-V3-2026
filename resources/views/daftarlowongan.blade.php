@@ -677,5 +677,6 @@
 
         </div>
     </div>
+    <script defer src="{{ asset('js/live-filter.js') }}?v={{ @filemtime(public_path('js/live-filter.js')) }}"></script>
 </body>
 {{-- @endsection --}}

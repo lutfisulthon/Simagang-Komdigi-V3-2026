@@ -7,6 +7,7 @@ use App\Models\Intern;
 use App\Models\Mentor;
 use App\Models\Industri;
 use App\Exports\MonitoringExport;
+use App\Services\WorkspaceDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -167,6 +168,10 @@ class AdminMonitoringController extends Controller
 
         $activeInterns = $activeQuery->orderBy('end_date', 'asc')->orderBy('name', 'asc')
             ->paginate(15, ['*'], 'active_page');
+
+        // Progres tugas workspace per intern (selesai/total, terlambat) untuk kolom Tugas
+        $taskProgress = app(WorkspaceDashboardService::class)->progressByIntern($activeInterns->pluck('id')->all());
+
         $alumniInterns = $alumniQuery->orderBy('updated_at', 'desc')->orderBy('name', 'asc')
             ->paginate(15, ['*'], 'alumni_page');
 
@@ -294,6 +299,7 @@ class AdminMonitoringController extends Controller
             'selectedMentor',
             'hasFilter',
             'activeInterns',
+            'taskProgress',
             'alumniInterns',
             'releasedThisMonth',
             'internsMasuk',

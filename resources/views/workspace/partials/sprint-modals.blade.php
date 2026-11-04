@@ -208,3 +208,57 @@
         </x-slot:footer>
     </x-workspace.modal>
 </div>
+
+{{-- ================= Epic (kelola) ================= --}}
+<div x-data="wsEpics(@js(['workspaceId' => $workspace['id']]))">
+    <x-workspace.modal name="ws-epics" max-width="md" labelledby="ws-epics-heading" x-model="open">
+        <div class="-mt-1">
+            <h2 id="ws-epics-heading" class="text-lg font-bold text-gray-800 mb-1">Epic</h2>
+            <p class="text-sm text-slate-500 mb-4">Kelompokkan tugas yang berkaitan lintas sprint. Pilih epic saat membuat atau mengubah tugas.</p>
+
+            <ul class="space-y-2 mb-4" x-show="epics.length">
+                <template x-for="e in epics" :key="e.id">
+                    <li class="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
+                        <span class="ws-label-chip__dot" :style="{ background: e.color }"></span>
+                        <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-800" x-text="e.name"></span>
+                        <span class="text-xs text-slate-500 whitespace-nowrap" x-text="usage(e.id) + ' tugas'"></span>
+                        <button type="button" class="ws-icon-btn ws-icon-btn--sm" x-on:click="edit(e)" :aria-label="'Ubah ' + e.name"><i class="fas fa-pen"></i></button>
+                        <template x-if="confirmId !== e.id">
+                            <button type="button" class="ws-icon-btn ws-icon-btn--sm text-red-600" x-on:click="confirmId = e.id" :aria-label="'Hapus ' + e.name"><i class="fas fa-trash"></i></button>
+                        </template>
+                        <template x-if="confirmId === e.id">
+                            <span class="flex items-center gap-1">
+                                <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" :disabled="saving" x-on:click="remove(e)">Hapus</button>
+                                <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-on:click="confirmId = null">Batal</button>
+                            </span>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+            <p class="text-sm text-slate-500 mb-4" x-show="!epics.length">Belum ada epic.</p>
+
+            <form x-on:submit.prevent="save()" novalidate class="rounded-xl bg-slate-50 p-3">
+                <p class="ws-label" x-text="editingId ? 'Ubah epic' : 'Epic baru'"></p>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="text" class="ws-input flex-1 min-w-[10rem]" x-model="form.name" maxlength="60" placeholder="Nama epic, mis. Autentikasi" aria-label="Nama epic" x-ref="name">
+                    <div class="flex items-center gap-1.5" role="group" aria-label="Warna epic">
+                        <template x-for="c in colors" :key="c">
+                            <button type="button" class="h-6 w-6 rounded-full border-2" :style="{ background: c }" :class="form.color === c ? 'border-gray-800' : 'border-transparent'"
+                                    :aria-pressed="(form.color === c).toString()" :aria-label="'Warna ' + c" x-on:click="form.color = c"></button>
+                        </template>
+                    </div>
+                </div>
+                <p class="ws-field-error" x-show="errors.name" x-text="errors.name"></p>
+                <div class="mt-3 flex justify-end gap-2">
+                    <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-show="editingId" x-on:click="reset()">Batal ubah</button>
+                    <button type="submit" class="ws-btn ws-btn--primary ws-btn--sm" :disabled="saving">
+                        <i class="fas" :class="saving ? 'fa-spinner fa-spin' : 'fa-plus'"></i> <span x-text="editingId ? 'Simpan' : 'Tambah epic'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <x-slot:footer>
+            <button type="button" class="ws-btn ws-btn--ghost" x-on:click="open = false">Tutup</button>
+        </x-slot:footer>
+    </x-workspace.modal>
+</div>

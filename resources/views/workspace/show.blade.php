@@ -9,10 +9,9 @@
       $assignableInterns  InternMini[]
       $labels             {id,name,color}[]
       $channels           Channel[]    channel workspace ini + #pengumuman
-      $templates          Template[]   template tim (untuk "Pakai template"); kosong untuk intern
       $sprints     Sprint[]    sprint kelompok (planned, active, completed) — tab Backlog & board
       $tab         'backlog'|'board'|'list'|'timeline'|'deadline'|'laporan'|'channel'|'activity'
-      $can         ['create_task', 'manage_channels', 'create_template', 'manage_labels' => bool]
+      $can         ['create_task', 'manage_channels', 'manage_labels' => bool]
 --}}
 @extends('workspace.layout')
 
@@ -30,7 +29,7 @@
         $activeTasks = $s['todo'] + $s['in_progress'] + $s['review'] + $s['revision'];
         $isIntern = auth()->user()->isIntern();
         $tabs = array_filter([
-            'backlog' => $isIntern ? null : ['Backlog', 'fa-layer-group', null, false],
+            'backlog' => ($workspace['is_personal'] ?? false) ? null : ['Backlog', 'fa-layer-group', null, false],
             'board' => ['Board', 'fa-table-columns', $activeTasks, false],
             'list' => ['List', 'fa-list-ul', null, false],
             'timeline' => ['Timeline', 'fa-chart-gantt', null, false],
@@ -49,12 +48,15 @@
             ['late', 'Terlambat', $s['late'], '#ef4444', 'triangle-exclamation', '#fff1f1', '#fbd0d0'],
         ];
         $mentorMembers = collect($members)->where('role', 'mentor')->values();
+        // Workspace tim punya banyak mentor: tampilkan dua nama pertama, sisanya sebagai hitungan.
+        $mentorNames = $mentorMembers->pluck('name');
+        $mentorLine = $mentorNames->take(2)->implode(', ') . ($mentorNames->count() > 2 ? ' +' . ($mentorNames->count() - 2) . ' lainnya' : '');
         $internMembers = collect($members)->where('role', 'intern')->values();
         $previewMembers = collect($members)->take(4);
     @endphp
 
     {{-- Boot store tugas sebelum board/list diinisialisasi (urutan DOM). --}}
-    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks, 'sprints' => $sprints ?? [], 'interns' => $assignableInterns]))"></div>
+    <div hidden x-data x-init="$store.wsTasks.boot(@js(['workspace' => $workspace, 'tasks' => $initialTasks, 'sprints' => $sprints ?? [], 'epics' => $epics ?? [], 'interns' => $assignableInterns]))"></div>
     <div hidden x-data x-init="$store.wsChat.boot(@js(['workspaceId' => $workspace['id'], 'channels' => $channels, 'readOnly' => $workspace['is_read_only']]))"></div>
 
     <div x-data="wsWorkspaceShow(@js(['tab' => $tab, 'tabs' => array_keys($tabs)]))">
@@ -65,15 +67,18 @@
         </nav>
 
         <x-workspace.hero class="ws-anim-1 mb-6"
-                          :eyebrow="'Kelompok · ' . $workspace['team']['name']"
+                          :eyebrow="'Kelompok' . ($workspace['team'] && ! ($workspace['is_personal'] ?? false) ? ' · ' . $workspace['team']['name'] : '')"
                           :title="$workspace['name']"
                           :color="$workspace['color']" :initials="$initials"
                           :subtitle="$workspace['description'] ?: 'Board tugas dan diskusi kelompok'">
             <x-slot:meta>
-                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: {{ $workspace['mentor']['name'] }}</span>
+                <span class="inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-user"></i> Mentor: <span title="{{ $mentorNames->implode(', ') }}">{{ $mentorLine ?: $workspace['mentor']['name'] }}</span></span>
                 <span class="opacity-50 hidden sm:inline">·</span>
-                <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
-                <span class="opacity-50 hidden sm:inline">·</span>
+                {{-- Space pribadi hanya berisi satu intern: jumlah anak magang tidak perlu ditampilkan. --}}
+                @unless ($workspace['is_personal'] ?? false)
+                    <span class="inline-flex items-center gap-1.5"><i class="fas fa-user-graduate"></i> {{ $internMembers->count() }} anak magang</span>
+                    <span class="opacity-50 hidden sm:inline">·</span>
+                @endunless
                 @if ($workspace['status'] === 'finished')
                     <span class="inline-flex items-center gap-1.5"><i class="fas fa-flag-checkered"></i> Selesai {{ $date($workspace['finished_at']) }}</span>
                 @elseif ($workspace['end_date'])
@@ -317,7 +322,7 @@
     {{-- Detail tugas (slide-over) — URL ikut berubah: ?task=T-12 --}}
     <div x-data="wsTaskDetail({ mode: 'panel' })">
         <x-workspace.slide-over name="ws-task-detail" title="Detail tugas" x-model="$store.wsTasks.detailOpen">
-            @include('workspace.partials.task-detail', ['mode' => 'panel', 'canTemplate' => $can['create_template'] ?? false])
+            @include('workspace.partials.task-detail', ['mode' => 'panel'])
         </x-workspace.slide-over>
     </div>
 
@@ -335,11 +340,6 @@
         @include('workspace.partials.label-manager', ['labelTeams' => [$workspace['team']], 'labelsByTeam' => [$workspace['team']['id'] => $labels]])
     @endif
 
-    @if (($can['create_template'] ?? false) && $workspace['team'])
-        @include('workspace.partials.template-modals', [
-            'tplTeams' => [$workspace['team']], 'canChooseTeam' => false, 'defaultTeamId' => $workspace['team']['id'], 'withAssign' => false,
-        ])
-    @endif
 @endsection
 
 @push('scripts')
@@ -349,7 +349,6 @@
             WS.mock.seed('sprint-context', @js(['workspace_id' => $workspace['id'], 'sprints' => $sprints ?? [], 'members' => $assignableInterns]));
             WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
             WS.mock.seed('label-context', @js(['teams' => $workspace['team'] ? [$workspace['team']] : [], 'labels' => $labels]));
-            WS.mock.seed('template-context', @js(['templates' => $templates ?? [], 'labels' => $labels, 'teams' => $workspace['team'] ? [$workspace['team']] : []]));
             WS.mock.seed('channel-context', @js([
                 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'url' => $workspace['url']],
                 'members' => $members,

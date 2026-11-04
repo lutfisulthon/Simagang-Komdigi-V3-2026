@@ -8,10 +8,9 @@
       $counts     ['active' => int, 'finished' => int, 'attention' => int]
       $sort       'deadline'|'newest'       urutan kelompok aktif (default deadline tugas terdekat)
       $attention  bool                      hanya kelompok yang perlu perhatian (lewat deadline / jatuh tempo ≤ 3 hari)
-      $ungrouped  Roster[]                  mentor: anak bimbingan yang belum punya kelompok
       $teams      {id,name}[]               admin: filter unit kerja
       $mentors    {id,name}[]               admin: filter mentor
-      $can        ['create_group', 'manage_templates' => bool]
+      $can        ['create_group' => bool]
 --}}
 @extends('workspace.layout')
 
@@ -20,6 +19,7 @@
 @section('workspace-content')
     @php
         $viewerIsAdmin = ! empty($teams);
+        $viewerIsIntern = auth()->user()->isIntern();
         $total = $noGroup ? 0 : $counts['active'] + $counts['finished'];
         $filtering = request()->filled('q') || request()->filled('team') || request()->filled('mentor');
         $showFilter = $viewerIsAdmin || $total > 9 || $filtering;
@@ -31,8 +31,8 @@
 
     <x-workspace.hero class="ws-anim-1 mb-6"
                       eyebrow="Workspace" icon="layer-group"
-                      :title="$noGroup ? 'Kelompok Magang' : ($viewerIsAdmin ? 'Semua Kelompok' : 'Kelompok Bimbingan')"
-                      :subtitle="$noGroup ? 'Tugas dan diskusi bersama kelompokmu' : ($viewerIsAdmin ? 'Pantau kelompok kerja semua mentor' : 'Kelompokkan anak bimbingan, beri tugas, dan pantau progresnya')">
+                      :title="$noGroup ? 'Kelompok Magang' : ($viewerIsAdmin ? 'Semua Kelompok' : ($viewerIsIntern ? 'Workspace Saya' : 'Kelompok Bimbingan'))"
+                      :subtitle="$noGroup ? 'Tugas dan diskusi bersama kelompokmu' : ($viewerIsAdmin ? 'Pantau kelompok kerja semua mentor' : ($viewerIsIntern ? 'Space pribadi dan workspace tim Anda' : 'Kelompokkan anak bimbingan, beri tugas, dan pantau progresnya'))">
         @unless ($noGroup)
             <x-slot:meta>
                 <span class="inline-flex items-center gap-1.5"><i class="fas fa-users"></i> {{ $counts['active'] }} kelompok aktif</span>
@@ -40,11 +40,6 @@
                 <span class="inline-flex items-center gap-1.5"><i class="fas fa-flag-checkered"></i> {{ $counts['finished'] }} selesai magang</span>
             </x-slot:meta>
         @endunless
-        @if (($can['manage_templates'] ?? false) && Route::has('workspace.templates.index'))
-            <a href="{{ route('workspace.templates.index') }}" class="ws-hero-btn">
-                <i class="fas fa-copy"></i> Template tugas
-            </a>
-        @endif
         @if ($can['create_group'] ?? false)
             <button type="button" class="ws-hero-btn ws-hero-btn--solid" x-data x-on:click="$dispatch('ws-group-create', {})">
                 <i class="fas fa-plus"></i> Buat kelompok
@@ -59,34 +54,6 @@
                                      :description="'Mentor Anda' . ($mentor ? ' (' . $mentor['name'] . ')' : '') . ' akan memasukkan Anda ke sebuah kelompok. Setelah itu, tugas dan diskusi kelompok muncul di sini.'" />
         </div>
     @else
-        {{-- Anak bimbingan yang belum punya kelompok --}}
-        @if (count($ungrouped))
-            <div class="ws-anim-2 mb-6 ws-callout" role="status">
-                <span class="ws-callout__icon" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
-                <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-sm text-gray-800">{{ count($ungrouped) }} anak bimbingan belum punya kelompok</p>
-                    <ul class="mt-2 flex flex-wrap gap-2">
-                        @foreach ($ungrouped as $intern)
-                            <li class="ws-chip-person">
-                                <x-workspace.avatar :name="$intern['name']" :src="$intern['avatar_url']" size="xs" />
-                                <span class="text-sm font-medium text-gray-800">{{ $intern['name'] }}</span>
-                                <button type="button" class="ws-chip-person__action" x-data
-                                        x-on:click="$dispatch('ws-group-assign', { intern: @js(['id' => $intern['id'], 'name' => $intern['name']]) })">
-                                    Masukkan<span class="sr-only"> {{ $intern['name'] }} ke kelompok</span>
-                                </button>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-                @if (count($ungrouped) > 1)
-                    <button type="button" class="ws-btn ws-btn--primary ws-btn--sm shrink-0 self-start" x-data
-                            x-on:click="$dispatch('ws-group-create', { intern_ids: @js(array_column($ungrouped, 'id')) })">
-                        <i class="fas fa-plus"></i> Kelompokkan semua
-                    </button>
-                @endif
-            </div>
-        @endif
-
         @if ($showFilter)
             <form method="GET" action="{{ route('workspace.index') }}" class="ws-anim-2 mb-6 flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3" role="search">
                 <label class="relative flex-1 min-w-0">
@@ -97,7 +64,7 @@
                 @if ($viewerIsAdmin)
                     <label class="order-last sm:order-none basis-[calc(50%-4px)] sm:basis-auto sm:w-52 min-w-0">
                         <span class="sr-only">Filter unit kerja</span>
-                        <select name="team" class="ws-input" onchange="this.form.submit()">
+                        <select name="team" class="ws-input">
                             <option value="">Semua unit</option>
                             @foreach ($teams as $team)
                                 <option value="{{ $team['id'] }}" @selected((string) request('team') === (string) $team['id'])>{{ $team['name'] }}</option>
@@ -106,7 +73,7 @@
                     </label>
                     <label class="order-last sm:order-none basis-[calc(50%-4px)] sm:basis-auto sm:w-52 min-w-0">
                         <span class="sr-only">Filter mentor</span>
-                        <select name="mentor" class="ws-input" onchange="this.form.submit()">
+                        <select name="mentor" class="ws-input">
                             <option value="">Semua mentor</option>
                             @foreach ($mentors as $m)
                                 <option value="{{ $m['id'] }}" @selected((string) request('mentor') === (string) $m['id'])>{{ $m['name'] }}</option>

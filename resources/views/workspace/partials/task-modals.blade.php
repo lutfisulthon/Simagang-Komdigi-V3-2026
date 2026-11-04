@@ -1,33 +1,15 @@
 {{--
     Modal tugas: form buat/edit, review (mentor), kirim hasil (intern), hapus.
-    Variabel: $workspace, $assignableInterns, $labels, $selfInternId (int|null — intern membuat to-do pribadi),
-              $templates (opsional, Template[] tim — untuk "Pakai template")
+    Variabel: $workspace, $assignableInterns, $labels, $selfInternId (int|null — intern membuat to-do pribadi)
 --}}
 
 {{-- ================= Form buat / edit ================= --}}
-<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'selfInternId' => $selfInternId ?? null, 'templates' => $templates ?? [], 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
+<div x-data="wsTaskForm(@js(['workspaceId' => $workspace['id'], 'interns' => $assignableInterns, 'labels' => $labels, 'epics' => $epics ?? [], 'selfInternId' => $selfInternId ?? null, 'teamId' => $workspace['team']['id'] ?? null, 'canManageLabels' => $can['manage_labels'] ?? false]))">
     <x-workspace.modal name="ws-task-form" max-width="lg" labelledby="ws-task-form-heading" x-model="open">
         <form x-on:submit.prevent="submit()" novalidate class="-mt-1">
             <h2 id="ws-task-form-heading" class="text-lg font-bold text-gray-800 mb-5" x-text="editing ? 'Edit ' + editing.code : 'Buat tugas baru'"></h2>
 
             <div class="space-y-5">
-                {{-- Pakai template (hanya saat membuat, bila tim punya template) --}}
-                <div class="ws-tpl-use" x-show="!editing && !selfOnly && templates.length">
-                    <label class="ws-label !mb-1" for="ws-f-template"><i class="fas fa-copy mr-1 text-indigo-500"></i>Pakai template</label>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <select id="ws-f-template" class="ws-input !py-2 !text-sm" :value="form.template_id" x-on:change="applyTemplate($event.target.value)">
-                            <option value="">Tanpa template</option>
-                            <template x-for="t in templates" :key="t.id">
-                                <option :value="t.id" x-text="t.title + (t.is_onboarding ? ' · onboarding' : '')"></option>
-                            </template>
-                        </select>
-                        @if (Route::has('workspace.templates.index'))
-                            <a href="{{ route('workspace.templates.index') }}" class="text-sm font-semibold text-indigo-600 hover:underline shrink-0 py-1">Kelola template</a>
-                        @endif
-                    </div>
-                    <p class="text-xs text-slate-500 mt-1.5" x-show="form.template_id">Judul, deskripsi, prioritas, label, checklist, dan deadline diisi dari template. Semua masih bisa diubah.</p>
-                </div>
-
                 {{-- Judul --}}
                 <div>
                     <div class="flex items-center justify-between">
@@ -75,6 +57,22 @@
                     </label>
                 </div>
 
+                {{-- Story point & epic (perencanaan sprint) --}}
+                <div class="grid sm:grid-cols-2 gap-4" x-show="!selfOnly">
+                    <div>
+                        <label class="ws-label" for="ws-f-points">Story point <span class="font-normal text-slate-500">(estimasi, opsional)</span></label>
+                        <input id="ws-f-points" type="number" min="0" max="100" step="1" inputmode="numeric" class="ws-input" x-model="form.story_points" placeholder="mis. 3">
+                        <p class="ws-field-error" x-show="errors.story_points" x-text="errors.story_points"></p>
+                    </div>
+                    <div>
+                        <label class="ws-label" for="ws-f-epic">Epic <span class="font-normal text-slate-500">(opsional)</span></label>
+                        <select id="ws-f-epic" class="ws-input" x-model="form.epic_id" :disabled="!epics.length">
+                            <option value="" x-text="epics.length ? 'Tanpa epic' : 'Belum ada epic (buat di tab Backlog)'"></option>
+                            <template x-for="e in epics" :key="e.id"><option :value="String(e.id)" x-text="e.name"></option></template>
+                        </select>
+                    </div>
+                </div>
+
                 {{-- Prioritas & waktu --}}
                 <div class="grid sm:grid-cols-3 gap-4">
                     <div>
@@ -86,14 +84,15 @@
                             <option value="urgent">Urgent</option>
                         </select>
                     </div>
-                    <div>
+                    <div x-show="showDates">
                         <label class="ws-label" for="ws-f-start">Mulai</label>
                         <input id="ws-f-start" type="datetime-local" class="ws-input" x-model="form.start_at">
                     </div>
-                    <div>
-                        <label class="ws-label" for="ws-f-due">Deadline <span class="text-red-600">*</span></label>
+                    <div x-show="showDates">
+                        <label class="ws-label" for="ws-f-due">Deadline <span class="text-red-600" x-show="deadlineRequired">*</span><span class="font-normal text-slate-500" x-show="!deadlineRequired"> (opsional)</span></label>
                         <input id="ws-f-due" type="datetime-local" class="ws-input" x-model="form.due_at" :class="errors.due_at && 'ws-input--error'">
                         <p class="ws-field-error" x-show="errors.due_at" x-text="errors.due_at"></p>
+                        <p class="mt-1 text-xs text-slate-500" x-show="!deadlineRequired && !form.due_at">Kosong: tugas di sprint otomatis berakhir bersama sprint.</p>
                     </div>
                 </div>
 

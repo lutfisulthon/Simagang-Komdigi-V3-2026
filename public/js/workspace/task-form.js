@@ -52,10 +52,10 @@
         },
     });
 
-    // Bentuk form kosong — template modal dirender sebelum form pertama kali dibuka.
+    // Bentuk form kosong — modal dirender sebelum form pertama kali dibuka.
     function blankForm() {
-        return { title: '', description: '', priority: 'medium', assignee_ids: [], label_ids: [], start_at: '', due_at: '', checklist: [], result_links: [],
-            template_id: '', separate_copies: false };
+        return { title: '', description: '', priority: 'medium', assignee_ids: [], label_ids: [], start_at: '', due_at: '', checklist: [], result_links: [], story_points: '', epic_id: '',
+            separate_copies: false };
     }
 
     document.addEventListener('alpine:init', () => {
@@ -100,7 +100,7 @@
         }));
 
         // ---------- Form tugas ----------
-        // config: { workspaceId, interns: InternMini[], labels, selfInternId?: number, templates?: Template[],
+        // config: { workspaceId, interns: InternMini[], labels, selfInternId?: number,
         //          teamId?: number, canManageLabels?: bool }
         Alpine.data('wsTaskForm', (config) => ({
             open: false,
@@ -112,31 +112,24 @@
             saving: false,
             interns: config.interns,
             labels: config.labels,
-            templates: config.templates || [],
+            epics: config.epics || [],
             selfOnly: !!config.selfInternId,
             sprintId: null,       // sprint tujuan tugas baru (null = backlog)
             canManageLabels: !!config.canManageLabels,
 
             init() {
                 window.addEventListener('ws-open-task-form', (e) => this.start(e.detail || {}));
+                window.addEventListener('ws-epics-changed', (e) => {
+                    this.epics = e.detail.epics;
+                    if (!this.epics.some((x) => String(x.id) === String(this.form.epic_id))) this.form.epic_id = '';
+                });
                 window.addEventListener('ws-labels-changed', (e) => {
                     this.labels = e.detail.labels;
                     const ids = new Set(e.detail.labels.map((l) => l.id));
                     this.form.label_ids = this.form.label_ids.filter((id) => ids.has(id));
                 });
-                // Template yang baru disimpan ("Simpan sebagai template") langsung bisa dipakai.
-                window.addEventListener('ws-template-saved', (e) => {
-                    const t = e.detail.template;
-                    const i = this.templates.findIndex((x) => x.id === t.id);
-                    if (i === -1) this.templates.push(t);
-                    else this.templates.splice(i, 1, t);
-                });
                 // Setelah percobaan simpan pertama, error diperbarui langsung saat user mengetik.
                 this.$watch('form', () => { if (this.submitted) this.validate(); });
-                // Template + beberapa intern: default-nya salinan terpisah (seperti "Tugaskan" di halaman template).
-                this.$watch('form.assignee_ids.length', (n, old) => {
-                    if (!this.editing && this.form.template_id && n > 1 && old <= 1) this.form.separate_copies = true;
-                });
             },
 
             start({ task, sprint_id }) {
@@ -158,7 +151,8 @@
                     due_at: toLocalInput(t.due_at),
                     checklist: t.checklist_items ? t.checklist_items.map((c) => ({ id: c.id, content: c.content, is_done: c.is_done })) : [],
                     result_links: t.result_links ? t.result_links.map((l) => ({ url: l.url, label: l.label || '' })) : [],
-                    template_id: '',
+                    story_points: t.story_points === null || t.story_points === undefined ? '' : String(t.story_points),
+                    epic_id: t.epic_id ? String(t.epic_id) : '',
                     separate_copies: false,
                 };
                 this.open = true;
@@ -167,24 +161,6 @@
 
             manageLabels() {
                 this.$dispatch('ws-open-labels', { teamId: config.teamId });
-            },
-
-            // "Pakai template": isi form dari template; assignee & lampiran tidak diubah.
-            applyTemplate(id) {
-                const tpl = this.templates.find((x) => x.id === Number(id));
-                this.form.template_id = tpl ? tpl.id : '';
-                if (!tpl) return;
-                const labelIds = new Set(this.labels.map((l) => l.id));
-                Object.assign(this.form, {
-                    title: tpl.title,
-                    description: tpl.description || '',
-                    priority: tpl.priority,
-                    label_ids: (tpl.labels || []).map((l) => l.id).filter((x) => labelIds.has(x)),
-                    due_at: WS.templates ? WS.templates.dueFromDays(tpl.due_in_days) : this.form.due_at,
-                    checklist: (tpl.checklist || []).map((c) => ({ id: null, content: c.content, is_done: false })),
-                });
-                // Template biasanya dipakai untuk beberapa intern sekaligus.
-                if (this.form.assignee_ids.length > 1) this.form.separate_copies = true;
             },
 
             get uploading() {
@@ -227,12 +203,25 @@
                 });
             },
 
+            // Deadline wajib hanya di Space pribadi. Di kelompok boleh kosong: backlog tanpa tanggal, di sprint mengikuti akhir sprint.
+            get deadlineRequired() {
+                return !this.$store.wsTasks.usesSprints;
+            },
+
+            // Tanggal mulai/deadline disembunyikan untuk tugas di backlog: belum dijadwalkan, tanggalnya ditentukan sprint.
+            get showDates() {
+                if (!this.$store.wsTasks.usesSprints) return true;
+                return !!(this.editing ? this.editing.sprint_id : this.sprintId);
+            },
+
             validate() {
                 const f = this.form;
                 const errors = {};
                 if (!f.title.trim()) errors.title = 'Judul wajib diisi.';
                 else if (f.title.length > 150) errors.title = 'Judul maksimal 150 karakter.';
-                if (!f.due_at) errors.due_at = 'Deadline wajib diisi.';
+                if (f.story_points !== '' && !(/^\d{1,3}$/.test(String(f.story_points)) && Number(f.story_points) <= 100)) errors.story_points = 'Story point 0–100 (bilangan bulat).';
+                if (!this.showDates) { /* backlog: tanggal tidak diisi di sini */ }
+                else if (!f.due_at) { if (this.deadlineRequired) errors.due_at = 'Deadline wajib diisi.'; }
                 else if (f.start_at && new Date(f.start_at) > new Date(f.due_at)) errors.due_at = 'Deadline harus setelah tanggal mulai.';
                 f.result_links.forEach((l, i) => {
                     if (l.url.trim() && !/^https?:\/\/\S+$/.test(l.url.trim())) errors['result_links.' + i + '.url'] = 'URL harus diawali http:// atau https://';
@@ -247,6 +236,8 @@
                     title: f.title.trim(),
                     description: f.description,
                     priority: f.priority,
+                    story_points: f.story_points === '' ? null : Number(f.story_points),
+                    epic_id: f.epic_id ? Number(f.epic_id) : null,
                     assignee_ids: f.assignee_ids,
                     label_ids: f.label_ids,
                     start_at: fromLocalInput(f.start_at),
@@ -257,7 +248,6 @@
                     // Hanya saat membuat: satu salinan per assignee (respons tetap berupa array TaskCard).
                     ...(this.editing ? {} : {
                         sprint_id: this.sprintId,
-                        template_id: f.template_id || null,
                         separate_copies: f.separate_copies && f.assignee_ids.length > 1,
                     }),
                 };

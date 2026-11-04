@@ -107,20 +107,6 @@
             downloadUrl: (attachmentId) => url(`/workspace/attachments/${attachmentId}`),
         },
 
-        // Usulan kontrak #9 (PRD: TaskTemplateController). payload template:
-        // { team_id, title, description?, priority, label_ids?, due_in_days, checklist?: [{content}], is_onboarding }
-        templates: {
-            create: (payload) => call('templates.create', [payload],
-                () => WS.http('POST', url('/workspace/templates'), { body: payload })),
-            update: (templateId, payload) => call('templates.update', [templateId, payload],
-                () => WS.http('PUT', url(`/workspace/templates/${templateId}`), { body: payload })),
-            remove: (templateId) => call('templates.remove', [templateId],
-                () => WS.http('DELETE', url(`/workspace/templates/${templateId}`))),
-            // payload: { assignee_ids: [internId], due_at, start_at? } — tugas dibuat di kelompok tiap intern
-            assign: (templateId, payload) => call('templates.assign', [templateId, payload],
-                () => WS.http('POST', url(`/workspace/templates/${templateId}/assign`), { body: payload })),
-        },
-
         // Label per tim (usulan kontrak #11). payload: { name, color }
         labels: {
             create: (teamId, payload) => call('labels.create', [teamId, payload],
@@ -146,9 +132,22 @@
             // payload: { move_to: 'backlog' | 'new' | sprintId } → { data: Sprint, moved: { task_ids, sprint_id }, created_sprint?: Sprint }
             complete: (sprintId, payload) => call('sprints.complete', [sprintId, payload],
                 () => WS.http('POST', url(`/workspace/sprints/${sprintId}/complete`), { body: payload })),
+            // Buka kembali sprint selesai (tidak ada sprint berjalan) → { data: Sprint } (status active)
+            reopen: (sprintId) => call('sprints.reopen', [sprintId],
+                () => WS.http('POST', url(`/workspace/sprints/${sprintId}/reopen`))),
             // Hanya sprint planned; tugasnya kembali ke backlog. → 204
             remove: (sprintId) => call('sprints.remove', [sprintId],
                 () => WS.http('DELETE', url(`/workspace/sprints/${sprintId}`))),
+        },
+
+        // Epic per kelompok. payload: { name, color? } → { data: Epic }. remove → 204 (tugasnya jadi tanpa epic)
+        epics: {
+            create: (workspaceId, payload) => call('epics.create', [workspaceId, payload],
+                () => WS.http('POST', url(`/workspace/${workspaceId}/epics`), { body: payload })),
+            update: (epicId, payload) => call('epics.update', [epicId, payload],
+                () => WS.http('PATCH', url(`/workspace/epics/${epicId}`), { body: payload })),
+            remove: (epicId) => call('epics.remove', [epicId],
+                () => WS.http('DELETE', url(`/workspace/epics/${epicId}`))),
         },
 
         // Kelompok buatan mentor (usulan kontrak #18). 1 anak magang = 1 kelompok; anggota tidak bisa dikeluarkan.

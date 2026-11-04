@@ -50,10 +50,6 @@
                     <template x-if="task.can.update">
                         <button type="button" class="ws-menu__item" x-on:click="menu = false; edit()"><i class="fas fa-pen w-4"></i>Edit tugas</button>
                     </template>
-                    @if ($canTemplate ?? false)
-                        {{-- Form template ada di partials/template-modals (disertakan halaman bila $can['create_template']). --}}
-                        <button type="button" class="ws-menu__item" x-on:click="menu = false; $dispatch('ws-open-template-form', { fromTask: task })"><i class="far fa-copy w-4"></i>Simpan sebagai template</button>
-                    @endif
                     <template x-if="task.can.delete">
                         <button type="button" class="ws-menu__item ws-menu__item--danger" x-on:click="menu = false; remove()"><i class="fas fa-trash w-4"></i>Hapus tugas</button>
                     </template>
@@ -129,6 +125,15 @@
                 <span class="text-xs ws-text-faint ml-1" x-show="task.status !== 'done'" x-text="'(' + due().relative + ')'"></span>
                 <span class="text-xs text-emerald-600 ml-1" x-show="task.completed_at" x-text="'· selesai ' + dateTime(task.completed_at)"></span>
             </dd>
+            <template x-if="task.epic || task.story_points !== null">
+                <dt>Epic &amp; poin</dt>
+            </template>
+            <template x-if="task.epic || task.story_points !== null">
+                <dd class="flex flex-wrap items-center gap-2">
+                    <span class="ws-label-chip" x-show="task.epic"><span class="ws-label-chip__dot" :style="{ background: task.epic ? task.epic.color : '' }"></span><span x-text="task.epic ? task.epic.name : ''"></span></span>
+                    <span class="ws-points" x-show="task.story_points !== null" x-text="task.story_points + ' poin'"></span>
+                </dd>
+            </template>
             <template x-if="task.labels.length">
                 <dt>Label</dt>
             </template>

@@ -66,9 +66,6 @@
                         @enderror
                     </div>
 
-                    <!-- Tugas terkait (Workspace) -->
-                    <x-workspace.logbook-task-select :selected="old('task_id')" />
-
                     <!-- Activity Field -->
                     <div class="mb-6">
                         <label for="activity" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -83,6 +80,29 @@
                             </p>
                         @enderror
                     </div>
+
+                    <!-- Linked Task Field -->
+                    @if (isset($tasks) && $tasks->isNotEmpty())
+                        <div class="mb-6">
+                            <label for="task_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-link text-blue-500 mr-2"></i>Tugas Terkait (Opsional)
+                            </label>
+                            <select name="task_id" id="task_id"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                <option value="">Tidak terkait tugas</option>
+                                @foreach ($tasks as $task)
+                                    <option value="{{ $task->id }}" @selected(old('task_id') == $task->id)>
+                                        {{ $task->code }} — {{ $task->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('task_id')
+                                <p class="mt-2 text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+                    @endif
 
                     <!-- Photo Field -->
                     <div class="mb-8">

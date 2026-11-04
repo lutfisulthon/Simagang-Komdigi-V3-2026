@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Intern;
 use App\Http\Controllers\Controller;
 use App\Models\Logbook;
 use App\Models\Attendance;
+use App\Services\WorkspaceDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
@@ -65,18 +67,22 @@ class LogbookController extends Controller
         return view('intern.logbook.index', compact('logbooks', 'totalLogbooks', 'thisMonthCount', 'belumDikerjakan', 'cekaktif'));
     }
 
-    public function create()
+    public function create(WorkspaceDashboardService $workspace)
     {
-        return view('intern.logbook.create');
+        $tasks = $workspace->linkableTasks(Auth::user()->intern);
+
+        return view('intern.logbook.create', compact('tasks'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, WorkspaceDashboardService $workspace)
     {
         $intern = Auth::user()->intern;
 
         $validated = $request->validate([
             'date' => ['required', 'date'],
             'activity' => ['required', 'string', 'max:1000'],
+            // Tugas terkait (opsional): hanya tugas yang ditugaskan ke intern ini
+            'task_id' => ['nullable', 'integer', Rule::in($workspace->linkableTasks($intern)->pluck('id')->all())],
             // 'photo' => ['nullable', 'image', 'max:2048'],
             'photo' => [
                 'nullable',
@@ -91,6 +97,7 @@ class LogbookController extends Controller
             'intern_id' => $intern->id,
             'date' => $validated['date'],
             'activity' => $validated['activity'],
+            'task_id' => $validated['task_id'] ?? null,
         ];
 
         if ($request->hasFile('photo')) {
@@ -145,13 +152,16 @@ class LogbookController extends Controller
             ->with('success', 'Logbook berhasil disimpan.');
     }
 
-    public function edit(Logbook $logbook)
+    public function edit(Logbook $logbook, WorkspaceDashboardService $workspace)
     {
         $this->authorize('update', $logbook);
 
         $logbook->photo_url = $this->makeOneTimeLogbookPhotoUrl($logbook->photo_path);
 
-        return view('intern.logbook.edit', compact('logbook'));
+        // Tugas yang sudah tertaut tetap muncul meski sudah lama selesai
+        $tasks = $workspace->linkableTasks(Auth::user()->intern, $logbook->task_id);
+
+        return view('intern.logbook.edit', compact('logbook', 'tasks'));
     }
 
     public function show(Logbook $logbook)
@@ -163,13 +173,14 @@ class LogbookController extends Controller
         return view('intern.logbook.show', compact('logbook'));
     }
 
-    public function update(Request $request, Logbook $logbook)
+    public function update(Request $request, Logbook $logbook, WorkspaceDashboardService $workspace)
     {
         $this->authorize('update', $logbook);
 
         $validated = $request->validate([
             'date' => ['required', 'date'],
             'activity' => ['required', 'string', 'max:1000'],
+            'task_id' => ['nullable', 'integer', Rule::in($workspace->linkableTasks(Auth::user()->intern, $logbook->task_id)->pluck('id')->all())],
             'photo' => [
                 'nullable',
                 'image',
@@ -183,6 +194,11 @@ class LogbookController extends Controller
             'date' => $validated['date'],
             'activity' => $validated['activity'],
         ];
+
+        // Tautan tugas hanya berubah jika field dikirim; kalau tidak, tautan lama dipertahankan.
+        if ($request->has('task_id')) {
+            $data['task_id'] = $validated['task_id'] ?? null;
+        }
 
         if ($request->hasFile('photo')) {
             $photo = $request->file('photo');

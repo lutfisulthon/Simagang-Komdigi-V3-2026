@@ -4,7 +4,7 @@
 --}}
 @php($isIntern = auth()->user()->isIntern())
 
-<div x-data="wsReports" class="space-y-4">
+<div x-data="wsReports(@js(['fullScope' => ! $isIntern]))" class="space-y-4">
     <p class="text-sm text-slate-600 flex items-center gap-2">
         <i class="fas {{ $isIntern ? 'fa-user' : 'fa-users' }} text-indigo-500" aria-hidden="true"></i>
         {{ $isIntern ? 'Grafik ini hanya memakai tugas yang di-assign kepada Anda.' : 'Grafik memakai seluruh tugas kelompok ini.' }}
@@ -76,6 +76,35 @@
                 <div>@include('workspace.partials.report-bars', ['expr' => 'velocity', 'label' => 'Tugas selesai per sprint'])</div>
             </template>
             <p class="ws-rp__empty" x-show="!velocity.cols.length" x-cloak><i class="fas fa-chart-column" aria-hidden="true"></i>Belum ada sprint yang dimulai.</p>
+        </section>
+
+        {{-- ================= Velocity (story point) ================= --}}
+        <section class="ws-panel ws-rp" aria-labelledby="ws-rp-points">
+            <header class="ws-rp__head">
+                <div>
+                    <h2 id="ws-rp-points" class="ws-rp__title">Velocity (story point)</h2>
+                    <p class="ws-rp__desc">Story point yang selesai di tiap sprint. Rata-rata sprint selesai dipakai untuk memperkirakan kapasitas sprint berikutnya.</p>
+                </div>
+            </header>
+            <template x-if="pointsVelocity.cols.length">
+                <div>
+                    <p class="ws-rp__kpi mb-2" x-show="pointsVelocity.avg !== null">
+                        Rata-rata <strong x-text="pointsVelocity.avg"></strong> poin/sprint
+                        <span class="text-slate-500" x-text="'(' + pointsVelocity.sample + ' sprint selesai terakhir)'"></span>
+                    </p>
+                    @include('workspace.partials.report-bars', ['expr' => 'pointsVelocity', 'label' => 'Story point selesai per sprint', 'unit' => 'poin'])
+                    <details class="ws-rp__data">
+                        <summary>Lihat data</summary>
+                        <table>
+                            <thead><tr><th scope="col">Sprint</th><th scope="col">Komitmen</th><th scope="col">Selesai</th></tr></thead>
+                            <tbody>
+                                <template x-for="r in pointsVelocity.rows" :key="r.label"><tr><td x-text="r.label"></td><td x-text="r.committed"></td><td x-text="r.value"></td></tr></template>
+                            </tbody>
+                        </table>
+                    </details>
+                </div>
+            </template>
+            <p class="ws-rp__empty" x-show="!pointsVelocity.cols.length" x-cloak><i class="fas fa-gauge-high" aria-hidden="true"></i>Belum ada sprint yang dimulai.</p>
         </section>
 
         {{-- ================= Selesai per minggu ================= --}}

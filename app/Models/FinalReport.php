@@ -25,11 +25,13 @@ class FinalReport extends Model
         'needs_revision',
         'admin_note',
         'submitted_at',
+        'include_task_recap',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'needs_revision' => 'boolean',
+        'include_task_recap' => 'boolean',
         'activities' => 'array',
         'project_files' => 'array',
         'project_links' => 'array',

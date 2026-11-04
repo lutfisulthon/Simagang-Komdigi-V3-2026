@@ -42,6 +42,8 @@
     {{-- Dialog konfirmasi: aktif untuk form ber-atribut data-confirm-* (lihat public/js/confirm-dialog.js) --}}
     <link rel="stylesheet" href="{{ asset('css/confirm-dialog.css') }}?v={{ @filemtime(public_path('css/confirm-dialog.css')) }}">
     <script defer src="{{ asset('js/confirm-dialog.js') }}?v={{ @filemtime(public_path('js/confirm-dialog.js')) }}"></script>
+    {{-- Filter langsung: form GET otomatis terkirim saat isian berubah (lihat public/js/live-filter.js) --}}
+    <script defer src="{{ asset('js/live-filter.js') }}?v={{ @filemtime(public_path('js/live-filter.js')) }}"></script>
     @stack('styles')
     <style>
         @font-face {
@@ -296,7 +298,7 @@
             </div>
 
             <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto"
+            <main class="relative flex-1 overflow-y-auto"
                   @if ($pageMeta) data-tone="{{ $pageMeta[0] }}" @if ($pageMeta[2]) data-hero-icon="{{ $pageMeta[2] }}" style="--pt-icon: '{{ $pageMeta[2] }}'" @endif @endif>
                 @if(session('success'))
                     <div class="mb-4">

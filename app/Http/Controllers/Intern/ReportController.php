@@ -128,6 +128,7 @@ class ReportController extends Controller
             'project_link' => null,
             'project_links' => array_values(array_filter((array) $request->input('project_links', []))),
             'activities' => $request->input('activities'),
+            'include_task_recap' => $request->boolean('include_task_recap', true),
             'file_name' => $fileName,
             'status' => 'pending',
             'submitted_at' => now(),
@@ -260,6 +261,7 @@ class ReportController extends Controller
             'project_link' => null,
             'project_links' => array_values(array_filter((array) $request->input('project_links', []))),
             'activities' => $request->input('activities'),
+            'include_task_recap' => $request->boolean('include_task_recap', true),
             'file_name' => $fileName,
             'status' => 'pending',
             'needs_revision' => false, // Reset revision flag when resubmitted

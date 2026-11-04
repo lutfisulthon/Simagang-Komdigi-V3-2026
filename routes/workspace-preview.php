@@ -68,7 +68,6 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'mentors' => $data['role'] === 'admin' ? $data['mentors'] : [],
             'can' => [
                 'create_group' => $data['role'] === 'mentor',
-                'manage_templates' => in_array($data['role'], ['admin', 'mentor'], true),
             ],
         ]);
     })->name('workspace.index');
@@ -440,23 +439,6 @@ Route::middleware('auth')->group(function () use ($fixtures) {
         return response()->json(['interns' => (object) $interns, 'teams' => $teams]);
     })->name('workspace.progress');
 
-    // Template tugas: kelola + tugaskan massal (admin: semua tim, mentor: tim sendiri, intern: 403).
-    Route::get('/workspace/templates', function () use ($fixtures) {
-        $data = $fixtures(auth()->user());
-        abort_unless(in_array($data['role'], ['admin', 'mentor'], true), 403, 'Hanya mentor atau admin yang dapat mengelola template tugas.');
-        $templates = ($data['templates'])();
-        $targets = ($data['templateTargets'])();
-        $teamIds = collect($targets)->pluck('team.id')->merge(collect($templates)->pluck('team.id'))->unique();
-
-        return view('workspace.templates.index', [
-            'templates' => $templates,
-            'teams' => $data['role'] === 'admin' ? $data['teams'] : array_values(array_filter($data['teams'], fn ($t) => $teamIds->contains($t['id']))),
-            'assignableInterns' => $targets,
-            'labels' => $data['labels'],
-            'can' => ['create' => true, 'choose_team' => $data['role'] === 'admin', 'manage_labels' => true],
-        ]);
-    })->name('workspace.templates.index');
-
     Route::get('/workspace/{workspace}', function (int $workspace) use ($fixtures) {
         $data = $fixtures(auth()->user());
         $ws = $data['workspaces'][$workspace] ?? abort(404);
@@ -481,8 +463,6 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'assignableInterns' => $ws['_assignables'],
             'labels' => $data['labels'],
             'channels' => ($data['channels'])($ws),
-            // Template tim workspace ini (untuk "Pakai template" di form tugas). Intern: kosong.
-            'templates' => array_values(array_filter(($data['templates'])(), fn ($t) => $t['team']['id'] === ($ws['team']['id'] ?? null))),
             'tab' => $tab,
             'sprints' => ($data['sprints'])($ws),
             'candidates' => $candidates,
@@ -490,7 +470,6 @@ Route::middleware('auth')->group(function () use ($fixtures) {
                 'create_task' => ! $readOnly && $isStaff,
                 'manage_sprints' => ! $readOnly && $isStaff,
                 'manage_channels' => false,
-                'create_template' => ! $readOnly && $isStaff,
                 'manage_labels' => ! $readOnly && $isStaff,
             ],
         ]);
@@ -515,8 +494,6 @@ Route::middleware('auth')->group(function () use ($fixtures) {
             'members' => $ws['_members'],
             'assignableInterns' => $ws['_assignables'],
             'labels' => $data['labels'],
-            'templates' => array_values(array_filter(($data['templates'])(), fn ($t) => $t['team']['id'] === ($ws['team']['id'] ?? null))),
-            'can' => ['create_template' => $isStaff && ! $ws['is_read_only']],
         ]);
     })->whereNumber('task')->name('workspace.tasks.show');
 

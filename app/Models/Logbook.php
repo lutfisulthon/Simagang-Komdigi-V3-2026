@@ -11,6 +11,7 @@ class Logbook extends Model
 
     protected $fillable = [
         'intern_id',
+        'task_id',
         'date',
         'activity',
         'photo_path',
@@ -27,6 +28,11 @@ class Logbook extends Model
     public function intern()
     {
         return $this->belongsTo(Intern::class);
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
     }
 
     public function comments()

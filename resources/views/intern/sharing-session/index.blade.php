@@ -29,7 +29,7 @@
         <form method="GET" class="flex flex-col sm:flex-row gap-3">
 
             <select name="filter"
-                    onchange="this.form.submit()"
+                   
                     class="bg-white border border-gray-200 rounded-2xl px-5 py-3 shadow-sm text-gray-700 font-medium">
 
                 <option value="semua"
@@ -54,7 +54,7 @@
             </select>
 
             <select name="role_filter"
-                    onchange="this.form.submit()"
+                   
                     class="bg-white border border-gray-200 rounded-2xl px-5 py-3 shadow-sm text-gray-700 font-medium">
 
                 <option value="semua"

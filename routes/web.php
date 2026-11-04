@@ -716,7 +716,4 @@ Route::middleware(['auth', 'mentor'])->prefix('mentor')->name('mentor.')->group(
 
 Route::post('/chatbot', [\App\Http\Controllers\ChatbotController::class, 'ask'])->name('chatbot.ask');
 
-// Preview frontend Workspace (sementara, hanya local). Hapus saat route Workspace asli dibuat.
-if (app()->environment('local') && file_exists(__DIR__.'/workspace-preview.php')) {
-    require __DIR__.'/workspace-preview.php';
-}
+require __DIR__.'/workspace.php';

@@ -50,7 +50,15 @@
     // Sprint tujuan default tugas baru: sprint berjalan (supaya langsung tampil di board), selain itu backlog.
     const defaultSprintId = () => {
         const store = window.Alpine && window.Alpine.store('wsTasks');
-        return store && store.activeSprint ? store.activeSprint.id : null;
+        if (!store) return null;
+        // Ketua sprint (intern) membuat tugas di sprint yang ia pimpin: yang berjalan dulu, lalu yang direncanakan.
+        const me = WS.config && WS.config.user;
+        if (me && me.role === 'intern') {
+            const mine = store.sprints.filter((sp) => sp.status !== 'completed' && store.leads(sp));
+            const pick = mine.find((sp) => sp.status === 'active') || mine[0];
+            return pick ? pick.id : null;
+        }
+        return store.activeSprint ? store.activeSprint.id : null;
     };
 
     WS.tasks = Object.assign(WS.tasks || {}, { STATUSES, allowedTargets, dialogFor, dueInfo, priorityIcon, defaultSprintId });
@@ -64,6 +72,7 @@
             workspace: null,
             tasks: [],
             sprints: [],       // Sprint[] kelompok ini (planned, active, completed)
+            epics: [],         // Epic[] kelompok ini { id, name, color }
             interns: [],       // anggota yang bisa di-assign (assign di board)
             initialDone: 0,
             readOnly: false,
@@ -75,6 +84,7 @@
                 this.workspace = config.workspace;
                 this.tasks = config.tasks;
                 this.sprints = config.sprints || [];
+                this.epics = config.epics || [];
                 this.interns = config.interns || [];
                 this.readOnly = !!config.workspace.is_read_only;
                 this.initialDone = config.tasks.filter((t) => t.status === 'done').length;
@@ -107,10 +117,45 @@
                 return this.sprints.find((sp) => sp.status === 'active') || null;
             },
 
-            // Board hanya menampilkan sprint berjalan. Tanpa sprint aktif: semua tugas (kelompok tanpa sprint).
+            // Board hanya menampilkan sprint berjalan; tanpa sprint berjalan board kosong (seperti Jira).
+            // Space pribadi intern tidak memakai sprint, jadi semua tugasnya tampil.
+            get usesSprints() {
+                return !(this.workspace && this.workspace.is_personal);
+            },
+
             onBoard(t) {
+                if (!this.usesSprints) return true;
                 const active = this.activeSprint;
-                return active ? t.sprint_id === active.id : true;
+                return !!active && t.sprint_id === active.id;
+            },
+
+            // ---------- Epic ----------
+
+            epicById(id) {
+                return id ? this.epics.find((e) => e.id === id) || null : null;
+            },
+
+            upsertEpic(epic) {
+                const i = this.epics.findIndex((e) => e.id === epic.id);
+                if (i === -1) this.epics.push(epic);
+                else this.epics.splice(i, 1, Object.assign({}, this.epics[i], epic));
+                this.epics.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+                window.dispatchEvent(new CustomEvent('ws-epics-changed', { detail: { epics: this.epics } }));
+            },
+
+            removeEpic(id) {
+                this.epics = this.epics.filter((e) => e.id !== id);
+                this.tasks.forEach((t) => { if (t.epic_id === id) t.epic_id = null; });
+                window.dispatchEvent(new CustomEvent('ws-epics-changed', { detail: { epics: this.epics } }));
+            },
+
+            // Total story point satu sprint/backlog (tugas tanpa poin dihitung 0).
+            points(sprintId) {
+                return this.section(sprintId).reduce((sum, t) => sum + (t.story_points || 0), 0);
+            },
+
+            pointsDone(sprintId) {
+                return this.section(sprintId).filter((t) => t.status === 'done').reduce((sum, t) => sum + (t.story_points || 0), 0);
             },
 
             // Isi satu bagian backlog (sprintId null = Backlog), urut rank.
@@ -149,8 +194,12 @@
                 card.sprint_id = sprintId;
                 ids.forEach((id, i) => { const t = this.byId(id); if (t) t.rank = i + 1; });
                 this.busy[card.id] = true;
+                const startedAt = Date.now();
                 try {
                     await WS.api.tasks.plan(card.id, { sprint_id: sprintId, rank_order: ids });
+                    // Penanda "Memindahkan…" tampil minimal sebentar supaya prosesnya terlihat.
+                    const wait = 700 - (Date.now() - startedAt);
+                    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
                     if (from !== sprintId) {
                         const sp = this.sprintById(sprintId);
                         WS.toast(`${card.code} dipindah ke ${sp ? sp.name : 'Backlog'}.`, 'success');
@@ -214,7 +263,7 @@
 
             // Tugas terdekat yang belum lewat deadline.
             get nextDue() {
-                const open = this.tasks.filter((t) => ['todo', 'in_progress', 'revision'].includes(t.status) && !WS.tasks.unfinished(t));
+                const open = this.tasks.filter((t) => t.due_at && ['todo', 'in_progress', 'revision'].includes(t.status) && !WS.tasks.unfinished(t));
                 return open.sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0] || null;
             },
 
@@ -432,6 +481,7 @@
                     if (this.priority && t.priority !== this.priority) return false;
                     if (this.assignee && !t.assignees.some((a) => String(a.id) === this.assignee)) return false;
                     if (this.label && !t.labels.some((l) => String(l.id) === this.label)) return false;
+                    if ((from || to) && !t.due_at) return false;
                     const due = new Date(t.due_at).getTime();
                     if (from && due < from) return false;
                     if (to && due > to) return false;
@@ -443,7 +493,7 @@
                     title: (t) => t.title.toLowerCase(),
                     status: (t) => STATUSES.indexOf(t.status),
                     priority: (t) => PRIORITY_RANK[t.priority],
-                    due_at: (t) => new Date(t.due_at).getTime(),
+                    due_at: (t) => (t.due_at ? new Date(t.due_at).getTime() : Infinity),
                 }[this.sortKey];
                 return rows.sort((a, b) => (value(a) > value(b) ? dir : value(a) < value(b) ? -dir : 0));
             },

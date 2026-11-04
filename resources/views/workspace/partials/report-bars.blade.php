@@ -1,6 +1,6 @@
 {{--
     Diagram batang HTML/CSS. Dipakai di dalam scope wsReports (public/js/workspace/reports.js).
-    Variabel: $expr (getter berbentuk { cols, ticks }), $label (judul untuk pembaca layar).
+    Variabel: $expr (getter berbentuk { cols, ticks }), $label (judul untuk pembaca layar), $unit (default "tugas").
 --}}
 <div class="ws-bc" role="img" :aria-label="'{{ $label }}: ' + {{ $expr }}.cols.map((c) => c.label + ' ' + c.value).join(', ')">
     <div class="ws-bc__plot">
@@ -10,7 +10,7 @@
         <div class="ws-bc__cols">
             <template x-for="c in {{ $expr }}.cols" :key="c.label">
                 <div class="ws-bc__col">
-                    <div class="ws-bc__bar" :style="{ height: c.pct + '%' }" :title="c.label + ': ' + c.value + ' tugas'">
+                    <div class="ws-bc__bar" :style="{ height: c.pct + '%' }" :title="c.label + ': ' + c.value + ' {{ $unit ?? 'tugas' }}'">
                         <span class="ws-bc__val" x-text="c.value"></span>
                     </div>
                 </div>

@@ -1042,6 +1042,10 @@ a.ws-card:focus-visible {
     overflow: hidden;
 }
 
+/* Pembungkus modal (x-workspace.modal) hanya menampung konten yang di-teleport ke <body>:
+   jangan ikut menjadi item grid, kalau tidak terbentuk baris kedua dan kolom tidak sampai bawah. */
+.ws-chat > :not(.ws-chat__side):not(.ws-chat__main):not(.ws-chat__panel) { display: contents; }
+
 .ws-chat__side {
     display: flex;
     flex-direction: column;
@@ -1954,24 +1958,7 @@ a.ws-card:focus-visible {
     .ws-ns-cols { grid-template-columns: 52px 52px; }
 }
 
-/* ---------- Template tugas (Fase 2) ---------- */
-
-.ws-tpl-card {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    padding: 18px 20px;
-    background: var(--ws-surface);
-    border: 1px solid #e8eeff;
-    border-radius: 16px;
-    box-shadow: 0 1px 2px rgba(30, 58, 138, 0.05);
-    transition: box-shadow .2s ease, border-color .2s ease;
-}
-
-.ws-tpl-card:hover { border-color: #c7d2fe; box-shadow: var(--ws-shadow); }
-
-.ws-tpl-badge--onboarding { background: #ecfeff; color: #0e7490; border-color: #cffafe; }
-.ws-tpl-badge--team { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+/* ---------- Komponen pilihan (toggle, daftar pilih intern) ---------- */
 
 /* Kotak centang dengan judul + keterangan (onboarding, salinan terpisah). */
 .ws-tpl-toggle {
@@ -1986,13 +1973,6 @@ a.ws-card:focus-visible {
 }
 
 .ws-tpl-toggle:has(input:checked) { border-color: #a5b4fc; background: var(--ws-primary-soft); }
-
-.ws-tpl-use {
-    padding: 12px 14px;
-    border: 1px dashed #c7d2fe;
-    border-radius: 12px;
-    background: #f8faff;
-}
 
 /* Daftar pilih intern (modal tugaskan) */
 .ws-tpl-pick {
@@ -3135,7 +3115,8 @@ a.ws-chip.ws-chip--late[aria-current="true"],
 .ws-tl__sprint--planned { background: #fff; border: 1.5px dashed #93c5fd; color: #1d4ed8; }
 .ws-tl__sprint--completed { background: #e2e8f0; color: #475569; }
 
-.ws-tl__today-wrap { position: absolute; top: 0; bottom: 0; z-index: 3; pointer-events: none; }
+/* z-index 0: di bawah baris (z-index 1) supaya kolom nama tugas yang sticky menutupi garis saat digulir ke kanan. */
+.ws-tl__today-wrap { position: absolute; top: 0; bottom: 0; z-index: 0; pointer-events: none; }
 .ws-tl__today { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #f97316; }
 
 .ws-avatar-filter { display: inline-flex; gap: 2px; }
@@ -3230,3 +3211,20 @@ a.ws-chip.ws-chip--late[aria-current="true"],
     .ws-wl__row { grid-template-columns: 88px 1fr 24px; gap: 8px; }
 }
 
+
+
+/* ---------- Story point (estimasi tugas) ---------- */
+.ws-points {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+}

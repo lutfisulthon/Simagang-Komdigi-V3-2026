@@ -20,3 +20,6 @@ yarn-error.log
 DATABASE_ANALYSIS_REPORT.md 
 LARAVEL12_MIGRATION_KNOWLEDGE_BASE.md 
 *.zip
+
+# Dokumentasi internal modul Workspace (tidak ikut di-commit)
+/docs/workspace-backend.md

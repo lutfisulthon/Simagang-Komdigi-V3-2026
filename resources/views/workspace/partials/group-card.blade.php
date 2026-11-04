@@ -8,7 +8,10 @@
     $percent = $total ? round($s['done'] / $total * 100) : 0;
     $finished = $ws['status'] === 'finished';
     $interns = collect($ws['members_preview'])->where('role', 'intern');
-    $internCount = $ws['members_count'] - 1;
+    // interns_count dari server; cadangan lama mengira satu mentor per kelompok.
+    $internCount = $ws['interns_count'] ?? ($ws['members_count'] - 1);
+    $mentorList = $ws['mentors'] ?? [$ws['mentor']];
+    $mentorLabel = $mentorList[0]['name'] . (count($mentorList) > 1 ? ' +' . (count($mentorList) - 1) : '');
     $extra = max(0, $internCount - $interns->count());
     $date = fn ($iso) => \Illuminate\Support\Carbon::parse($iso)->locale('id');
     $initials = collect(preg_split('/\s+/', trim($ws['name'])))->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
@@ -28,11 +31,13 @@
     <div class="flex items-start gap-3">
         <span class="ws-group-icon" style="--group-color: {{ $ws['color'] }}" aria-hidden="true">{{ $initials }}</span>
         <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-bold uppercase tracking-[0.12em] ws-text-faint truncate">{{ $ws['team']['name'] }}</p>
+            @if ($ws['team'] && ! ($ws['is_personal'] ?? false))
+                <p class="text-[10px] font-bold uppercase tracking-[0.12em] ws-text-faint truncate">{{ $ws['team']['name'] }}</p>
+            @endif
             <h3 class="font-bold text-gray-800 truncate" title="{{ $ws['name'] }}">{{ $ws['name'] }}</h3>
             <p class="text-xs text-slate-500 truncate">
                 @if ($showMentor)
-                    Mentor: {{ $ws['mentor']['name'] }}
+                    Mentor: {{ $mentorLabel }}
                 @elseif ($finished)
                     Selesai {{ $date($ws['finished_at'])->translatedFormat('j M Y') }} · {{ $s['done'] }} tugas selesai
                 @else
