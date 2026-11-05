@@ -63,13 +63,25 @@ class TaskNotifier
         );
     }
 
-    /** Tugas masuk Review: beri tahu mentor/admin pembuat tugas. */
+    /**
+     * Tugas masuk Review: beri tahu mentor/admin pembuat tugas. Bila pembuatnya intern (ketua sprint
+     * menyusun tugas sprintnya) atau sudah tidak ada, mentor workspace yang menilai ikut diberi tahu.
+     */
     public function reviewRequested(Task $task, User $actor): void
     {
         $creator = $task->creator;
+        $recipients = collect([$creator]);
 
-        if ($creator && $creator->id !== $actor->id) {
-            $this->send(collect([$creator]), new TaskReviewRequestedNotification($task, $actor));
+        if (! $creator || $creator->isIntern()) {
+            $recipients = $recipients->merge(
+                $task->workspace->members()->wherePivot('role', 'mentor')->wherePivotNull('left_at')->get()
+            );
+        }
+
+        $recipients = $recipients->filter()->unique('id')->reject(fn (User $u) => $u->id === $actor->id);
+
+        if ($recipients->isNotEmpty()) {
+            $this->send($recipients, new TaskReviewRequestedNotification($task, $actor));
         }
     }
 
