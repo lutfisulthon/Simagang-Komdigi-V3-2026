@@ -2,7 +2,6 @@
  * Workspace — realtime (Fase 3, Laravel Reverb + Echo) dengan fallback polling.
  * Aktif hanya bila layout mengirim WS.config.realtime:
  *   { driver: 'reverb', key, host, port, scheme }   → Echo + pusher-js dari jsdelivr
- *   { driver: 'mock' }                               → preview lokal (?realtime=mock), tanpa server
  * Event realtime dipakai sebagai SINYAL: komponen langsung memanggil polling/refresh yang sudah ada,
  * sehingga hanya ada satu jalur penggabungan data. Selama terhubung, interval polling diperlambat
  * (lihat WS.createPoller); bila koneksi putus, polling kembali normal dengan sendirinya.
@@ -40,11 +39,6 @@
         // Notifikasi Laravel (Database + Broadcast) untuk user yang login.
         onNotification(handler) {
             return this.subscribe('App.Models.User.' + (WS.config.user && WS.config.user.id), '__notification', handler);
-        },
-
-        // Hanya untuk mock: kirim event ke pelanggan di halaman ini.
-        emit(channel, event, payload) {
-            (listeners.get(channel) || []).forEach((l) => { if (l.event === event) l.handler(payload || {}); });
         },
     };
 
@@ -106,5 +100,4 @@
     WS.realtime = realtime;
 
     if (cfg && cfg.driver === 'reverb') connectReverb();
-    if (cfg && cfg.driver === 'mock') setTimeout(() => setStatus('connected'), 300);
 })();

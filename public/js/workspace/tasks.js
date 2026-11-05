@@ -89,7 +89,6 @@
                 this.readOnly = !!config.workspace.is_read_only;
                 this.initialDone = config.tasks.filter((t) => t.status === 'done').length;
                 this.booted = true;
-                if (WS.config.mock && WS.mock) WS.mock.seed('tasks', config.tasks);
 
                 window.addEventListener('ws-task-saved', (e) => this.upsert(e.detail.card));
                 window.addEventListener('ws-task-deleted', (e) => this.remove(e.detail.id));

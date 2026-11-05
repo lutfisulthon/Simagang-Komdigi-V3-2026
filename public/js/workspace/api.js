@@ -1,8 +1,7 @@
 /*
  * Workspace — lapisan data.
  * Satu-satunya tempat yang tahu URL endpoint. Bentuk request/response mengikuti
- * docs/workspace/kontrak-frontend.md. Saat WS.config.mock = true, panggilan
- * dialihkan ke WS.mock (mock.js) sehingga UI bisa dikembangkan tanpa backend.
+ * docs/workspace/kontrak-frontend.md.
  */
 (function () {
     'use strict';
@@ -12,10 +11,6 @@
     const url = (path) => base + path;
 
     function call(name, args, real) {
-        if (WS.config.mock) {
-            if (WS.mock && WS.mock.has(name)) return WS.mock.handle(name, args);
-            return Promise.reject(new WS.HttpError(501, 'Mock belum tersedia untuk: ' + name));
-        }
         return real();
     }
 

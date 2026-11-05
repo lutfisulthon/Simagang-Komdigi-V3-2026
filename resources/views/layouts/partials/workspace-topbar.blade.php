@@ -34,11 +34,6 @@
 
     <div class="tb__right">
         @if ($wsEnabled)
-            @if ($wsMock)
-                <span class="tb-chip hidden xl:inline-flex" title="Data berasal dari public/js/workspace/mock.js, bukan dari server">
-                    <i class="fas fa-flask"></i> Mode preview · data contoh
-                </span>
-            @endif
             {{-- Status realtime: hanya tampil bila realtime dikonfigurasi (Reverb). Tanpa Reverb, aplikasi memakai polling. --}}
             <span class="ws-rt" x-data="{ s: WS.realtime ? WS.realtime.status : 'off' }" x-on:ws-realtime-status.window="s = $event.detail"
                   x-show="s !== 'off'" x-cloak role="status"

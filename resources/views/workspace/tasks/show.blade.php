@@ -37,11 +37,3 @@
     @include('workspace.partials.task-modals')
 
 @endsection
-
-@push('scripts')
-    <script>
-        if (WS.config.mock && WS.mock) {
-            WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
-        }
-    </script>
-@endpush
