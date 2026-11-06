@@ -121,7 +121,7 @@
                                                 <i class="fas" :class="meta(item.type).icon"></i>
                                             </span>
                                             <span class="flex-1 min-w-0">
-                                                <span class="block text-sm text-gray-800" :class="item.read_at ? 'font-medium' : 'font-bold'" x-text="item.title"></span>
+                                                <span class="block text-sm text-gray-800" :class="item.read_at ? 'font-medium' : 'font-bold'" x-text="$store.wsNotif.title(item)"></span>
                                                 <span class="block text-sm text-slate-500 mt-0.5 line-clamp-2" x-show="item.body" x-text="item.body"></span>
                                                 <span class="ws-notif__meta">
                                                     <span class="ws-notif__cat" x-text="categoryLabel(item.type)"></span>

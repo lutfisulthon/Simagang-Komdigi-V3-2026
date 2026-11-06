@@ -384,6 +384,13 @@
                 setTimeout(() => this.dismiss(id), type === 'loading' ? 20000 : type === 'error' ? 6000 : 4000);
                 return id;
             },
+            // Toast notifikasi (kartu yang bisa diklik): n = item dari /notifications, meta = ikon, warna, label jenis.
+            notify(n, meta) {
+                const id = ++this.seq;
+                this.items.push({ id, message: n.title, type: 'notif', notif: n, meta });
+                setTimeout(() => this.dismiss(id), 9000);
+                return id;
+            },
             dismiss(id) {
                 this.items = this.items.filter((t) => t.id !== id);
             },

@@ -8,6 +8,7 @@
 <div x-data="wsBacklog(@js(['canManage' => $canManage]))" class="ws-backlog">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <p class="text-sm text-slate-600">
+            <x-workspace.help term="backlog" label="Apa itu Backlog dan Sprint?" />
             @if ($canManage)
                 Susun tugas ke sprint. Seret baris <i class="fas fa-grip-vertical text-xs" aria-hidden="true"></i> atau pakai menu <i class="fas fa-ellipsis text-xs" aria-hidden="true"></i>.
                 Ketua tim membagi tugas sprint ke anggota di <button type="button" class="font-semibold text-indigo-600 hover:underline" x-on:click="$dispatch('ws-select-tab', 'board')">Board</button>.

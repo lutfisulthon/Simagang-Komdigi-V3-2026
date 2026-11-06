@@ -16,6 +16,8 @@
             $wsMock ? 'js/workspace/mock-sprints.js' : null,
             'js/workspace/notifications.js',
             'js/workspace/groups.js',
+            'vendor/driverjs/driver.js.iife.js',
+            'js/workspace/tour.js',
         ]);
         // Realtime (Fase 3): aktif bila BROADCAST_DRIVER=reverb. Preview lokal: ?realtime=mock.
         $wsReverb = config('broadcasting.connections.reverb');
@@ -39,6 +41,7 @@
         ];
     @endphp
     <link rel="stylesheet" href="{{ $wsAsset('css/workspace.css') }}">
+    <link rel="stylesheet" href="{{ $wsAsset('vendor/driverjs/driver.css') }}">
     <link rel="stylesheet" href="{{ $wsAsset('css/workspace-ui.css') }}">
     <script>
         window.SimagangWorkspace = @json($wsConfig);

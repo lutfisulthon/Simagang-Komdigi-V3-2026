@@ -257,3 +257,135 @@ a.ws-card:hover .ws-card__open { background: var(--group-color); color: #fff; }
 a.ws-card .ws-card__open { filter: saturate(1); }
 a.ws-card.ws-card--finished { background: #f6f8fb; border-color: #e2e8f0; box-shadow: none; }
 a.ws-card.ws-card--finished:hover { border-color: #cbd5e1; box-shadow: 0 12px 24px -18px rgba(15, 30, 80, .3); }
+
+/* ---------- Toast notifikasi (kartu yang bisa diklik) ---------- */
+.ws-toast__plain { display: flex; align-items: flex-start; gap: 10px; width: 100%; }
+.ws-toast--notif { padding: 0; overflow: hidden; }
+.ws-toast__notif {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+.ws-toast__notif:hover { background: #f8fafc; }
+.ws-toast__notif:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+.ws-toast__ico { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+.ws-toast__txt { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.ws-toast__eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.ws-toast__title { font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ws-toast__body { font-size: 12.5px; color: #64748b; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* ---------- Panduan penggunaan (components/workspace/guide) ---------- */
+.ws-help {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; margin-left: 4px; vertical-align: middle;
+    border-radius: 999px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4f46e5;
+    font-size: 11px; font-weight: 800; line-height: 1; cursor: pointer;
+    transition: background .15s ease, color .15s ease, transform .15s ease;
+}
+.ws-help:hover { background: #4f46e5; color: #fff; transform: scale(1.08); }
+.ws-help:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.ws-help--inline { cursor: default; margin: 0 2px; pointer-events: none; }
+
+.ws-guide__ico { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; background: #eef2ff; color: #4f46e5; font-size: 14px; }
+.ws-guide__tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; border-radius: 12px; background: #f1f5f9; overflow-x: auto; scrollbar-width: none; }
+.ws-guide__tabs button { flex: 1 0 auto; padding: 7px 12px; border-radius: 9px; font-size: 13px; font-weight: 600; color: #64748b; white-space: nowrap; transition: background .15s ease, color .15s ease; }
+.ws-guide__tabs button:hover { color: #1e293b; }
+.ws-guide__tabs button.is-active { background: #fff; color: #4f46e5; box-shadow: 0 1px 3px rgba(15, 23, 42, .1); }
+.ws-guide__lead { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #334155; }
+
+.ws-guide__steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ws-guide__steps li { display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #f8fafc; border: 1px solid #eef2f7; }
+.ws-guide__num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 999px; background: #4f46e5; color: #fff; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.ws-guide__step-title { margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; }
+.ws-guide__step-text { margin: 2px 0 0; font-size: 13px; line-height: 1.5; color: #64748b; }
+.ws-guide__note { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: #eff6ff; border: 1px solid #dbeafe; font-size: 13px; line-height: 1.5; color: #1e40af; }
+.ws-guide__note i { margin-top: 3px; }
+.ws-guide__note button { font-weight: 700; text-decoration: underline; }
+
+.ws-guide__flow { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.ws-guide__flow-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #eef2f7; }
+.ws-guide__flow-row p { margin: 0; font-size: 13px; color: #475569; }
+.ws-guide__pill { flex-shrink: 0; min-width: 92px; text-align: center; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--c); background: var(--b); border: 1px solid var(--c); }
+.ws-guide__arrow { align-self: center; color: #94a3b8; font-size: 13px; }
+.ws-guide__fork { display: grid; gap: 6px; margin-top: 4px; padding-left: 14px; border-left: 2px dashed #cbd5e1; }
+.ws-guide__mini { margin: 0; padding-left: 22px; list-style: decimal; font-size: 13px; line-height: 1.7; color: #475569; }
+
+.ws-guide__search { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin-bottom: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #94a3b8; }
+.ws-guide__search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 14px; color: #1e293b; }
+.ws-guide__search:focus-within { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .15); }
+.ws-guide__terms { display: flex; flex-direction: column; gap: 10px; }
+.ws-guide__term { padding: 12px 14px; border-radius: 14px; background: #f8fafc; border: 1px solid #eef2f7; transition: background .3s ease, border-color .3s ease; }
+.ws-guide__term.is-focus { background: #eef2ff; border-color: #a5b4fc; }
+.ws-guide__term h3 { margin: 0; font-size: 15px; font-weight: 800; color: #1e293b; }
+.ws-guide__term p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #475569; }
+.ws-guide__term .ws-guide__analogy { color: #4f46e5; font-style: italic; }
+.ws-guide__term .ws-guide__analogy i { font-size: 10px; opacity: .6; }
+.ws-guide__empty { margin: 8px 0; text-align: center; font-size: 13px; color: #94a3b8; }
+
+.ws-guide__faqs { display: flex; flex-direction: column; gap: 8px; }
+.ws-guide__faq { border-radius: 14px; background: #f8fafc; border: 1px solid #eef2f7; overflow: hidden; }
+.ws-guide__faq button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px; text-align: left; font-size: 14px; font-weight: 700; color: #1e293b; }
+.ws-guide__faq button i { font-size: 11px; color: #94a3b8; transition: transform .2s ease; }
+.ws-guide__faq.is-open button i { transform: rotate(180deg); }
+.ws-guide__faq p { margin: 0; padding: 0 14px 14px; font-size: 13px; line-height: 1.55; color: #475569; }
+
+/* ---------- Tutorial pertama kali (public/js/workspace/tour.js, Driver.js) ---------- */
+.driver-popover.ws-tour {
+    max-width: 340px;
+    padding: 18px 18px 16px;
+    border-radius: 18px;
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 26px 60px -22px rgba(15, 23, 42, .5);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.driver-popover.ws-tour, .driver-popover.ws-tour * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+.ws-tour .driver-popover-title { font-size: 16px; font-weight: 800; line-height: 1.3; color: #0f172a; }
+.ws-tour .driver-popover-description { margin-top: 6px; font-size: 13.5px; line-height: 1.55; color: #475569; }
+.ws-tour .driver-popover-progress-text { font-size: 12px; font-weight: 700; color: #94a3b8; }
+.ws-tour .driver-popover-footer { margin-top: 16px; align-items: center; gap: 6px; }
+.ws-tour .driver-popover-footer button { padding: 7px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 700; text-shadow: none; }
+.ws-tour .driver-popover-navigation-btns { gap: 6px; }
+.ws-tour .driver-popover-next-btn { background: #2563eb; color: #fff; border: 1px solid #2563eb; }
+.ws-tour .driver-popover-next-btn:hover { background: #1d4ed8; }
+.ws-tour .driver-popover-prev-btn { background: #fff; color: #475569; border: 1px solid #e2e8f0; }
+.ws-tour .driver-popover-prev-btn:hover { background: #f1f5f9; }
+.ws-tour .driver-popover-close-btn { color: #94a3b8; }
+.ws-tour .driver-popover-close-btn:hover { color: #475569; }
+.ws-tour .ws-tour__skip { margin-right: auto; padding: 7px 4px !important; border: 0; background: transparent; color: #94a3b8; }
+.ws-tour .ws-tour__skip:hover { color: #475569; text-decoration: underline; }
+.ws-tour .driver-popover-progress-text + .ws-tour__skip { margin-left: 8px; }
+
+.ws-tour .driver-popover-arrow-side-left { border-left-color: #fff; }
+.ws-tour .driver-popover-arrow-side-right { border-right-color: #fff; }
+.ws-tour .driver-popover-arrow-side-top { border-top-color: #fff; }
+.ws-tour .driver-popover-arrow-side-bottom { border-bottom-color: #fff; }
+
+/* Mode gelap: kartu dan lapisan gelap memakai palet sendiri (kartu ditandai data-dm-native oleh tour.js). */
+html[data-theme="dark"] .driver-popover.ws-tour { background: #1b2433; color: #e2e8f0; border-color: rgba(148, 163, 184, .22); box-shadow: 0 26px 60px -22px rgba(0, 0, 0, .8); }
+html[data-theme="dark"] .ws-tour .driver-popover-title { color: #f1f5f9; }
+html[data-theme="dark"] .ws-tour .driver-popover-description { color: #b6c2d4; }
+html[data-theme="dark"] .ws-tour .driver-popover-progress-text { color: #7d8aa0; }
+html[data-theme="dark"] .ws-tour .driver-popover-prev-btn { background: transparent; color: #cbd5e1; border-color: rgba(148, 163, 184, .3); }
+html[data-theme="dark"] .ws-tour .driver-popover-prev-btn:hover { background: rgba(255, 255, 255, .06); }
+html[data-theme="dark"] .ws-tour .driver-popover-close-btn { color: #7d8aa0; }
+html[data-theme="dark"] .ws-tour .driver-popover-close-btn:hover { color: #e2e8f0; }
+html[data-theme="dark"] .ws-tour .ws-tour__skip { color: #7d8aa0; }
+html[data-theme="dark"] .ws-tour .ws-tour__skip:hover { color: #e2e8f0; }
+html[data-theme="dark"] .ws-tour .driver-popover-arrow-side-left { border-left-color: #1b2433; }
+html[data-theme="dark"] .ws-tour .driver-popover-arrow-side-right { border-right-color: #1b2433; }
+html[data-theme="dark"] .ws-tour .driver-popover-arrow-side-top { border-top-color: #1b2433; }
+html[data-theme="dark"] .ws-tour .driver-popover-arrow-side-bottom { border-bottom-color: #1b2433; }
+.driver-overlay[data-dm-flip], .driver-overlay[data-dm-mixed] { filter: none !important; }
+
+/* Tombol ulangi tutorial di Panduan */
+.ws-guide__replay { margin-top: 18px; padding: 14px; border-radius: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; }
+.ws-guide__replay .ws-guide__lead { margin-bottom: 10px; }
+.ws-guide__replay-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ws-guide__replay-btns button { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca; font-size: 13px; font-weight: 700; transition: background .15s ease, color .15s ease; }
+.ws-guide__replay-btns button:hover { background: #4f46e5; border-color: #4f46e5; color: #fff; }

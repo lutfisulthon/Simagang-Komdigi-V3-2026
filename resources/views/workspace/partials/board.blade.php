@@ -20,6 +20,7 @@
         <div class="min-w-0 flex-1">
             <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span class="font-bold text-gray-800" x-text="sp.name"></span>
+                <x-workspace.help term="sprint" label="Apa itu Sprint?" />
                 <span class="text-xs text-slate-500" x-text="WS.sprints.dateRange(sp)"></span>
                 <span class="text-xs font-semibold text-indigo-700" x-text="WS.sprints.remaining(sp)"></span>
                 <span class="ws-leader-chip" x-show="sp && sp.leader" :title="sp && sp.leader ? 'Ketua tim: ' + sp.leader.name : ''">
