@@ -131,7 +131,9 @@
             get range() {
                 const store = this.$store.wsTasks;
                 const stamps = [startOfDay(new Date()).getTime()];
-                store.tasks.forEach((t) => { const s = this.span(t); stamps.push(s.start, s.end); });
+                // Tugas tanpa deadline (mis. di Backlog) tidak punya batang; tanpa filter ini new Date(null) = 1970
+                // dan skala membengkak jadi puluhan ribu kolom hari.
+                store.tasks.forEach((t) => { if (!t.due_at) return; const s = this.span(t); stamps.push(s.start, s.end); });
                 store.sprints.forEach((sp) => {
                     if (sp.start_date) stamps.push(parseDate(sp.start_date).getTime());
                     if (sp.end_date) stamps.push(parseDate(sp.end_date).getTime());
