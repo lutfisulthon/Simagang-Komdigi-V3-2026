@@ -12,6 +12,14 @@
  *   - nanti (kebutuhan backend): bila server menyediakan `config.onboarding` (data awal) dan `config.onboardingUrl`
  *     (POST simpan, DELETE reset), data dibaca dan disimpan di akun. Tidak ada kode lain yang perlu diubah.
  *   Untuk pengujian otomatis: localStorage['ws-tour-disabled'] = '1' mematikan tampil-otomatis.
+ *
+ * Preferensi "Tutorial otomatis" (saklar di panel ikon gerigi):
+ *   - pengguna baru: selalu menyala, saklar belum tampil;
+ *   - saklar baru tampil setelah tutorial dasar selesai/dilewati DAN aplikasi dipakai di >= USAGE_DAYS hari berbeda
+ *     (atau bila pengguna pernah mematikannya, supaya bisa dinyalakan lagi);
+ *   - dilewati 2 kali: ditawari sekali untuk mematikan;
+ *   - saat mati, hanya tampil-otomatis yang berhenti. "Ulangi tutorial" di Panduan tetap jalan, dan tutorial yang naik
+ *     versi hanya ditandai titik "Baru" di tombol Panduan.
  */
 (function () {
     'use strict';
@@ -62,6 +70,79 @@
             }
         },
     };
+
+    // ---------- Preferensi & pemakaian ----------
+
+    const USAGE_DAYS = 3;       // hari berbeda sebelum saklar "Tutorial otomatis" tampil
+    const SKIPS_BEFORE_ASK = 2; // jumlah "Lewati" sebelum ditawari mematikan
+    const PREF_KEY = 'ws-tour-prefs:' + (user.id || 'anon');
+
+    const prefs = {
+        read() {
+            try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (_) { return {}; }
+        },
+        write(data) {
+            try { localStorage.setItem(PREF_KEY, JSON.stringify(data)); } catch (_) { /* storage tidak tersedia */ }
+        },
+        // Data dari server (bila ada) diutamakan; tanpa data berarti menyala.
+        get auto() {
+            if (cfg.onboardingPrefs && typeof cfg.onboardingPrefs.auto === 'boolean') return cfg.onboardingPrefs.auto;
+            return this.read().auto !== false;
+        },
+        async setAuto(on) {
+            const d = this.read();
+            d.auto = !!on;
+            this.write(d);
+            if (cfg.onboardingPrefs) cfg.onboardingPrefs.auto = !!on;
+            syncUI();
+            if (cfg.onboardingUrl) {
+                try { await WS.http('PATCH', cfg.onboardingUrl.replace(/\/$/, '') + '/preferences', { body: { auto: !!on } }); } catch (_) { /* tidak fatal */ }
+            }
+        },
+        // Mencatat hari ini sebagai hari pemakaian (maks. 30 hari terakhir disimpan).
+        touchToday() {
+            const d = this.read();
+            const day = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD, zona waktu lokal
+            d.days = Array.isArray(d.days) ? d.days : [];
+            if (!d.days.includes(day)) { d.days.push(day); d.days = d.days.slice(-30); this.write(d); }
+        },
+        get days() { return (this.read().days || []).length; },
+        // Opsi mematikan baru muncul setelah pengguna terbiasa; yang sudah mematikannya tetap bisa menyalakan lagi.
+        get canToggle() {
+            return !this.auto || (!!storage.get('dasar') && this.days >= USAGE_DAYS);
+        },
+        // Satu "Lewati" dihitung (bukan dari pemutaran ulang). true bila saatnya menawarkan mematikan.
+        countSkip() {
+            const d = this.read();
+            d.skips = (d.skips || 0) + 1;
+            const ask = this.auto && !d.asked && d.skips >= SKIPS_BEFORE_ASK;
+            if (ask) d.asked = true;
+            this.write(d);
+            return ask;
+        },
+    };
+    prefs.touchToday();
+
+    // Baris saklar di panel gerigi ([data-tour-row], lihat components/theme-menu) dan titik "Baru" di tombol Panduan.
+    function syncUI() {
+        const show = prefs.canToggle;
+        document.querySelectorAll('[data-tour-row]').forEach((row) => {
+            row.hidden = !show;
+            const sw = row.querySelector('[data-tour-switch]');
+            if (sw) sw.setAttribute('aria-checked', prefs.auto ? 'true' : 'false');
+        });
+        // Tutorial yang naik versi saat pop-up dimatikan hanya ditandai titik kecil.
+        const updated = TOURS.some((tr) => { const r = storage.get(tr.id); return r && (r.version || 0) < tr.version; });
+        document.querySelectorAll('.sb-help').forEach((b) => b.classList.toggle('has-new', !prefs.auto && updated));
+    }
+
+    document.addEventListener('click', (e) => {
+        const sw = e.target.closest && e.target.closest('[data-tour-switch]');
+        if (!sw) return;
+        const next = !prefs.auto;
+        prefs.setAuto(next);
+        WS.toast(next ? 'Tutorial otomatis dinyalakan.' : 'Tutorial otomatis dimatikan. Nyalakan lagi lewat ikon gerigi, atau ulangi dari Panduan.', 'info');
+    });
 
     // ---------- Util DOM ----------
 
@@ -139,7 +220,7 @@
         }));
     }
 
-    function start(id) {
+    function start(id, opts = {}) {
         const tour = TOURS.find((t) => t.id === id);
         if (!tour || active || !window.driver || !window.driver.js) return false;
         const steps = resolveSteps(tour);
@@ -176,9 +257,20 @@
                 if (drv.hasNextStep()) drv.moveNext();
                 else { finished = true; drv.destroy(); }
             },
-            onDestroyed: () => {
+            onDestroyed: async () => {
                 active = null;
-                storage.set(id, { version: tour.version, status: finished ? 'completed' : 'skipped', at: new Date().toISOString() });
+                await storage.set(id, { version: tour.version, status: finished ? 'completed' : 'skipped', at: new Date().toISOString() });
+                syncUI();
+                if (opts.manual) return; // diputar ulang dari Panduan: tidak dihitung dan tidak disusul tutorial lain
+                if (!finished && prefs.countSkip()) {
+                    // Sudah dua kali dilewati: tawarkan mematikan (sekali saja).
+                    const off = window.SimagangConfirm ? await window.SimagangConfirm.open({
+                        title: 'Matikan tutorial otomatis?',
+                        message: 'Tutorial tidak akan muncul sendiri lagi. Anda bisa menyalakannya kembali lewat ikon gerigi, dan Panduan tetap tersedia kapan saja.',
+                        ok: 'Ya, matikan', cancel: 'Tidak, tetap tampilkan', tone: 'primary', icon: 'fa-graduation-cap',
+                    }) : false;
+                    if (off) { await prefs.setAuto(false); return; }
+                }
                 // Tutorial berikutnya yang cocok dengan halaman ini (mis. dasar → daftar-kelompok) menyusul sebentar lagi.
                 setTimeout(autoStart, 700);
             },
@@ -199,6 +291,7 @@
 
     function autoStart() {
         try { if (localStorage.getItem('ws-tour-disabled') === '1') return; } catch (_) { /* abaikan */ }
+        if (!prefs.auto) return;
         // Jangan menimpa dialog yang sedang terbuka (lapisan gelap yang disembunyikan tidak dihitung).
         if (active || visible('.ws-overlay') || document.querySelector('.driver-popover')) return;
         const next = pending();
@@ -218,7 +311,7 @@
         tick();
     }
 
-    document.addEventListener('alpine:initialized', () => whenReady(autoStart));
+    document.addEventListener('alpine:initialized', () => { syncUI(); whenReady(autoStart); });
 
     // Ulangi dari Panduan: detail { id } atau { id: 'halaman' } (tutorial yang cocok dengan halaman ini).
     window.addEventListener('ws-tour-start', async (e) => {
@@ -228,8 +321,8 @@
         await storage.reset(tour.id);
         shownThisPage.delete(tour.id);
         window.dispatchEvent(new CustomEvent('ws-close-modal'));
-        setTimeout(() => { if (!start(tour.id)) WS.toast('Tutorial tidak dapat dimulai di halaman ini.', 'info'); }, 450);
+        setTimeout(() => { if (!start(tour.id, { manual: true })) WS.toast('Tutorial tidak dapat dimulai di halaman ini.', 'info'); }, 450);
     });
 
-    WS.tour = { start, storage, tours: TOURS.map((t) => t.id) };
+    WS.tour = { start, storage, prefs, tours: TOURS.map((t) => t.id) };
 })();

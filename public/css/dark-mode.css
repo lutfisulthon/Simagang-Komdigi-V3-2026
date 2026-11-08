@@ -294,6 +294,8 @@ html[data-theme="dark"] main tbody tr:has(> td[colspan]:only-child):hover { back
 }
 
 .sm-theme__row { display: flex; align-items: center; gap: 12px; }
+.sm-theme__row[hidden] { display: none; }
+.sm-theme__row + .sm-theme__row { margin-top: 12px; }
 
 .sm-theme__icon {
     display: inline-flex;

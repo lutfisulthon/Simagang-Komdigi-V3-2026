@@ -61,6 +61,20 @@ Menghapus kunci `{tour}` dari kolom `onboarding` pengguna. `{tour}` divalidasi t
 
 Frontend memanggil `DELETE` ini sebelum memutar ulang tutorial, jadi tutorial yang diulang dari Panduan dicatat ulang saat selesai.
 
+### `PATCH /onboarding/preferences` — saklar "Tutorial otomatis"
+
+Pengguna yang sudah terbiasa dapat mematikan tampil-otomatis lewat saklar di ikon gerigi (hanya menghentikan pop-up otomatis; "Ulangi tutorial" di Panduan tetap jalan).
+
+Request (JSON): `{ "auto": false }`
+
+| Field | Aturan |
+|---|---|
+| `auto` | wajib, boolean |
+
+Perilaku: menyimpan di kolom `onboarding` pada kunci khusus `_prefs`, mis. `{ "_prefs": { "auto": false }, "dasar": { ... } }`. Respons `200`/`204`. Kunci `_prefs` **bukan** nama tutorial, jadi tidak ikut daftar tetap di `POST`/`DELETE` dan tidak boleh bisa dihapus lewat `DELETE /onboarding/_prefs`.
+
+Aturan tampilan yang dihitung frontend (tidak perlu di server): saklar baru tampil setelah tutorial dasar selesai/dilewati dan aplikasi dipakai di ≥3 hari berbeda. Penghitung hari saat ini hanya di browser; bila ingin permanen, simpan juga sebagai `_prefs.days` (daftar tanggal `YYYY-MM-DD`, maks. 30) lewat endpoint yang sama dan kirim balik lewat `onboardingPrefs` (§4). Opsional, tidak wajib.
+
 ### Daftar tutorial
 
 Daftar nama ada di frontend (`TOURS` di `public/js/workspace/tour.js`). Bila frontend menambah tutorial baru, daftar tetap di validasi server **harus ikut ditambah**. Usulan: simpan sebagai konstanta/enum tunggal di backend, mis. `OnboardingTour`.
@@ -74,6 +88,7 @@ $wsConfig = [
     // ...kunci yang sudah ada...
     'onboarding'    => $wsUser->onboarding ?? [],          // object kosong bila belum ada
     'onboardingUrl' => route('onboarding.store'),          // alamat dasar, mis. https://host/onboarding
+    'onboardingPrefs' => ['auto' => $wsUser->onboarding['_prefs']['auto'] ?? true],   // opsional bila backend menyimpan preferensi
 ];
 ```
 
@@ -82,7 +97,8 @@ Catatan:
 - `onboarding` harus berupa **object JSON** (bukan array list). Pastikan `[]` kosong terkirim sebagai `{}`; di PHP gunakan `(object) []` atau `->onboarding ?: new \stdClass`.
 - Frontend memakai `onboardingUrl` untuk `POST` (simpan) dan `DELETE onboardingUrl + '/' + tour` (reset), jadi route `DELETE` harus berada di bawah alamat dasar yang sama.
 - Bila `onboardingUrl` tidak ada, frontend kembali memakai localStorage seperti sekarang. Jadi penerapannya bisa bertahap.
-- Data dari server diutamakan atas data browser.
+- Data dari server diutamakan atas data browser (juga untuk `onboardingPrefs.auto`).
+- `onboarding` yang dikirim ke frontend **tidak perlu** menyertakan kunci `_prefs`; cukup kunci nama tutorial.
 
 ## 5. Contoh implementasi singkat (usulan)
 
@@ -106,6 +122,9 @@ Route::delete('onboarding/{tour}', [OnboardingController::class, 'destroy'])->na
 - [ ] Pengguna belum login → `401`/redirect login.
 - [ ] `window.SimagangWorkspace.onboarding` bertipe object (`{}`) saat kosong, bukan `[]`.
 - [ ] Setelah menyelesaikan tutorial lalu login di browser lain, tutorial tidak muncul lagi.
+- [ ] `PATCH /onboarding/preferences` dengan `auto` bukan boolean → `422`; dengan `auto: false` → `_prefs.auto = false` tersimpan tanpa menghapus kunci tutorial lain.
+- [ ] `DELETE /onboarding/_prefs` → `422`/`404` (bukan nama tutorial).
+- [ ] Setelah `auto: false` tersimpan, login di browser lain: tutorial tidak muncul otomatis.
 
 ## 7. Catatan frontend
 
