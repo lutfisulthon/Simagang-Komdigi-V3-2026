@@ -6,8 +6,10 @@
  *     tahap pemuatan halaman (DOM siap → mode gelap siap → semua aset termuat).
  *  2. Transisi tema: SimagangSplash.transition('dark'|'light', fn) menutupi layar selama tema diganti.
  *
- *  3. Aktivitas: layar yang sama tampil saat pengguna berpindah halaman (klik tautan / kirim form) dan saat permintaan
- *     AJAX yang mengubah data berjalan lebih lama dari ~1,5 detik. Progres merayap sampai selesai, lalu penuh dan menghilang.
+ *  3. Aktivitas (TANPA menutup layar): berpindah halaman (klik tautan / kirim form) dan permintaan AJAX yang mengubah data
+ *     yang berjalan lebih lama dari ~1,5 detik hanya menampilkan bar tipis di tepi atas layar (kelas html.sm-navbar-on,
+ *     gaya di splash.css). Menu sidebar yang diklik langsung ditandai aktif, dan form yang dikirim dikunci supaya tidak
+ *     terkirim dua kali. Splash penuh tidak dipakai untuk berpindah halaman karena menambah waktu tunggu.
  *
  * API: SimagangSplash.available(), .show(), .transition(theme, applyFn), .loadingDone(), .begin(label), .end(), .navigate()
  */
@@ -28,12 +30,11 @@
     const pct = el.querySelector('.sm-splash__pct');
     const status = el.querySelector('.sm-splash__status');
     const meter = el.querySelector('[role="progressbar"]');
-    const MIN_MS = 900;       // lama tampil minimum untuk layar pemuatan, supaya tidak berkedip
+    const MIN_MS = 500;       // lama tampil minimum untuk layar pemuatan, supaya tidak berkedip
     const MAX_MS = 7000;      // jaring pengaman
-    const ACTIVITY_DELAY = 1500;  // permintaan AJAX yang lebih cepat dari ini tidak menampilkan layar
-    const ACTIVITY_MIN_MS = 500;  // setelah tampil, minimal selama ini supaya tidak berkedip
-    const NAV_MAX_MS = 12000;     // berpindah halaman yang tidak jadi (mis. unduhan): layar dilepas otomatis
-    const NAV_FLAG = 'simagang-splash-nav';
+    const ACTIVITY_DELAY = 1500;  // permintaan AJAX yang lebih cepat dari ini tidak menampilkan bar
+    const NAV_MAX_MS = 12000;     // berpindah halaman yang tidak jadi (mis. unduhan): bar dan kunci form dilepas otomatis
+    const NAV_KEY = 'simagang-nav'; // penanda sessionStorage: halaman baru melanjutkan bar (dibaca di theme-head)
 
     const STAGES = [[0, 'Menyiapkan tampilan…'], [35, 'Memuat komponen…'], [70, 'Menyelaraskan data…'], [94, 'Hampir selesai…']];
 
@@ -48,10 +49,9 @@
     let label = null;
     let minMs = MIN_MS;
     let maxMs = MAX_MS;
-    let activityOn = false;
     let pending = 0;
     let delayTimer = 0;
-    let navigating = false;
+    let ajaxBar = false;
 
     const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -91,8 +91,6 @@
             label = null;
             busy = false;
             timed = null;
-            activityOn = false;
-            navigating = false;
             minMs = MIN_MS;
             maxMs = MAX_MS;
             loadFinished = false;
@@ -123,7 +121,6 @@
             if (value >= 100 && elapsed >= minMs) { setTimeout(hide, 220); return; }
             if (elapsed > maxMs) {
                 value = 100; paint(); hide();
-                if (navigating) { try { sessionStorage.removeItem(NAV_FLAG); } catch (e) { /* abaikan */ } }
                 return;
             }
         }
@@ -134,8 +131,6 @@
 
     function startLoading() {
         variantFromTheme();
-        // Datang dari berpindah halaman: lanjutan layar yang sama, tampil lebih singkat.
-        if (root.classList.contains('sm-splash-nav')) { minMs = 350; label = 'Memuat halaman…'; }
         el.classList.add('is-active');
         el.setAttribute('aria-hidden', 'false');
         startedAt = performance.now();
@@ -171,44 +166,72 @@
         raf = requestAnimationFrame(tick);
     }
 
-    // ----- Aktivitas (berpindah halaman & permintaan AJAX) -----
+    // ----- Aktivitas: bar tipis di tepi atas layar (tidak menutup halaman) -----
 
-    function startActivity(text, opts) {
-        if (busy || activityOn || el.classList.contains('is-active')) return false;
-        activityOn = true;
-        variantFromTheme();
-        label = text || 'Memproses…';
-        loadFinished = false;
-        goal = 88; cap = 92;
-        minMs = opts.min;
-        maxMs = opts.max;
-        show();
-        return true;
+    function barOn(color) {
+        if (color) root.style.setProperty('--sm-nav-color', color);
+        root.classList.remove('sm-navbar-done');
+        root.classList.add('sm-navbar-on');
     }
 
-    // AJAX: begin() di awal, end() di akhir (boleh bertumpuk). Layar baru muncul bila permintaan lebih lama dari ACTIVITY_DELAY.
-    function begin(text) {
+    function barDone() {
+        if (!root.classList.contains('sm-navbar-on')) return;
+        root.classList.add('sm-navbar-done');
+        setTimeout(() => root.classList.remove('sm-navbar-on', 'sm-navbar-resume', 'sm-navbar-done'), 520);
+    }
+
+    // AJAX: begin() di awal, end() di akhir (boleh bertumpuk). Bar baru muncul bila permintaan lebih lama dari ACTIVITY_DELAY.
+    function begin() {
         pending++;
-        if (pending > 1 || activityOn) return;
+        if (pending > 1) return;
         clearTimeout(delayTimer);
-        delayTimer = setTimeout(() => { if (pending > 0) startActivity(text, { min: ACTIVITY_MIN_MS, max: 60000 }); }, ACTIVITY_DELAY);
+        delayTimer = setTimeout(() => { if (pending > 0) { ajaxBar = true; barOn(); } }, ACTIVITY_DELAY);
     }
 
     function end() {
         pending = Math.max(0, pending - 1);
         if (pending > 0) return;
         clearTimeout(delayTimer);
-        if (activityOn && !navigating) { loadFinished = true; goal = 100; cap = 100; }
+        if (ajaxBar) { ajaxBar = false; barDone(); }
     }
 
-    // Berpindah halaman: layar tampil sampai halaman lama diganti; halaman baru melanjutkannya (penanda di sessionStorage).
-    function navigate() {
-        if (navigating || activityOn) return;
-        try { sessionStorage.setItem(NAV_FLAG, '1'); } catch (e) { /* abaikan */ }
-        if (startActivity('Memuat halaman…', { min: 0, max: NAV_MAX_MS })) navigating = true;
+    // Warna bar mengikuti warna menu yang diklik (kelas [data-tone] → --t), bila ada.
+    function toneColor(a) {
+        const host = a && a.closest ? a.closest('[data-tone]') : null;
+        return host ? getComputedStyle(host).getPropertyValue('--t').trim() : '';
     }
 
-    // Tautan/form yang bukan berpindah halaman biasa (unduhan, tab baru, hash, domain lain) tidak memakai layar.
+    let lockedForms = [];
+    let restoreActive = null;
+
+    // Berpindah halaman: bar tampil sampai halaman baru selesai dimuat (penanda di sessionStorage melanjutkannya).
+    function navigate(link) {
+        const color = toneColor(link);
+        try { sessionStorage.setItem(NAV_KEY, color || '1'); } catch (e) { /* abaikan */ }
+        barOn(color);
+        // Respons langsung: menu yang diklik ditandai aktif sebelum halaman baru terbuka.
+        if (link && link.classList && link.classList.contains('sb-link') && !link.classList.contains('is-active')) {
+            const prev = document.querySelector('.sb-link.is-active');
+            if (prev) prev.classList.remove('is-active');
+            link.classList.add('is-active');
+            restoreActive = () => { link.classList.remove('is-active'); if (prev) prev.classList.add('is-active'); };
+        }
+        // Jaring pengaman: bila halaman tidak jadi berpindah (unduhan, dibatalkan), kembalikan keadaan semula.
+        setTimeout(release, NAV_MAX_MS);
+    }
+
+    function release() {
+        try { sessionStorage.removeItem(NAV_KEY); } catch (e) { /* abaikan */ }
+        barDone();
+        if (restoreActive) { restoreActive(); restoreActive = null; }
+        lockedForms.forEach(({ form, buttons }) => {
+            delete form.dataset.smSubmitting;
+            buttons.forEach((b) => { b.disabled = false; b.classList.remove('sm-busy'); b.removeAttribute('aria-busy'); });
+        });
+        lockedForms = [];
+    }
+
+    // Tautan/form yang bukan berpindah halaman biasa (unduhan, tab baru, hash, domain lain) tidak memakai bar.
     const FILE_RE = /(\/(download|export|print|attachments)(\/|$|\?)|\.(pdf|zip|rar|xlsx?|docx?|pptx?|csv|png|jpe?g|gif|webp|svg|mp4|mp3)(\?|$))/i;
 
     function linkQualifies(a) {
@@ -226,8 +249,14 @@
         const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
         if (!a) return;
         // Dicek setelah semua handler selesai: klik yang di-preventDefault (Alpine, dialog konfirmasi) bukan berpindah halaman.
-        setTimeout(() => { if (!e.defaultPrevented && linkQualifies(a)) navigate(); }, 0);
+        setTimeout(() => { if (!e.defaultPrevented && linkQualifies(a)) navigate(a); }, 0);
     });
+
+    // Form yang sedang dikirim tidak boleh terkirim lagi (menggantikan peran splash penuh).
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (form instanceof HTMLFormElement && form.dataset.smSubmitting === '1') e.preventDefault();
+    }, true);
 
     document.addEventListener('submit', (e) => {
         const form = e.target;
@@ -237,17 +266,23 @@
             if (form.target && form.target !== '_self') return;
             const action = form.getAttribute('action') || location.href;
             if (FILE_RE.test(action)) return;
-            navigate();
+            const buttons = [...form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]')];
+            form.dataset.smSubmitting = '1';
+            buttons.forEach((b) => { b.disabled = true; b.classList.add('sm-busy'); b.setAttribute('aria-busy', 'true'); });
+            lockedForms.push({ form, buttons });
+            navigate(null);
         }, 0);
     });
 
-    // Kembali lewat cache browser (bfcache): halaman dipulihkan apa adanya, lepaskan layar yang tertinggal.
-    window.addEventListener('pageshow', (e) => {
-        if (e.persisted && activityOn) {
-            try { sessionStorage.removeItem(NAV_FLAG); } catch (err) { /* abaikan */ }
-            hide();
-        }
-    });
+    // Halaman baru yang melanjutkan bar (dipasang theme-head): selesaikan saat halaman termuat.
+    if (root.classList.contains('sm-navbar-on')) {
+        const finish = () => { try { sessionStorage.removeItem(NAV_KEY); } catch (e) { /* abaikan */ } barDone(); };
+        if (document.readyState === 'complete') finish(); else window.addEventListener('load', finish);
+        setTimeout(finish, 8000);
+    }
+
+    // Kembali lewat cache browser (bfcache): halaman dipulihkan apa adanya, lepaskan bar dan kunci yang tertinggal.
+    window.addEventListener('pageshow', (e) => { if (e.persisted) release(); });
 
     window.SimagangSplash = {
         available: () => true,
