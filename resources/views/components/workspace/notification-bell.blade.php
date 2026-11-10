@@ -72,7 +72,8 @@
                         <i class="fas" :class="$store.wsNotif.meta(item.type).icon"></i>
                     </span>
                     <span class="flex-1 min-w-0">
-                        <span class="block text-sm text-gray-800 line-clamp-2" :class="item.read_at ? 'font-medium' : 'font-bold'" x-text="item.title"></span>
+                        <span class="block text-[11px] font-bold uppercase tracking-wide" :style="{ color: $store.wsNotif.meta(item.type).color }" x-text="$store.wsNotif.meta(item.type).label"></span>
+                        <span class="block text-sm text-gray-800 line-clamp-2" :class="item.read_at ? 'font-medium' : 'font-bold'" x-text="$store.wsNotif.title(item)"></span>
                         <span x-show="item.body" class="block text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="item.body"></span>
                         <span class="block text-[11px] ws-text-faint mt-1" x-text="relative(item.created_at)"></span>
                     </span>

@@ -18,5 +18,14 @@
             </span>
             <button type="button" role="switch" class="sm-switch" data-theme-switch aria-checked="false" aria-labelledby="{{ $themeMenuId }}-label"><span></span></button>
         </div>
+        {{-- Tutorial otomatis: disembunyikan sampai pengguna terbiasa; diatur public/js/workspace/tour.js (hanya ada di halaman Workspace). --}}
+        <div class="sm-theme__row" data-tour-row hidden>
+            <span class="sm-theme__icon" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span>
+            <span class="sm-theme__text" id="{{ $themeMenuId }}-tour-label">
+                <strong>Tutorial otomatis</strong>
+                <small>Tampilkan panduan singkat di halaman baru</small>
+            </span>
+            <button type="button" role="switch" class="sm-switch" data-tour-switch aria-checked="true" aria-labelledby="{{ $themeMenuId }}-tour-label"><span></span></button>
+        </div>
     </div>
 </div>

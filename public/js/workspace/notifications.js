@@ -26,6 +26,30 @@
     };
     const FALLBACK_META = { icon: 'fa-bell', color: '#475569', bg: '#f1f5f9' };
 
+    // Label singkat jenis pembaruan, tampil di atas judul notifikasi (lonceng dan toast).
+    const TYPE_LABEL = {
+        task_assigned: 'Tugas baru',
+        task_in_review: 'Perlu review',
+        task_approved: 'Tugas selesai',
+        task_revision: 'Perlu revisi',
+        task_due_soon: 'Segera jatuh tempo',
+        task_overdue: 'Terlambat',
+        task_commented: 'Komentar baru',
+        mentioned: 'Anda disebut',
+        announcement: 'Pengumuman',
+        intern_joined: 'Anggota baru',
+        group_joined: 'Kelompok baru',
+        sprint_leader: 'Ketua sprint',
+        sprint_to_divide: 'Bagi tugas',
+        deadline_extended: 'Deadline diperpanjang',
+        intern_without_mentor: 'Belum ada mentor',
+    };
+    const FALLBACK_LABEL = 'Pembaruan';
+
+    // Toast pop-up: paling banyak 3 sekaligus; sisanya diringkas jadi satu toast.
+    const TOAST_MAX = 3;
+    const SEEN_KEY = 'ws-notif-toasted';
+
     document.addEventListener('alpine:init', () => {
         const Alpine = window.Alpine;
 
@@ -35,6 +59,7 @@
             loaded: false,
             error: false,
             poller: null,
+            baseTitle: document.title,
 
             init() {
                 this.poller = WS.createPoller(() => this.refresh(), {
@@ -56,6 +81,8 @@
                     this.items = res.data;
                     this.loaded = true;
                     this.error = false;
+                    this.syncTitle();
+                    this.announce(res.data);
                     // Usulan kontrak #3: badge unread per channel ikut polling ringkas ini (dibaca store wsChat).
                     if (res.unread_messages) {
                         window.dispatchEvent(new CustomEvent('ws-unread-messages', { detail: res.unread_messages }));
@@ -74,12 +101,14 @@
                 const now = new Date().toISOString();
                 this.items.forEach((n) => { if (!n.read_at) n.read_at = now; });
                 this.unread = 0;
+                this.syncTitle();
                 try {
                     await WS.api.notifications.readAll();
                     return true;
                 } catch (err) {
                     this.items = snapshot;
                     this.unread = prevUnread;
+                    this.syncTitle();
                     WS.toast(err.message, 'error');
                     return false;
                 }
@@ -90,6 +119,7 @@
                 const copy = this.items.find((n) => n.id === id);
                 if (copy) copy.read_at = copy.read_at || new Date().toISOString();
                 this.unread = Math.max(0, this.unread - 1);
+                this.syncTitle();
                 return WS.api.notifications.read(id).catch(() => { /* tidak fatal */ });
             },
 
@@ -102,8 +132,42 @@
                 window.location.href = item.url;
             },
 
+            // Meta (ikon, warna) ditambah label jenis, dipakai lonceng dan toast.
             meta(type) {
-                return TYPE_META[type] || FALLBACK_META;
+                return Object.assign({ label: TYPE_LABEL[type] || FALLBACK_LABEL }, TYPE_META[type] || FALLBACK_META);
+            },
+
+            // Judul tanpa awalan yang sama dengan label jenis ("Tugas baru: T-7 …" → "T-7 …").
+            title(item) {
+                const label = this.meta(item.type).label.toLowerCase();
+                const m = /^([^:]{3,30}):\s+(.+)$/.exec(item.title || '');
+                return m && m[1].trim().toLowerCase() === label ? m[2] : (item.title || '');
+            },
+
+            // "(3) Workspace": jumlah belum dibaca di judul tab, supaya terlihat walau tab sedang tidak dibuka.
+            syncTitle() {
+                if (!/^\(\d+\+?\)\s/.test(document.title)) this.baseTitle = document.title;
+                document.title = this.unread > 0 ? `(${this.badgeText()}) ${this.baseTitle}` : this.baseTitle;
+            },
+
+            // Toast untuk notifikasi belum dibaca yang belum pernah ditampilkan. Pemuatan pertama dalam satu sesi
+            // hanya menjadi acuan (tidak ada toast untuk notifikasi lama).
+            announce(list) {
+                let seen = null;
+                try { seen = JSON.parse(sessionStorage.getItem(SEEN_KEY)); } catch (_) { /* storage tidak tersedia */ }
+                const baseline = !Array.isArray(seen);
+                const known = new Set(baseline ? [] : seen);
+                const fresh = list.filter((n) => !n.read_at && !known.has(n.id));
+                if (!baseline && document.hidden) return; // tab tidak terlihat: tampilkan nanti saat kembali
+                list.forEach((n) => known.add(n.id));
+                try { sessionStorage.setItem(SEEN_KEY, JSON.stringify([...known].slice(-100))); } catch (_) { /* abaikan */ }
+                if (baseline || !fresh.length || !window.Alpine.store('wsToast')) return;
+
+                const toasts = window.Alpine.store('wsToast');
+                const ordered = fresh.slice().reverse(); // terlama dulu, terbaru paling bawah
+                ordered.slice(-TOAST_MAX).forEach((n) => toasts.notify(n, this.meta(n.type)));
+                const rest = ordered.length - TOAST_MAX;
+                if (rest > 0) WS.toast(`${rest} notifikasi baru lainnya di lonceng.`, 'info');
             },
 
             badgeText() {

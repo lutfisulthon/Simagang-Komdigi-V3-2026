@@ -60,12 +60,12 @@
                 {{-- Story point & epic (perencanaan sprint) --}}
                 <div class="grid sm:grid-cols-2 gap-4" x-show="!selfOnly">
                     <div>
-                        <label class="ws-label" for="ws-f-points">Story point <span class="font-normal text-slate-500">(estimasi, opsional)</span></label>
+                        <label class="ws-label" for="ws-f-points">Story point <span class="font-normal text-slate-500">(estimasi, opsional)</span> <x-workspace.help term="story-point" label="Apa itu Story Point?" /></label>
                         <input id="ws-f-points" type="number" min="0" max="100" step="1" inputmode="numeric" class="ws-input" x-model="form.story_points" placeholder="mis. 3">
                         <p class="ws-field-error" x-show="errors.story_points" x-text="errors.story_points"></p>
                     </div>
                     <div>
-                        <label class="ws-label" for="ws-f-epic">Epic <span class="font-normal text-slate-500">(opsional)</span></label>
+                        <label class="ws-label" for="ws-f-epic">Epic <span class="font-normal text-slate-500">(opsional)</span> <x-workspace.help term="epic" label="Apa itu Epic?" /></label>
                         <select id="ws-f-epic" class="ws-input" x-model="form.epic_id" :disabled="!epics.length">
                             <option value="" x-text="epics.length ? 'Tanpa epic' : 'Belum ada epic (buat di tab Backlog)'"></option>
                             <template x-for="e in epics" :key="e.id"><option :value="String(e.id)" x-text="e.name"></option></template>

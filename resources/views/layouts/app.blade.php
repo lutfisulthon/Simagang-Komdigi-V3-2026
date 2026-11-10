@@ -363,6 +363,7 @@
 
     @if ($wsEnabled)
         <x-workspace.toasts />
+        <x-workspace.guide :role="$wsRole" />
     @endif
     @stack('scripts')
     <script>
