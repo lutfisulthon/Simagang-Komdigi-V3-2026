@@ -13,18 +13,8 @@
             'js/workspace/notifications.js',
             'js/workspace/tour.js',
         ]);
-        // Realtime (Fase 3): aktif bila BROADCAST_DRIVER=reverb.
-        $wsReverb = config('broadcasting.connections.reverb');
-        $wsRealtime = null;
-        if (config('broadcasting.default') === 'reverb' && ! empty($wsReverb['key'])) {
-            $wsRealtime = [
-                'driver' => 'reverb',
-                'key' => $wsReverb['key'],
-                'host' => $wsReverb['options']['host'] ?? request()->getHost(),
-                'port' => (int) ($wsReverb['options']['port'] ?? 443),
-                'scheme' => $wsReverb['options']['scheme'] ?? 'https',
-            ];
-        }
+        // Realtime (Fase 3): aktif bila BROADCAST_DRIVER=reverb (lihat App\Support\Realtime).
+        $wsRealtime = \App\Support\Realtime::clientConfig();
         $wsConfig = [
             'realtime' => $wsRealtime,
             'baseUrl' => url('/'),

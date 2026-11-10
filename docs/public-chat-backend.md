@@ -1,5 +1,34 @@
 # Kebutuhan Backend: Chat Publik (dashboard, pengguna login)
 
+> **Status: sudah diimplementasikan.** Chat tersambung ke server (bukan lagi data contoh).
+>
+> | Bagian | Berkas |
+> |---|---|
+> | Tabel `public_chat_messages` (pesan, sematan, disembunyikan) dan `public_chat_members` (penanda dibaca, waktu aktif, bungkam) | `database/migrations/2026_11_10_000001_create_public_chat_tables.php` |
+> | Endpoint `GET/POST /public-chat/messages`, `POST/DELETE /public-chat/messages/{id}/pin`, halaman `/chat-publik` | `app/Http/Controllers/PublicChatController.php`, `routes/public-chat.php` |
+> | Aturan bersama (peran, user nonaktif, pembersihan teks, deteksi tautan) | `app/Support/PublicChat.php`, middleware `public-chat` |
+> | Pengaturan (riwayat 50, 10000 karakter, 0,6 detik / 40 per menit, 3 sematan, retensi) | `config/public_chat.php` |
+> | Moderasi admin: sembunyikan/tampilkan pesan, cabut sematan, bungkam user 1/7/30 hari atau tanpa batas | `/admin/chat-publik`, `app/Http/Controllers/Admin/AdminPublicChatController.php` |
+> | Retensi: hapus pesan > 30 hari (kecuali pengumuman aktif), terjadwal harian 00.20 | `php artisan public-chat:prune` |
+> | Test seluruh daftar uji di bagian 6 | `tests/Feature/PublicChatTest.php` |
+>
+> Keputusan implementasi:
+> - `GET` selalu mengirim `unread` (penanda dibaca disimpan per user di server). Frontend menambahkan `viewing=1` saat halaman chat sedang dibaca, dan membuka `/chat-publik` juga menandai semua pesan sebagai dibaca.
+> - "User nonaktif" = profil peserta/mentor/institusi/industri dengan `is_active = false`: ditolak `403` untuk membaca dan menulis, dan skrip chat tidak dimuat. User yang dibungkam admin tetap bisa membaca tetapi `POST` ditolak `403` beserta pesannya.
+> - Tautan hanya boleh dari admin dan mentor (`links_allowed_roles`); peran lain ditolak `422`.
+> - Realtime (bagian 5) sudah aktif lewat Laravel Reverb, lihat "Realtime: cara menjalankan" di bawah.
+>
+> ### Realtime: cara menjalankan
+>
+> - Channel privat `public-chat` (otorisasi di `routes/channels.php`: user login yang tidak nonaktif). Event (`app/Events/PublicChatEvent.php`):
+>   `message.created` `{ message }` (bila payload > 8 KB hanya `{ id }`), `pins.changed` (sinyal), `message.hidden` `{ id }`.
+> - Event dikirim langsung tanpa queue. Bila server Reverb mati, galat hanya dicatat di log, pesan tetap tersimpan, dan klien memakai polling.
+> - Browser memakai pusher-js + laravel-echo yang dihost sendiri (`public/vendor/echo`). Halaman yang memuat Workspace memakai koneksi Workspace yang sama.
+>   Selama tersambung, polling diperlambat jadi 30 detik (halaman chat) / 60 detik (halaman lain), hanya untuk jumlah online dan lencana.
+> - Konfigurasi: `BROADCAST_DRIVER=reverb` + `REVERB_*` di `.env` (contoh di `.env.example`). CSP `connect-src` otomatis mengizinkan alamat Reverb.
+> - Lokal: `php artisan reverb:start`. Produksi: jalankan `reverb:start` lewat Supervisor dan teruskan websocket lewat nginx
+>   (mis. `REVERB_HOST=domain`, `REVERB_PORT=443`, `REVERB_SCHEME=https`, proxy `/app` dan `/apps` ke `127.0.0.1:8080` dengan header Upgrade).
+
 Untuk: tim backend. Frontend sudah selesai dan **saat ini berjalan dengan data contoh** di browser (tanda "Mode contoh" tampil di header halaman). Dokumen ini menjelaskan yang dibutuhkan agar obrolan benar-benar tersambung.
 
 Berkas frontend: halaman `resources/views/chat-publik/index.blade.php`, pemuat `resources/views/public-chat.blade.php` (di-include `layouts/app` untuk semua halaman login), menu `resources/views/layouts/partials/nav-item.blade.php`, `public/js/public-chat.js`, `public/css/public-chat.css`.

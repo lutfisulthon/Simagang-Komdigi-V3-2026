@@ -12,6 +12,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "intervention/image": "^3.11",
         "laravel/framework": "^13.0",
+        "laravel/reverb": "^1.12",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "maatwebsite/excel": "^3.1",

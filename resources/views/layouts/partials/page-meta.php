@@ -52,6 +52,7 @@ return [
     'admin.certificates.*' => ['amber', 'Monitoring & Evaluasi', '\f0a3'],
     'admin.report.*' => ['rose', 'Monitoring & Evaluasi', '\f15c'],
     'admin.rag.*' => ['violet', 'Sistem', '\f5dc'],
+    'admin.public-chat.*' => ['teal', 'Operasional', '\f3ed'],
     'admin.*' => ['blue', 'Admin', null],
 
     // Institusi

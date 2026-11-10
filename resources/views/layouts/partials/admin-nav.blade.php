@@ -22,6 +22,7 @@
             ['route' => 'admin.microskill.index', 'match' => ['admin.microskill.index', 'admin.microskill.create', 'admin.microskill.edit', 'admin.microskill.show'], 'icon' => 'fa-award', 'label' => 'Mikro Skill', 'tone' => 'orange'],
             ['route' => 'admin.sharing-session.index', 'match' => ['admin.sharing-session.*'], 'icon' => 'fa-comments', 'label' => 'Sharing Session', 'tone' => 'teal'],
             ['route' => 'admin.aktivitas.index', 'match' => ['admin.aktivitas.*'], 'icon' => 'fa-newspaper', 'label' => 'Aktivitas Terbaru', 'tone' => 'rose'],
+            ['route' => 'admin.public-chat.index', 'match' => ['admin.public-chat.*'], 'icon' => 'fa-shield-halved', 'label' => 'Moderasi Chat Publik', 'tone' => 'teal'],
         ],
         'Monitoring & Evaluasi' => [
             ['route' => 'admin.monitoring.index', 'match' => ['admin.monitoring.index'], 'icon' => 'fa-chart-line', 'label' => 'Monitoring Peserta Magang', 'tone' => 'blue'],

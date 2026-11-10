@@ -30,7 +30,7 @@
         ann: $('pc-ann'), annbar: $('pc-annbar'), emoji: $('pc-emoji'), emojiBtn: $('pc-emoji-btn'),
     } : {};
     const badges = Array.from(document.querySelectorAll('[data-pc-badge]'));
-    const cfg = Object.assign({ mock: true, endpoints: null, maxLen: 10000, maxPins: 3, rateMs: 600, perMinute: 40, pollViewMs: 5000, pollIdleMs: 30000, user: {} }, window.PublicChatConfig || {});
+    const cfg = Object.assign({ mock: true, endpoints: null, maxLen: 10000, maxPins: 3, rateMs: 600, perMinute: 40, pollViewMs: 5000, pollIdleMs: 30000, pollLiveViewMs: 30000, pollLiveIdleMs: 60000, realtime: null, authEndpoint: '/broadcasting/auth', user: {} }, window.PublicChatConfig || {});
 
     const ROLES = { admin: 'ADMIN', mentor: 'MENTOR', intern: 'PESERTA', institusi: 'INSTITUSI', industri: 'INDUSTRI' };
     const ROLE_CHIP = { mentor: 'Mentor', intern: 'Peserta', institusi: 'Institusi', industri: 'Industri', admin: 'Admin' };
@@ -183,10 +183,12 @@
         async fail(r, fallback) {
             if (r.status === 429) return new Error('Terlalu cepat. Coba lagi sebentar.');
             let msg = ''; try { msg = (await r.json()).message || ''; } catch (_) { /* tanpa badan JSON */ }
-            return new Error(r.status === 422 && msg ? msg : fallback);
+            return new Error((r.status === 422 || r.status === 403) && msg ? msg : fallback);
         },
         async list() {
-            const url = cfg.endpoints.list + (this.last ? (cfg.endpoints.list.includes('?') ? '&' : '?') + 'after=' + encodeURIComponent(this.last) : '');
+            // viewing=1: pengguna sedang membaca halaman chat, server menandai pesan sebagai sudah dibaca (lencana lintas perangkat).
+            const qs = [this.last ? 'after=' + encodeURIComponent(this.last) : '', viewing() ? 'viewing=1' : ''].filter(Boolean).join('&');
+            const url = cfg.endpoints.list + (qs ? (cfg.endpoints.list.includes('?') ? '&' : '?') + qs : '');
             const r = await fetch(url, { headers: this.headers(false), credentials: 'same-origin' });
             if (!r.ok) throw new Error('list ' + r.status);
             const j = await r.json();
@@ -633,7 +635,94 @@
     function schedule() {
         clearTimeout(pollTimer);
         if (useMock) return; // mock memakai pendengar langsung
-        pollTimer = setTimeout(async () => { await load(false); schedule(); }, viewing() ? cfg.pollViewMs : cfg.pollIdleMs);
+        // Saat realtime tersambung, polling hanya cadangan (jumlah online, lencana), jadi diperlambat.
+        const ms = live ? (viewing() ? cfg.pollLiveViewMs : cfg.pollLiveIdleMs) : (viewing() ? cfg.pollViewMs : cfg.pollIdleMs);
+        pollTimer = setTimeout(async () => { await refresh(); schedule(); }, ms);
+    }
+
+    // ---------- Realtime (Laravel Reverb, channel privat "public-chat") ----------
+    // Event: message.created { message } atau { id } bila pesan terlalu besar, pins.changed (sinyal), message.hidden { id }.
+    // Bila websocket putus atau tidak tersedia, polling biasa tetap berjalan.
+    let live = false;
+    let refreshing = null;
+    let refreshAgain = false;
+
+    // Satu permintaan list() dalam satu waktu; sinyal yang datang saat sedang memuat digabung jadi satu muat ulang berikutnya.
+    function refresh() {
+        if (refreshing) { refreshAgain = true; return refreshing; }
+        refreshing = load(false).finally(() => {
+            refreshing = null;
+            if (refreshAgain) { refreshAgain = false; refresh(); }
+        });
+        return refreshing;
+    }
+
+    function removeMessage(id) {
+        const before = all.length;
+        all = all.filter((m) => String(m.id) !== String(id));
+        if (all.length === before) return;
+        if (PAGE) { renderAll(true); renderPeople(); updateMembers(); }
+    }
+
+    function setLive(on) {
+        if (on === live) return;
+        live = on;
+        if (!on) refresh(); // kejar pesan yang mungkin terlewat selama terputus
+        schedule();
+    }
+
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('Gagal memuat ' + src));
+            document.head.appendChild(s);
+        });
+    }
+
+    function connectRealtime() {
+        const rt = cfg.realtime;
+        if (useMock || !rt || rt.driver !== 'reverb') return;
+        const handlers = {
+            'message.created': (e) => { if (e && e.message) addIncoming(e.message); else refresh(); },
+            'pins.changed': () => refresh(),
+            'message.hidden': (e) => { if (e && e.id) removeMessage(e.id); },
+        };
+
+        // Halaman yang memuat Workspace sudah punya koneksi Reverb: pakai bersama, jangan buka koneksi kedua.
+        const shared = window.WS && window.WS.realtime;
+        if (shared && shared.driver === 'reverb') {
+            Object.keys(handlers).forEach((ev) => shared.subscribe('public-chat', ev, handlers[ev]));
+            window.addEventListener('ws-realtime-status', (e) => setLive(e.detail === 'connected'));
+            setLive(shared.isLive());
+            return;
+        }
+
+        (async () => {
+            try {
+                if (!window.Pusher) await loadScript(rt.scripts[0]);
+                if (typeof window.Echo !== 'function') await loadScript(rt.scripts[1]);
+                const csrf = document.querySelector('meta[name="csrf-token"]');
+                const echo = new window.Echo({
+                    broadcaster: 'reverb', key: rt.key,
+                    wsHost: rt.host, wsPort: rt.port, wssPort: rt.port, forceTLS: rt.scheme === 'https',
+                    enabledTransports: ['ws', 'wss'],
+                    authEndpoint: cfg.authEndpoint,
+                    auth: { headers: { 'X-CSRF-TOKEN': csrf ? csrf.content : '' } },
+                });
+                let connected = false;
+                let subscribed = false;
+                const sync = () => setLive(connected && subscribed);
+                const channel = echo.private('public-chat');
+                Object.keys(handlers).forEach((ev) => channel.listen('.' + ev, handlers[ev]));
+                channel.subscribed(() => { subscribed = true; sync(); });
+                channel.error(() => { subscribed = false; sync(); });
+                echo.connector.pusher.connection.bind('state_change', ({ current }) => {
+                    connected = current === 'connected';
+                    if (!connected) subscribed = false; // pusher-js berlangganan ulang otomatis setelah tersambung lagi
+                    sync();
+                });
+            } catch (_) { /* tetap jalan dengan polling */ }
+        })();
     }
 
     // ---------- Kotak tulis & interaksi (mode halaman) ----------
@@ -746,5 +835,6 @@
         if (PAGE) pinSig = pins.map((p) => p.id).join(',');
         if (useMock) { mock.onIncoming(addIncoming); mock.simulate(); }
         schedule();
+        connectRealtime();
     });
 })();

@@ -16,3 +16,8 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+// Chat Publik: semua user login yang aktif (sama dengan middleware public-chat).
+Broadcast::channel('public-chat', function ($user) {
+    return ! \App\Support\PublicChat::isBlocked($user);
+});

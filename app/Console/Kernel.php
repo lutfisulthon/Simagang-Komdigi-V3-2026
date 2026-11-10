@@ -26,6 +26,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('workspace:archive-expired')
             ->dailyAt('00:10')
             ->timezone('Asia/Makassar');
+
+        $schedule->command('public-chat:prune')
+            ->dailyAt('00:20')
+            ->timezone('Asia/Makassar');
     }
 
 

@@ -33,6 +33,12 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Kirim pesan Chat Publik: maksimal 40 per menit per user (jeda 0,6 detik dicek di controller).
+        RateLimiter::for('public-chat-messages', function (Request $request) {
+            return Limit::perMinute((int) config('public_chat.per_minute', 40))->by($request->user()?->id ?: $request->ip())
+                ->response(fn () => response()->json(['message' => 'Terlalu cepat. Coba lagi sebentar.'], 429));
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

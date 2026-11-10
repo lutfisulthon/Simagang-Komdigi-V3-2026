@@ -1,7 +1,7 @@
 /*
  * Workspace — realtime (Fase 3, Laravel Reverb + Echo) dengan fallback polling.
  * Aktif hanya bila layout mengirim WS.config.realtime:
- *   { driver: 'reverb', key, host, port, scheme }   → Echo + pusher-js dari jsdelivr
+ *   { driver: 'reverb', key, host, port, scheme, scripts }   → Echo + pusher-js (public/vendor/echo)
  * Event realtime dipakai sebagai SINYAL: komponen langsung memanggil polling/refresh yang sudah ada,
  * sehingga hanya ada satu jalur penggabungan data. Selama terhubung, interval polling diperlambat
  * (lihat WS.createPoller); bila koneksi putus, polling kembali normal dengan sendirinya.
@@ -59,8 +59,10 @@
 
     async function connectReverb() {
         try {
-            await loadScript('https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js');
-            await loadScript('https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js');
+            // pusher-js 8.4.0 dan laravel-echo 1.16.1, dihost sendiri di public/vendor/echo (cfg.scripts).
+            // Bila Chat Publik sudah memuatnya lebih dulu, tidak dimuat ulang.
+            if (!window.Pusher) await loadScript(cfg.scripts[0]);
+            if (!window.Echo) await loadScript(cfg.scripts[1]);
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
             echo = new window.Echo({
                 broadcaster: 'reverb',
