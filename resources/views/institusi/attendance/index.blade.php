@@ -3,174 +3,7 @@
 @section('title', 'Absensi Anak Bimbingan - Sistem Magang')
 
 @push('styles')
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
-        *,
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .dash-bg {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%);
-        }
-
-        .hero-strip {
-            background: linear-gradient(110deg, #1e3a8a 0%, #3b4fd8 55%, #4f46e5 100%);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(20, 40, 120, 0.16);
-        }
-
-        .hero-strip::before {
-            content: '';
-            position: absolute;
-            top: -70px;
-            right: -50px;
-            width: 220px;
-            height: 220px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .hero-strip::after {
-            content: '';
-            position: absolute;
-            bottom: -100px;
-            left: 18%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .stat-tile {
-            background: #fff;
-            border-radius: 18px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 3px rgba(20, 40, 120, 0.06), 0 4px 16px rgba(20, 40, 120, 0.06);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: transform .2s ease, box-shadow .2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-tile::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            border-radius: 0 0 18px 18px;
-        }
-
-        .stat-tile:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 28px rgba(20, 40, 120, 0.12);
-        }
-
-        .tile-blue::after {
-            background: linear-gradient(90deg, #3b82f6, #6366f1);
-        }
-
-        .tile-green::after {
-            background: linear-gradient(90deg, #22c55e, #10b981);
-        }
-
-        .tile-yellow::after {
-            background: linear-gradient(90deg, #f59e0b, #f97316);
-        }
-
-        .tile-red::after {
-            background: linear-gradient(90deg, #f43f5e, #e11d48);
-        }
-
-        .tile-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .panel {
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 1px 3px rgba(20, 40, 120, 0.06), 0 4px 18px rgba(20, 40, 120, 0.06);
-            overflow: hidden;
-        }
-
-        .panel-header {
-            background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 100%);
-            padding: 16px 22px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .panel-header h2 {
-            color: #fff;
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            margin: 0;
-        }
-
-        .panel-body {
-            padding: 20px 22px;
-        }
-
-        .field-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #1e3a8a;
-        }
-
-        .field-input,
-        .field-select {
-            width: 100%;
-            border-radius: 14px;
-            border: 1px solid #dbe3f0;
-            background: #fff;
-            padding: 0.9rem 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        .field-input:focus,
-        .field-select:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-            border: 1px solid #e8eeff;
-            border-radius: 18px;
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/pages/institusi-attendance-index.css') }}?v={{ @filemtime(public_path('css/pages/institusi-attendance-index.css')) }}">
 @endpush
 
 @section('content')
@@ -353,7 +186,7 @@
                                                 @if ($absentIntern->photo_path)
                                                     <img src="{{ url('storage/' . $absentIntern->photo_path) }}"
                                                         class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-blue-200 mr-2 sm:mr-3 flex-shrink-0"
-                                                        alt="{{ $absentIntern->name }}" />
+                                                        alt="{{ $absentIntern->name }}" loading="lazy" decoding="async" />
                                                 @else
                                                     <div
                                                         class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
@@ -387,7 +220,7 @@
                                                 @if ($a->intern->photo_path)
                                                     <img src="{{ url('storage/' . $a->intern->photo_path) }}"
                                                         class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-blue-200 mr-2 sm:mr-3 flex-shrink-0"
-                                                        alt="{{ $a->intern->name }}" />
+                                                        alt="{{ $a->intern->name }}" loading="lazy" decoding="async" />
                                                 @else
                                                     <div
                                                         class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
@@ -434,7 +267,7 @@
                                                 <img src="{{ $photoUrl }}" alt="Check In"
                                                     class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all shadow-sm hover:shadow-md"
                                                     onclick="window.open('{{ $photoUrl }}', '_blank')"
-                                                    title="Klik untuk melihat full size" />
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async" />
                                             @else
                                                 <span class="text-slate-400 text-xs sm:text-sm">-</span>
                                             @endif
@@ -449,7 +282,7 @@
                                                 <img src="{{ $photoCheckoutUrl }}" alt="Check Out"
                                                     class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all shadow-sm hover:shadow-md"
                                                     onclick="window.open('{{ $photoCheckoutUrl }}', '_blank')"
-                                                    title="Klik untuk melihat full size" />
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async" />
                                             @else
                                                 <span class="text-slate-400 text-xs sm:text-sm">-</span>
                                             @endif
@@ -520,7 +353,7 @@
                                                 @if ($intern->photo_path)
                                                     <img
                                                         src="{{ url('storage/' . $intern->photo_path) }}"
-                                                        class="w-10 h-10 rounded-full object-cover border-2 border-blue-200 mr-3">
+                                                        class="w-10 h-10 rounded-full object-cover border-2 border-blue-200 mr-3" loading="lazy" decoding="async">
                                                 @else
                                                     <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
                                                         <i class="fas fa-user"></i>

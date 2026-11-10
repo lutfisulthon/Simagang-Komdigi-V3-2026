@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -330,7 +329,7 @@
                                                 <img src="{{ $photoUrl }}" alt="Check In"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all"
                                                     onclick="window.open('{{ $photoUrl }}','_blank')"
-                                                    title="Klik untuk melihat full size">
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                             @else
                                                 <span class="text-gray-400 text-xs">Tidak ada akses</span>
                                             @endcan
@@ -350,7 +349,7 @@
                                                 <img src="{{ $photoUrl }}" alt="Check Out"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all"
                                                     onclick="window.open('{{ $photoUrl }}','_blank')"
-                                                    title="Klik untuk melihat full size">
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                             @else
                                                 <span class="text-gray-400 text-xs">Tidak ada akses</span>
                                             @endcan

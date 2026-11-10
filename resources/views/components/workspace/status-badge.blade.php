@@ -15,3 +15,4 @@
     <span class="ws-badge__dot"></span>
     {{ $labels[$status] ?? $status }}
 </span>
+<x-workspace.page-css />

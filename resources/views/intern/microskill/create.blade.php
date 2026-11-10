@@ -5,7 +5,6 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css">
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
     *{
         font-family:'Plus Jakarta Sans',sans-serif;
@@ -292,7 +291,7 @@
                 <div id="imagePreview" style="display:none">
                     <label class="block font-semibold text-gray-700 mb-3">Preview Bukti</label>
                     <div class="rounded-2xl overflow-hidden border border-blue-200 shadow">
-                        <img id="previewImage" class="w-full max-h-[450px] object-contain bg-gray-50">
+                        <img id="previewImage" class="w-full max-h-[450px] object-contain bg-gray-50" loading="lazy" decoding="async">
                     </div>
                 </div>
 

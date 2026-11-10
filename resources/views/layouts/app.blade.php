@@ -28,10 +28,8 @@
     <title>@yield('title', 'Sistem Manajemen Peserta Magang')</title>
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <link rel="shortcut icon" href="{{ url('storage/vendor/icon-komdigi.png') }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/fa-subset.css') }}?v={{ @filemtime(public_path('vendor/fontawesome/fa-subset.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}?v={{ @filemtime(public_path('css/fonts.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/app-shell.css') }}?v={{ @filemtime(public_path('css/app-shell.css')) }}">
     @auth
         <link rel="stylesheet" href="{{ asset('css/page-ui.css') }}?v={{ @filemtime(public_path('css/page-ui.css')) }}">
@@ -110,7 +108,8 @@
             transform: rotate(180deg);
         }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="{{ asset('vendor/alpine/alpine.min.js') }}?v={{ @filemtime(public_path('vendor/alpine/alpine.min.js')) }}"></script>
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}?v={{ @filemtime(public_path('css/tailwind.css')) }}">
 </head>
 <body class="bg-gray-50">
     <x-splash-screen />
@@ -365,6 +364,10 @@
         <x-workspace.toasts />
         <x-workspace.guide :role="$wsRole" />
     @endif
+    @auth
+        @include('public-chat')
+        @include('layouts.partials.page-guide')
+    @endauth
     @stack('scripts')
     <script>
         // Judul top bar cadangan: bila title halaman generik, pakai <h1> halaman.

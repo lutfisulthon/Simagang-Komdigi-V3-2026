@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     @include('layouts.partials.theme-head')
 
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         * { box-sizing: border-box; margin:0; padding:0; }
@@ -97,6 +96,7 @@
             text-decoration: none;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}?v={{ @filemtime(public_path('css/tailwind.css')) }}">
 </head>
 
 <body>

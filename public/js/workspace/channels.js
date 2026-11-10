@@ -199,6 +199,9 @@
                     });
                     this.fit();
                     this.listenRealtime();
+                    // Tab ini dirender malas: saat pertama dibuka, event ws-tab-changed terjadi sebelum komponen ini ada,
+                    // jadi status "tab terbuka" diambil dari alamat (select() sudah memperbaruinya).
+                    if (!this.tabOpen) this.tabOpen = new URL(window.location.href).searchParams.get('tab') === 'channel';
                     if (this.tabOpen) this.activate();
                 },
 

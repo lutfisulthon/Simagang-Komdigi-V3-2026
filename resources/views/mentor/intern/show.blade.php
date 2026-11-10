@@ -21,7 +21,7 @@
                         @if($intern->photo_path)
                             <img src="{{ url('storage/'.$intern->photo_path) }}" 
                                  class="w-32 h-32 object-cover rounded-2xl border-4 border-blue-200 shadow-lg" 
-                                 alt="{{ $intern->name }}" />
+                                 alt="{{ $intern->name }}" loading="lazy" decoding="async" />
                         @else
                             <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-lg border-4 border-blue-200">
                                 <i class="fas fa-user text-5xl"></i>

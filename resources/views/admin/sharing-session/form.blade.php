@@ -278,7 +278,7 @@
                 <a href="{{ $sharingSession->documentation_photo_url }}" target="_blank">
                     <img src="{{ $sharingSession->documentation_photo_url }}"
                          alt="Dokumentasi Sharing Session"
-                         class="w-full max-w-md rounded-2xl border border-gray-200 shadow-sm">
+                         class="w-full max-w-md rounded-2xl border border-gray-200 shadow-sm" loading="lazy" decoding="async">
                 </a>
 
                 <p class="mt-2 text-xs text-gray-400">

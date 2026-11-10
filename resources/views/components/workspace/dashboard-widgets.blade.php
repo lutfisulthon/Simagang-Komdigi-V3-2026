@@ -345,3 +345,4 @@
         @include('workspace.partials.group-modals')
     @endif
 @endif
+<x-workspace.page-css />

@@ -14,3 +14,4 @@
         </div>
     @endif
 </div>
+<x-workspace.page-css />

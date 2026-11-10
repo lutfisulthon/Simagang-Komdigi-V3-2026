@@ -6,12 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('layouts.partials.theme-head', ['splash' => true])
     <title>Simagang - Sistem Manajemen Magang</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/fa-subset.css') }}?v={{ @filemtime(public_path('vendor/fontawesome/fa-subset.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}?v={{ @filemtime(public_path('css/fonts.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts-poppins.css') }}?v={{ @filemtime(public_path('css/fonts-poppins.css')) }}">
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <link rel="shortcut icon" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
         @font-face {
             font-family: 'Etna';
@@ -1273,6 +1273,7 @@
             .v4-card:hover .v4-logo::before { opacity: .55; }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}?v={{ @filemtime(public_path('css/tailwind.css')) }}">
 </head>
 <body>
     <x-splash-screen />

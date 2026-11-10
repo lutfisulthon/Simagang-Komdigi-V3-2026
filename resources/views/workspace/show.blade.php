@@ -158,7 +158,7 @@
             @endforeach
         </div>
 
-        {{-- Tab --}}
+        {{-- Tab. Isi tiap tab (kecuali Aktivitas) baru dirender saat tab itu pertama kali dibuka: lihat `seen` di wsWorkspaceShow. --}}
         <div id="ws-tabbar" class="ws-anim-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="ws-tabs" role="tablist" aria-label="Bagian workspace" x-on:keydown="onKey($event)">
                 @foreach ($tabs as $key => [$label, $icon, $count, $alert])
@@ -197,40 +197,42 @@
 
         <section id="ws-panel-backlog" role="tabpanel" aria-labelledby="ws-tab-backlog"
                  x-show="tab === 'backlog'" @if ($tab !== 'backlog') x-cloak @endif>
-            @include('workspace.partials.backlog')
+            <template x-if="seen['backlog']"><div>@include('workspace.partials.backlog')</div></template>
         </section>
 
         <section id="ws-panel-board" role="tabpanel" aria-labelledby="ws-tab-board"
                  x-show="tab === 'board'" @if ($tab !== 'board') x-cloak @endif>
-            @if ($workspace['is_read_only'])
-                <p class="text-xs text-slate-500 mb-3"><i class="fas fa-lock mr-1"></i>Board hanya baca — kartu tidak bisa dipindahkan.</p>
-            @endif
-            @include('workspace.partials.board')
+            <template x-if="seen['board']"><div>
+                @if ($workspace['is_read_only'])
+                    <p class="text-xs text-slate-500 mb-3"><i class="fas fa-lock mr-1"></i>Board hanya baca — kartu tidak bisa dipindahkan.</p>
+                @endif
+                @include('workspace.partials.board')
+            </div></template>
         </section>
 
         <section id="ws-panel-list" role="tabpanel" aria-labelledby="ws-tab-list"
                  x-show="tab === 'list'" @if ($tab !== 'list') x-cloak @endif>
-            @include('workspace.partials.task-list')
+            <template x-if="seen['list']"><div>@include('workspace.partials.task-list')</div></template>
         </section>
 
         <section id="ws-panel-timeline" role="tabpanel" aria-labelledby="ws-tab-timeline"
                  x-show="tab === 'timeline'" @if ($tab !== 'timeline') x-cloak @endif>
-            @include('workspace.partials.timeline')
+            <template x-if="seen['timeline']"><div>@include('workspace.partials.timeline')</div></template>
         </section>
 
         <section id="ws-panel-laporan" role="tabpanel" aria-labelledby="ws-tab-laporan"
                  x-show="tab === 'laporan'" @if ($tab !== 'laporan') x-cloak @endif>
-            @include('workspace.partials.reports')
+            <template x-if="seen['laporan']"><div>@include('workspace.partials.reports')</div></template>
         </section>
 
         <section id="ws-panel-deadline" role="tabpanel" aria-labelledby="ws-tab-deadline"
                  x-show="tab === 'deadline'" @if ($tab !== 'deadline') x-cloak @endif>
-            @include('workspace.partials.deadlines')
+            <template x-if="seen['deadline']"><div>@include('workspace.partials.deadlines')</div></template>
         </section>
 
         <section id="ws-panel-channel" role="tabpanel" aria-labelledby="ws-tab-channel"
                  x-show="tab === 'channel'" @if ($tab !== 'channel') x-cloak @endif>
-            @include('workspace.partials.channel')
+            <template x-if="seen['channel']"><div>@include('workspace.partials.channel')</div></template>
         </section>
 
         {{-- Aktivitas --}}
@@ -343,5 +345,5 @@
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ asset('vendor/sortable/Sortable.min.js') }}?v={{ @filemtime(public_path('vendor/sortable/Sortable.min.js')) }}"></script>
 @endpush

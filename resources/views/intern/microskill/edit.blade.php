@@ -6,7 +6,6 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css">
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     body.page-microskill { background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%); }
@@ -160,7 +159,7 @@
                                     </p>
                                     <div class="flex justify-center">
                                         <img src="{{ $submission->photo_url }}" alt="Current Photo"
-                                            class="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg border-2 border-blue-300 shadow-md mx-auto object-contain">
+                                            class="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg border-2 border-blue-300 shadow-md mx-auto object-contain" loading="lazy" decoding="async">
                                     </div>
                                 </div>
                             </div>
@@ -173,7 +172,7 @@
                                     <i class="fas fa-circle-check mr-2"></i> Preview Bukti Baru (Siap Diunggah)
                                 </p>
                                 <div class="flex justify-center">
-                                    <img id="previewImage" class="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg border-2 border-green-300 shadow-md mx-auto object-contain">
+                                    <img id="previewImage" class="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg border-2 border-green-300 shadow-md mx-auto object-contain" loading="lazy" decoding="async">
                                 </div>
                             </div>
                         </div>

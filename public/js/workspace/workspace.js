@@ -98,6 +98,8 @@
         Alpine.data('wsWorkspaceShow', (config) => ({
             tab: config.tab,
             tabs: config.tabs,
+            // Tab yang sudah pernah dibuka: isinya baru dirender saat pertama dibuka supaya DOM awal ringan.
+            seen: { [config.tab]: true },
 
             init() {
                 this.$nextTick(() => this.revealTab());
@@ -111,6 +113,7 @@
             select(tab) {
                 if (!this.tabs.includes(tab) || tab === this.tab) return;
                 this.tab = tab;
+                this.seen = { ...this.seen, [tab]: true };
                 const url = new URL(window.location.href);
                 url.searchParams.set('tab', tab);
                 window.history.replaceState({}, '', url);

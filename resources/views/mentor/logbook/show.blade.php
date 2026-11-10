@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
         *,
         body {
@@ -125,7 +124,7 @@
                             @if ($logbook->intern->photo_path)
                                 <img src="{{ url('storage/' . $logbook->intern->photo_path) }}"
                                     class="h-16 w-16 rounded-full object-cover object-center border-4 border-white shadow-lg flex-shrink-0"
-                                    alt="{{ $logbook->intern->name }}" />
+                                    alt="{{ $logbook->intern->name }}" loading="lazy" decoding="async" />
                             @else
                                 <div
                                     class="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg flex-shrink-0">
@@ -226,7 +225,7 @@
                                     class="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
                                     <img src="{{ $photoUrl }}"
                                         class="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                                        alt="Foto Logbook" onclick="window.open('{{ $photoUrl }}', '_blank')" />
+                                        alt="Foto Logbook" onclick="window.open('{{ $photoUrl }}', '_blank')" loading="lazy" decoding="async" />
                                     <button type="button"
                                         class="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-blue-700 shadow-lg transition hover:bg-white"
                                         onclick="window.open('{{ $photoUrl }}', '_blank')">

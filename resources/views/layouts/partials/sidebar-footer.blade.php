@@ -1,11 +1,12 @@
 {{-- Kartu profil + logout di dasar sidebar (desktop & drawer mobile). --}}
 <div class="sb-foot">
-    @if (! empty($wsEnabled))
-        <button type="button" class="sb-help" onclick="window.dispatchEvent(new CustomEvent('ws-guide-open', { detail: {} }))">
+    {{-- Panduan untuk semua peran: tutorial halaman ini, ringkasan cara pakai, dan tutorial halaman lain (public/js/page-guide.js). --}}
+    @auth
+        <button type="button" class="sb-help" onclick="window.PageGuide && window.PageGuide.open()">
             <span class="sb-help__ico"><i class="fas fa-circle-question"></i></span>
             <span>Panduan penggunaan</span>
         </button>
-    @endif
+    @endauth
     @auth
         @php
             $sbUser = auth()->user();

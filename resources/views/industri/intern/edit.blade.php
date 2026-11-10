@@ -4,7 +4,6 @@
 
 @push('styles')
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     .mono { font-family: 'DM Mono', monospace; }
@@ -370,7 +369,7 @@
                 <div class="avatar-ring flex-shrink-0">
                     <img src="{{ url('storage/' . $intern->photo_path) }}"
                         alt="{{ $intern->name }}"
-                        class="avatar-photo">
+                        class="avatar-photo" loading="lazy" decoding="async">
                 </div>
             @else
                 <div class="avatar-ring flex-shrink-0">
@@ -570,7 +569,7 @@
 
             @if($intern->photo_path)
                 <div class="photo-current">
-                    <img src="{{ url('storage/' . $intern->photo_path) }}" alt="Foto {{ $intern->name }}">
+                    <img src="{{ url('storage/' . $intern->photo_path) }}" alt="Foto {{ $intern->name }}" loading="lazy" decoding="async">
                     <div class="photo-current-info">
                         <p><i class="fas fa-image mr-1"></i> Foto profil tersimpan</p>
                         <span>Upload foto baru di bawah untuk menggantinya</span>

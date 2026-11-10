@@ -6,6 +6,7 @@
     $internNav = [
         'Utama' => [
             ['route' => 'intern.dashboard', 'match' => ['intern.dashboard'], 'icon' => 'fa-gauge-high', 'label' => 'Dashboard', 'tone' => 'blue'],
+            ['route' => 'public-chat.index', 'match' => ['public-chat.*'], 'icon' => 'fa-comment-dots', 'label' => 'Chat Publik', 'tone' => 'teal', 'badge' => 'chat'],
             ['route' => 'workspace.index', 'match' => ['workspace.*'], 'icon' => 'fa-layer-group', 'label' => 'Workspace', 'tone' => 'violet', 'needs' => 'workspace'],
         ],
         'Aktivitas' => [
@@ -28,11 +29,7 @@
         <p class="sb-cap">{{ $caption }}</p>
         @foreach ($links as $l)
             @php $active = request()->routeIs(...$l['match']); @endphp
-            <a href="{{ route($l['route']) }}" data-tone="{{ $l['tone'] }}"
-               class="sb-link {{ $active ? 'is-active' : '' }}" @if($active) aria-current="page" @endif>
-                <span class="sb-ico"><i class="fas {{ $l['icon'] }}"></i></span>
-                <span>{{ $l['label'] }}</span>
-            </a>
+            @include('layouts.partials.nav-item', ['l' => $l, 'active' => $active])
         @endforeach
     @endforeach
 </div>

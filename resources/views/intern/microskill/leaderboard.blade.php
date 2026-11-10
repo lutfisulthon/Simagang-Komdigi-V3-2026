@@ -148,7 +148,7 @@
                                     <!-- Avatar -->
                                     @if($row->photo_path)
                                         <div class="leader-avatar mr-4">
-                                            <img src="{{ url('storage/' . $row->photo_path) }}" alt="{{ $row->name }}" class="w-full h-full object-cover">
+                                            <img src="{{ url('storage/' . $row->photo_path) }}" alt="{{ $row->name }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
                                         </div>
                                     @else
                                         <div class="leader-avatar mr-4" style="background:linear-gradient(135deg,#60a5fa,#818cf8);">

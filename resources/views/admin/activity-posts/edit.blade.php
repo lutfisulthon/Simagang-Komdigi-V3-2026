@@ -134,7 +134,7 @@
 
                         <img src="{{ $post->thumbnail_url }}"
                              class="w-44 h-28 object-cover rounded-2xl border border-slate-100 shadow-sm"
-                             alt="{{ $post->title }}">
+                             alt="{{ $post->title }}" loading="lazy" decoding="async">
                     </div>
                 @endif
 
@@ -173,7 +173,7 @@
 
                                 <img src="{{ $post->thumbnail_url }}"
                                      class="w-44 h-28 object-cover rounded-2xl border border-red-100 shadow-sm"
-                                     alt="{{ $post->title }}">
+                                     alt="{{ $post->title }}" loading="lazy" decoding="async">
                             </div>
                         @endif
                     </div>

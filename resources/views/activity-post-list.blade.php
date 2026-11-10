@@ -6,137 +6,14 @@
     @include('layouts.partials.theme-head')
     <title>{{ $type === 'youtube' ? 'Video YouTube' : 'Artikel' }} - Simagang</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/fa-subset.css') }}?v={{ @filemtime(public_path('vendor/fontawesome/fa-subset.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}?v={{ @filemtime(public_path('css/fonts.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts-poppins.css') }}?v={{ @filemtime(public_path('css/fonts-poppins.css')) }}">
 
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(34,211,238,.18), transparent 30%),
-                linear-gradient(135deg, #eef6ff 0%, #f8fbff 100%);
-            color: #0f172a;
-            margin: 0;
-            padding-bottom: 80px;
-        }
-
-        .activity-card {
-            background: white;
-            border: 1px solid #dbeafe;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 14px 34px rgba(15, 23, 42, .07);
-            transition: all .28s ease;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .activity-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 24px 54px rgba(37, 99, 235, .15);
-        }
-
-        .main-footer {
-            background: linear-gradient(135deg, #10499e 100%, #0e60cc 40%, #0891b2 30%);
-            color: white;
-            padding: 15px 0;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-            border-top: 1px solid rgba(34,211,238,0.3);
-            box-shadow: 0 -10px 25px rgba(0,0,0,0.25);
-        }
-
-        .footer-simple-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .footer-logos-simple,
-        .social-links-simple {
-            flex: 1;
-            display: flex;
-            align-items: center;
-        }
-
-        .footer-logos-simple {
-            gap: 1.5rem;
-        }
-
-        .footer-logos-simple img {
-            height: 28px;
-            object-fit: contain;
-        }
-
-        .copyright-simple {
-            flex: 1.5;
-            text-align: center;
-            font-size: 13px;
-            color: rgba(255,255,255,.85);
-        }
-
-        .copyright-simple strong {
-            color: #22d3ee;
-        }
-
-        .social-links-simple {
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .social-links-simple a {
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.75);
-            border: 1px solid rgba(255,255,255,.12);
-            transition: .25s;
-            text-decoration: none;
-        }
-
-        .social-links-simple a:hover {
-            color: #22d3ee;
-            border-color: #22d3ee;
-            transform: translateY(-3px);
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding-bottom: 125px;
-            }
-
-            .footer-simple-inner {
-                flex-direction: column;
-                gap: 8px;
-                padding: 4px 1rem;
-            }
-
-            .footer-logos-simple,
-            .social-links-simple {
-                justify-content: center;
-            }
-
-            .copyright-simple {
-                order: 3;
-                font-size: 11px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/pages/activity-post-list.css') }}?v={{ @filemtime(public_path('css/pages/activity-post-list.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}?v={{ @filemtime(public_path('css/tailwind.css')) }}">
 </head>
 
 <body>

@@ -3,6 +3,7 @@
     $navGroups = [
         'Utama' => [
             ['route' => 'institusi.dashboard', 'match' => ['institusi.dashboard'], 'icon' => 'fa-gauge-high', 'label' => 'Dashboard', 'tone' => 'blue'],
+            ['route' => 'public-chat.index', 'match' => ['public-chat.*'], 'icon' => 'fa-comment-dots', 'label' => 'Chat Publik', 'tone' => 'teal', 'badge' => 'chat'],
             ['route' => 'institusi.lowongan.index', 'match' => ['institusi.lowongan.*'], 'icon' => 'fa-briefcase', 'label' => 'Lowongan Magang', 'tone' => 'violet'],
             ['route' => 'institusi.pengajuan.index', 'match' => ['institusi.pengajuan.*'], 'icon' => 'fa-paper-plane', 'label' => 'Pengajuan Magang', 'tone' => 'orange'],
         ],

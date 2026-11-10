@@ -2,8 +2,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
 
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -164,7 +162,7 @@
                                     @if ($row->photo_path)
                                         <img src="{{ url('storage/' . $row->photo_path) }}"
                                             class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md mr-3"
-                                            alt="{{ $row->name }}">
+                                            alt="{{ $row->name }}" loading="lazy" decoding="async">
                                     @else
                                         <div
                                             class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 shadow-md">

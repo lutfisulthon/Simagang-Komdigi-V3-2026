@@ -3,228 +3,7 @@
 @section('title', 'Dashboard Mentor - Sistem Magang')
 
 @push('styles')
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
-        .mdash, .mdash *:not(i) { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .mdash .mono { font-family: 'DM Mono', monospace; }
-
-        .mdash { min-height: 100vh; background: #f4f7fb; }
-        .mdash-in { display: flex; flex-direction: column; gap: 20px; }
-
-        /* ── Palet (data-dm-native: warna gelap diatur di sini, bukan oleh filter) ── */
-        .mdash-sec {
-            --card: #ffffff; --card-b: #e6ebf3; --shadow: 0 1px 2px rgba(15, 30, 80, .04), 0 6px 20px rgba(15, 30, 80, .04);
-            --txt: #1e293b; --mut: #64748b; --faint: #94a3b8;
-            --row: #f6f8fc; --row-h: #edf2ff; --row-b: #e8edf6; --line: #edf0f6;
-            --prim: #2563eb; --prim-s: #e2ecff; --track: #e8edf7;
-            --hero: #eaf1ff; --hero-b: #d6e4ff; --hero-sub: #3b5b94;
-            --warn-bg: #fff4e0; --warn-fg: #9a4a07; --warn-b: #fbd9a0;
-            --btn-soft: #e2ecff; --btn-soft-h: #d0e0ff; --btn-soft-fg: #1d4ed8;
-            --tico: #fff; --seg: #eef2f8; --alum: #fff2f4; --alum-b: #fcd5dc;
-        }
-        html[data-theme="dark"] .mdash-sec {
-            --card: #161b22; --card-b: rgba(255, 255, 255, .08); --shadow: 0 1px 2px rgba(0, 0, 0, .4);
-            --txt: #e6edf3; --mut: #9aa7b8; --faint: #6b7788;
-            --row: #1b222c; --row-h: #222c3b; --row-b: rgba(255, 255, 255, .06); --line: rgba(255, 255, 255, .07);
-            --prim: #7db1ff; --prim-s: rgba(99, 140, 255, .16); --track: rgba(255, 255, 255, .09);
-            --hero: #16233b; --hero-b: #243656; --hero-sub: #9db4dc;
-            --warn-bg: rgba(245, 158, 11, .13); --warn-fg: #fcd34d; --warn-b: rgba(245, 158, 11, .3);
-            --btn-soft: rgba(99, 140, 255, .16); --btn-soft-h: rgba(99, 140, 255, .26); --btn-soft-fg: #a5c4ff;
-            --tico: rgba(255, 255, 255, .08); --seg: #0f141b; --alum: rgba(244, 63, 94, .09); --alum-b: rgba(244, 63, 94, .22);
-        }
-
-        .tone-blue   { --tb: #eff5ff; --tf: #1d4ed8; --ti: #3b82f6; --tl: #d3e2ff; }
-        .tone-green  { --tb: #edfaf4; --tf: #15803d; --ti: #22c55e; --tl: #cdeedb; }
-        .tone-amber  { --tb: #fff8e8; --tf: #b45309; --ti: #f59e0b; --tl: #f6e3b4; }
-        .tone-slate  { --tb: #f4f6f9; --tf: #475569; --ti: #64748b; --tl: #e0e5ec; }
-        .tone-violet { --tb: #f6f2ff; --tf: #6d28d9; --ti: #8b5cf6; --tl: #e3d8fc; }
-        .tone-rose   { --tb: #fff1f3; --tf: #be123c; --ti: #f43f5e; --tl: #fbd0d8; }
-        html[data-theme="dark"] .tone-blue   { --tb: rgba(59, 130, 246, .15);  --tf: #93c5fd; --tl: rgba(59, 130, 246, .28); }
-        html[data-theme="dark"] .tone-green  { --tb: rgba(34, 197, 94, .14);   --tf: #86efac; --tl: rgba(34, 197, 94, .26); }
-        html[data-theme="dark"] .tone-amber  { --tb: rgba(245, 158, 11, .14);  --tf: #fcd34d; --tl: rgba(245, 158, 11, .26); }
-        html[data-theme="dark"] .tone-slate  { --tb: rgba(148, 163, 184, .14); --tf: #cbd5e1; --tl: rgba(148, 163, 184, .24); }
-        html[data-theme="dark"] .tone-violet { --tb: rgba(139, 92, 246, .16);  --tf: #c4b5fd; --tl: rgba(139, 92, 246, .28); }
-        html[data-theme="dark"] .tone-rose   { --tb: rgba(244, 63, 94, .14);   --tf: #fda4af; --tl: rgba(244, 63, 94, .26); }
-
-        /* ── Banner ── */
-        .m-hero {
-            position: relative; overflow: hidden; border-radius: 16px; padding: 26px 28px;
-            background: var(--hero); border: 1px solid var(--hero-b);
-            display: flex; flex-wrap: wrap; align-items: center; gap: 22px;
-        }
-        .m-hero::after {
-            content: ''; position: absolute; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(59, 130, 246, .16), transparent 70%); pointer-events: none;
-        }
-        .m-hero__avatar {
-            width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
-            background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; font-size: 22px;
-            box-shadow: 0 6px 18px rgba(59, 130, 246, .35);
-        }
-        .m-hero__main { flex: 1; min-width: 240px; position: relative; z-index: 1; }
-        .m-chip {
-            display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px; border-radius: 999px; margin-bottom: 8px;
-            font-size: 11px; font-weight: 700; background: var(--card); color: var(--hero-sub); border: 1px solid var(--hero-b);
-        }
-        .m-chip i { font-size: 6px; color: #22c55e; }
-        .m-hero h1 { margin: 0 0 3px; font-size: 22px; font-weight: 800; color: var(--txt); }
-        .m-hero p { margin: 0; font-size: 13.5px; color: var(--hero-sub); }
-        .m-hero p strong { color: var(--txt); font-weight: 700; }
-        .m-alert {
-            margin-top: 12px; display: inline-flex; align-items: center; gap: 10px; padding: 8px 13px; border-radius: 12px;
-            background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-b); font-size: 13px; font-weight: 700;
-        }
-        .m-alert a { color: inherit; text-decoration: underline; font-weight: 800; margin-left: 6px; }
-        .m-meter { position: relative; z-index: 1; text-align: right; flex-shrink: 0; }
-        .m-meter small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--hero-sub); }
-        .m-meter b { display: block; font-size: 44px; font-weight: 800; line-height: 1.1; color: var(--txt); }
-        .m-meter b span { font-size: 20px; color: var(--hero-sub); }
-        .m-meter em { display: block; font-style: normal; font-size: 12px; color: var(--hero-sub); margin-top: 2px; }
-        .m-bar { height: 5px; width: 150px; margin: 8px 0 0 auto; border-radius: 99px; background: var(--track); overflow: hidden; }
-        #hero-bar { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #34d399, #10b981); transition: width 1.2s ease; }
-
-        /* ── Kartu statistik ── */
-        .m-tile {
-            background: var(--tb); border: 1px solid var(--tl); border-radius: 16px; padding: 14px 16px; min-width: 0;
-            display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 0;
-            text-align: left; transition: transform .2s ease, box-shadow .2s ease;
-        }
-        .m-tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -14px var(--ti); }
-        .m-tile__ico {
-            grid-row: 1 / span 2; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
-            background: var(--tico, #fff); color: var(--ti); font-size: 15px;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 6px 12px -8px var(--ti);
-        }
-        .m-tile .m-tile__num { grid-column: 2; grid-row: 1; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.55rem; font-weight: 800; letter-spacing: -.02em; color: var(--txt); line-height: 1.1; }
-        .m-tile__lbl { grid-column: 2; grid-row: 2; font-size: 11.5px; font-weight: 700; color: var(--tf); line-height: 1.25; }
-        .m-tile__note { grid-column: 2; grid-row: 3; font-size: 11px; font-weight: 600; color: var(--tf); opacity: .8; }
-        .att-bar-track { grid-column: 1 / -1; grid-row: 3; width: 100%; height: 4px; margin-top: 10px; border-radius: 99px; background: rgba(100, 116, 139, .18); overflow: hidden; }
-        .att-bar-fill { height: 100%; width: 0; border-radius: 99px; background: var(--ti); transition: width 1.2s cubic-bezier(.4, 0, .2, 1); }
-
-        /* ── Kartu & judul ── */
-        .m-card { background: var(--card); border: 1px solid var(--card-b); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
-        .m-card__head { display: flex; align-items: center; gap: 12px; padding: 18px 22px 0; }
-        .m-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--tb); color: var(--tf); font-size: 15px; flex-shrink: 0; }
-        .m-title { margin: 0; font-size: 16px; font-weight: 700; color: var(--txt); }
-        .m-sub { margin: 2px 0 0; font-size: 12.5px; color: var(--mut); }
-        .m-badge { margin-left: auto; font-size: 11.5px; font-weight: 700; padding: 3px 12px; border-radius: 999px; background: var(--prim-s); color: var(--prim); white-space: nowrap; }
-        .m-card__body { padding: 16px 22px 22px; flex: 1; }
-        .m-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 0 0 12px; }
-        .m-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: stretch; }
-        @media (min-width: 1024px) { .m-cols { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
-        .m-stack { display: flex; flex-direction: column; gap: 20px; }
-        .m-empty { text-align: center; padding: 34px 16px; color: var(--faint); }
-        .m-empty i { display: block; font-size: 36px; margin-bottom: 10px; opacity: .7; }
-        .m-empty p { margin: 0; font-size: 13px; }
-        .m-empty p + p { font-size: 12px; margin-top: 4px; }
-
-        /* ── Tab ── */
-        .m-seg { display: flex; gap: 4px; background: var(--seg); border-radius: 11px; padding: 4px; margin-bottom: 14px; }
-        .tab-btn { flex: 1; padding: 8px 14px; border-radius: 8px; border: 0; background: transparent; color: var(--mut); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .2s ease, color .2s ease; }
-        .tab-btn:hover { color: var(--txt); }
-        .tab-btn.active { background: var(--prim); color: #fff; box-shadow: 0 2px 8px rgba(37, 99, 235, .28); }
-        html[data-theme="dark"] .tab-btn.active { background: #2f6fe0; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* ── Daftar anak magang ── */
-        .intern-list { display: flex; flex-direction: column; gap: 8px; }
-        .intern-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--row); border: 1px solid var(--row-b); transition: background .2s ease, transform .2s ease; }
-        .intern-row:hover { background: var(--row-h); transform: translateX(3px); }
-        .intern-row.is-alumni { background: var(--alum); border-color: var(--alum-b); }
-        .avatar-sm { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; background: linear-gradient(135deg, #3b82f6, #6366f1); }
-        .avatar-sm.is-rose { background: linear-gradient(135deg, #f43f5e, #be185d); }
-        .m-name { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--txt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .m-meta { margin: 1px 0 0; font-size: 12px; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .mini-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--tb); color: var(--tf); font-family: 'DM Mono', monospace; }
-        .mini-pill i { font-size: 9px; }
-        .m-pager { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-        .m-pager > span { font-size: 12px; color: var(--faint); }
-        .m-pager div { display: flex; gap: 5px; }
-        .pg { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid var(--row-b); background: var(--row); color: var(--prim); cursor: pointer; transition: background .2s ease; }
-        .pg:hover { background: var(--row-h); }
-        .pg.is-on { background: var(--prim); border-color: var(--prim); color: #fff; }
-        html[data-theme="dark"] .pg.is-on { background: #2f6fe0; border-color: #2f6fe0; }
-
-        /* ── Peringkat ── */
-        .podium-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid transparent; background: var(--tb); transition: transform .2s ease; }
-        .podium-item:hover { transform: translateX(4px); }
-        .rank-badge { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex-shrink: 0; color: #fff; }
-        .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 3px 10px rgba(251, 191, 36, .4); }
-        .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); box-shadow: 0 3px 10px rgba(100, 116, 139, .3); }
-        .rank-3 { background: linear-gradient(135deg, #fb923c, #ea580c); box-shadow: 0 3px 10px rgba(251, 146, 60, .35); }
-        .m-score { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; font-family: 'DM Mono', monospace; background: var(--card); color: var(--tf); }
-        .m-score i { font-size: 9px; }
-        .m-photo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--card); box-shadow: 0 2px 8px rgba(0, 0, 0, .15); }
-        .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 16px; padding: 10px 20px; border-radius: 10px; font-size: 12.5px; font-weight: 700; text-decoration: none; background: var(--prim); color: #fff; transition: opacity .2s ease; }
-        .m-btn:hover { opacity: .88; }
-        html[data-theme="dark"] .m-btn { background: #2f6fe0; }
-
-        /* ── Donut ── */
-        .m-donut { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
-        .m-donut svg { transform: rotate(-90deg); }
-        .m-donut .track { fill: none; stroke: var(--track); stroke-width: 10; }
-        .m-donut__c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .m-donut__c b { font-size: 22px; font-weight: 800; color: var(--txt); }
-        .m-donut__c small { font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
-        .m-legend { display: flex; flex-direction: column; gap: 9px; }
-        .m-legend > div { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--mut); }
-        .m-legend > div > span:first-child { display: flex; align-items: center; gap: 8px; }
-        .m-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-        .m-legend b { color: var(--txt); font-size: 13px; }
-
-        /* ── Tabel absensi ── */
-        .m-table { width: 100%; border-collapse: collapse; }
-        .m-table th { padding: 11px 22px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--mut); background: var(--row); white-space: nowrap; }
-        .m-table td { padding: 11px 22px; border-top: 1px solid var(--line); font-size: 13px; color: var(--txt); vertical-align: middle; }
-        .att-tr { transition: background .15s ease; }
-        .att-tr:hover { background: var(--row-h); }
-        .att-tr-absent { background: var(--alum); }
-        .att-tr-absent td { border-top-color: var(--alum-b); }
-        .m-who { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-        .m-who .avatar-sm { width: 30px; height: 30px; font-size: 12px; }
-        .m-time { font-family: 'DM Mono', monospace; font-weight: 600; }
-        .m-dash { color: var(--faint); font-size: 12px; }
-        .m-thumb { width: 38px; height: 38px; object-fit: cover; border-radius: 9px; border: 1.5px solid var(--card-b); cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
-        .m-thumb:hover { transform: scale(1.08); border-color: var(--prim); }
-        .s-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .02em; background: var(--tb); color: var(--tf); }
-        .s-badge i { font-size: 9px; }
-
-        /* ── Logbook ── */
-        .m-logs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-        .logbook-card { background: var(--row); border: 1px solid var(--row-b); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: transform .2s ease, box-shadow .2s ease; }
-        .logbook-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-        .logbook-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
-        .logbook-card__who { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-        .logbook-card__body { padding: 14px 16px; flex: 1; }
-        .logbook-card__act { margin: 0; font-size: 13px; line-height: 1.5; color: var(--txt); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .logbook-card__row { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--mut); }
-        .logbook-card__row.is-link { margin-top: 6px; color: var(--prim); }
-        .logbook-card__foot { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--card); }
-        .m-act { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border: 0; border-radius: 9px; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; transition: background .2s ease; }
-        .m-act.is-soft { background: var(--btn-soft); color: var(--btn-soft-fg); }
-        .m-act.is-soft:hover { background: var(--btn-soft-h); }
-        .m-act.is-ok { background: #059669; color: #fff; }
-        .m-act.is-ok:hover { background: #047857; }
-
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        .a1 { animation: fadeUp .5s ease both; }
-        .a2 { animation: fadeUp .5s .08s ease both; }
-        .a3 { animation: fadeUp .5s .16s ease both; }
-        .a4 { animation: fadeUp .5s .24s ease both; }
-        .a5 { animation: fadeUp .5s .32s ease both; }
-        @media (prefers-reduced-motion: reduce) { .a1, .a2, .a3, .a4, .a5 { animation: none; } }
-
-        @media (max-width: 640px) {
-            .m-hero { padding: 20px; }
-            .m-meter { text-align: left; }
-            .m-bar { margin-left: 0; }
-            .m-table th, .m-table td { padding: 10px 14px; }
-            .m-card__head { padding: 16px 16px 0; }
-            .m-card__body { padding: 14px 16px 18px; }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/pages/mentor-dashboard.css') }}?v={{ @filemtime(public_path('css/pages/mentor-dashboard.css')) }}">
 @endpush
 
 @section('content')
@@ -487,7 +266,7 @@
                                             <div class="podium-item {{ ['tone-amber', 'tone-slate', 'tone-rose'][$index] ?? 'tone-slate' }}">
                                                 <div class="rank-badge rank-{{ $index + 1 }}">{{ $index + 1 }}</div>
                                                 @if (!empty($row['photo_path']))
-                                                    <img src="{{ url('storage/' . $row['photo_path']) }}" class="m-photo" alt="{{ $row['name'] }}">
+                                                    <img src="{{ url('storage/' . $row['photo_path']) }}" class="m-photo" alt="{{ $row['name'] }}" loading="lazy" decoding="async">
                                                 @else
                                                     <div class="avatar-sm">{{ strtoupper(substr($row['name'], 0, 1)) }}</div>
                                                 @endif
@@ -600,7 +379,7 @@
                                             @if ($attendance->photo_path)
                                                 @php $photoUrl = route('mentor.attendance.photo', ['filename' => basename($attendance->photo_path)]); @endphp
                                                 @can('view', $attendance)
-                                                    <img src="{{ $photoUrl }}" alt="In" class="m-thumb" onclick="window.open('{{ $photoUrl }}', '_blank')">
+                                                    <img src="{{ $photoUrl }}" alt="In" class="m-thumb" onclick="window.open('{{ $photoUrl }}', '_blank')" loading="lazy" decoding="async">
                                                 @else
                                                     <span class="m-dash">Tidak ada akses</span>
                                                 @endcan
@@ -613,7 +392,7 @@
                                             @if ($attendance->photo_checkout)
                                                 @php $photoOutUrl = route('mentor.attendance.photo', ['filename' => basename($attendance->photo_checkout)]); @endphp
                                                 @can('view', $attendance)
-                                                    <img src="{{ $photoOutUrl }}" alt="Out" class="m-thumb" onclick="window.open('{{ $photoOutUrl }}', '_blank')">
+                                                    <img src="{{ $photoOutUrl }}" alt="Out" class="m-thumb" onclick="window.open('{{ $photoOutUrl }}', '_blank')" loading="lazy" decoding="async">
                                                 @else
                                                     <span class="m-dash">Tidak ada akses</span>
                                                 @endcan
@@ -647,7 +426,7 @@
                                         <td>
                                             @if ($attendance->photo_path)
                                                 @php $photoUrl = route('mentor.attendance.photo', ['filename' => basename($attendance->photo_path)]); @endphp
-                                                <img src="{{ $photoUrl }}" alt="In" class="m-thumb" onclick="window.open('{{ $photoUrl }}', '_blank')">
+                                                <img src="{{ $photoUrl }}" alt="In" class="m-thumb" onclick="window.open('{{ $photoUrl }}', '_blank')" loading="lazy" decoding="async">
                                             @else
                                                 <span class="m-dash">—</span>
                                             @endif
@@ -656,7 +435,7 @@
                                         <td>
                                             @if ($attendance->photo_checkout)
                                                 @php $photoOutUrl = route('mentor.attendance.photo', ['filename' => basename($attendance->photo_checkout)]); @endphp
-                                                <img src="{{ $photoOutUrl }}" alt="Out" class="m-thumb" onclick="window.open('{{ $photoOutUrl }}', '_blank')">
+                                                <img src="{{ $photoOutUrl }}" alt="Out" class="m-thumb" onclick="window.open('{{ $photoOutUrl }}', '_blank')" loading="lazy" decoding="async">
                                             @else
                                                 <span class="m-dash">—</span>
                                             @endif

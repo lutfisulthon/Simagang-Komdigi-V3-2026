@@ -311,7 +311,7 @@
                 <div class="p-6">
                     <img src="{{ $session->documentation_photo_url }}"
                          alt="Dokumentasi Sharing Session"
-                         class="w-full max-h-[70vh] object-contain rounded-2xl border border-gray-200 bg-gray-50">
+                         class="w-full max-h-[70vh] object-contain rounded-2xl border border-gray-200 bg-gray-50" loading="lazy" decoding="async">
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-3 px-6 py-4 border-t border-gray-100">

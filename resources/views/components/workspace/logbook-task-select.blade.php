@@ -43,3 +43,4 @@
         @enderror
     </div>
 @endif
+<x-workspace.page-css />

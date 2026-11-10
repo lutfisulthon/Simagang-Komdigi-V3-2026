@@ -160,7 +160,7 @@
                                     <img
                                         src="{{ $sharingSession->documentation_photo_url }}"
                                         alt="Dokumentasi Sharing Session"
-                                        class="w-full max-w-md rounded-2xl border border-gray-200 shadow-sm">
+                                        class="w-full max-w-md rounded-2xl border border-gray-200 shadow-sm" loading="lazy" decoding="async">
                                 </a>
 
                                 <p class="text-xs text-gray-400 mt-2">

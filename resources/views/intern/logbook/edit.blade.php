@@ -5,7 +5,6 @@
 @section('content')
 @push('styles')
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     .mono { font-family: 'DM Mono', monospace; }
@@ -118,7 +117,7 @@
                                     <img src="{{ $logbook->photo_url }}" alt="Current photo"
                                         class="w-full max-w-md mx-auto rounded-lg shadow-md border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all"
                                         onclick="window.open('{{ $logbook->photo_url }}', '_blank')"
-                                        title="Klik untuk melihat full size">
+                                        title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                 </div>
                             </div>
                         @endif

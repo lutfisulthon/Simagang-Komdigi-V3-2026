@@ -202,8 +202,7 @@
                                             <img
                                                 src="{{ $session->documentation_photo_url }}"
                                                 alt="Dokumentasi Sharing Session"
-                                                class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                                            >
+                                                class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" decoding="async">
 
                                             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center">
                                                 <span class="opacity-0 group-hover:opacity-100 text-white text-xs font-bold">

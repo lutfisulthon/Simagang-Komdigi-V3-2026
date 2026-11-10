@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -215,7 +214,7 @@
                                                 @if ($report->intern->photo_path)
                                                     <img src="{{ url('storage/' . $report->intern->photo_path) }}"
                                                         class="report-avatar w-10 h-10 rounded-full object-cover border-2 border-blue-200 mr-3"
-                                                        alt="{{ $report->intern->name }}">
+                                                        alt="{{ $report->intern->name }}" loading="lazy" decoding="async">
                                                 @else
                                                     <div
                                                         class="report-avatar w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 border-2 border-blue-200">

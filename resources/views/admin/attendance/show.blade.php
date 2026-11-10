@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -111,7 +110,7 @@
                                         <div>
                                             <p class="text-xs text-gray-500 mb-2">Foto Check In</p>
                                             <img src="{{ $photoUrl }}" class="rounded-lg border cursor-pointer"
-                                                onclick="window.open('{{ $photoUrl }}','_blank')">
+                                                onclick="window.open('{{ $photoUrl }}','_blank')" loading="lazy" decoding="async">
                                         </div>
                                     @else
                                         <div>
@@ -127,7 +126,7 @@
                                         <div>
                                             <p class="text-xs text-gray-500 mb-2">Foto Check Out</p>
                                             <img src="{{ $photoCheckoutUrl }}" class="rounded-lg border cursor-pointer"
-                                                onclick="window.open('{{ $photoCheckoutUrl }}','_blank')">
+                                                onclick="window.open('{{ $photoCheckoutUrl }}','_blank')" loading="lazy" decoding="async">
                                         </div>
                                     @else
                                         <div>
