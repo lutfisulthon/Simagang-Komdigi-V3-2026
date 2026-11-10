@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
         *,
         body {
@@ -122,7 +121,7 @@
                         @if ($logbook->intern->photo_path)
                             <img src="{{ url('storage/' . $logbook->intern->photo_path) }}"
                                 class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover object-center border-4 border-blue-100 shadow-md flex-shrink-0 aspect-square"
-                                alt="{{ $logbook->intern->name }}" />
+                                alt="{{ $logbook->intern->name }}" loading="lazy" decoding="async" />
                         @else
                             <div
                                 class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md flex-shrink-0 aspect-square">
@@ -168,7 +167,7 @@
                                     <img src="{{ route('industri.logbook.photo', basename($logbook->photo_path)) }}"
                                         class="w-full rounded-xl border-2 border-blue-100 shadow-md cursor-pointer hover:shadow-xl transition-all duration-300 max-h-[420px] object-cover"
                                         alt="Foto Logbook"
-                                        onclick="window.open('{{ route('industri.logbook.photo', basename($logbook->photo_path)) }}', '_blank')" />
+                                        onclick="window.open('{{ route('industri.logbook.photo', basename($logbook->photo_path)) }}', '_blank')" loading="lazy" decoding="async" />
                                     <div
                                         class="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300 flex items-center justify-center">
                                         <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">

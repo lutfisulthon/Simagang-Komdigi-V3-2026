@@ -3,3 +3,4 @@
     <i class="fas fa-triangle-exclamation text-[10px]"></i>
     Terlambat
 </span>
+<x-workspace.page-css />

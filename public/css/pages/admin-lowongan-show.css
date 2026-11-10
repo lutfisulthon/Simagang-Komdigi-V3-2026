@@ -1,0 +1,238 @@
+/* Dipindahkan dari resources/views/admin/lowongan/show.blade.php (sebelumnya <style> inline). */
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+.mono { font-family: 'DM Mono', monospace; }
+body { background: #f0f4ff; }
+
+.dash-bg {
+    background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%);
+    min-height: 100vh;
+}
+
+/* ── Profile Strip ── */
+.profile-strip {
+    background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 50%, #4f46e5 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(20, 40, 120, 0.16);
+}
+.profile-strip::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+}
+.profile-strip::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+}
+
+/* ── Panel ── */
+.panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 20px rgba(30,58,138,0.06);
+}
+
+/* ── Logo wrapper ── */
+.logo-wrapper {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.logo-wrapper img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+/* ── Status badge ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.badge-green  { background: #dcfce7; color: #15803d; }
+.badge-red    { background: #fee2e2; color: #b91c1c; }
+.badge-amber  { background: #fef9c3; color: #a16207; }
+
+/* ── Action buttons on strip ── */
+.action-strip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    min-width: 130px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.action-strip-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+.action-strip-btn.approve {
+    background: rgba(34,197,94,0.25);
+    border-color: rgba(134,239,172,0.4);
+}
+.action-strip-btn.approve:hover {
+    background: rgba(34,197,94,0.4);
+}
+.action-strip-btn.reject {
+    background: rgba(239,68,68,0.25);
+    border-color: rgba(252,165,165,0.4);
+}
+.action-strip-btn.reject:hover {
+    background: rgba(239,68,68,0.4);
+}
+.action-strip-btn.delete-btn {
+    background: rgba(239,68,68,0.18);
+    border-color: rgba(252,165,165,0.35);
+}
+.action-strip-btn.delete-btn:hover {
+    background: rgba(239,68,68,0.35);
+}
+
+/* ── Info item ── */
+.info-item {
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.info-item:last-child { border-bottom: none; }
+.info-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+.info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* ── Detail box (grid items) ── */
+.detail-box {
+    background: #f8fafc;
+    border: 1px solid #e9eef6;
+    border-radius: 12px;
+    padding: 1rem;
+}
+.detail-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+}
+.detail-value {
+    font-size: .9rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* ── Description box ── */
+.description-box {
+    background: #f8fafc;
+    border: 1px solid #e9eef6;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+/* ── Section header ── */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.section-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+}
+.section-icon.blue   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.section-icon.indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.section-icon.green  { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.section-icon.violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.section-icon.amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.section-icon.rose   { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+
+.section-header-text h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0;
+}
+.section-header-text p {
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* ── Back btn ── */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 12px;
+    background: #f0f4ff;
+    border: 1.5px solid #e0e7ff;
+    color: #3b4fd8;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.btn-back:hover {
+    background: #e8eeff;
+    border-color: #a5b4fc;
+    transform: translateY(-1px);
+    color: #3b4fd8;
+    text-decoration: none;
+}
+
+/* ── Animations ── */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.anim-1 { animation: fadeSlideUp 0.5s ease both; }
+.anim-2 { animation: fadeSlideUp 0.5s ease 0.1s both; }
+.anim-3 { animation: fadeSlideUp 0.5s ease 0.2s both; }
+.anim-4 { animation: fadeSlideUp 0.5s ease 0.3s both; }
+
+@media (max-width: 640px) {
+    .panel { padding: 16px; }
+}
+

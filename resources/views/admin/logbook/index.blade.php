@@ -3,123 +3,7 @@
 @section('title', 'Pantau Logbook - Sistem Magang')
 
 @push('styles')
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-        * {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .dash-bg {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%);
-        }
-
-        .hero-strip {
-            background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 50%, #4f46e5 100%);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(20, 40, 120, 0.16);
-            color: #fff;
-        }
-
-        .hero-strip::before {
-            content: '';
-            position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 220px;
-            height: 220px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 50%;
-        }
-
-        .hero-strip::after {
-            content: '';
-            position: absolute;
-            bottom: -80px;
-            left: 30%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 50%;
-        }
-
-        .panel {
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 1px 3px rgba(30, 58, 138, 0.06), 0 4px 20px rgba(30, 58, 138, 0.06);
-            overflow: hidden;
-        }
-
-        .input-main {
-            width: 100%;
-            padding: 0.6rem 0.9rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.6rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-            transition: all .15s ease;
-        }
-
-        .input-main:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-        }
-
-        /* FIX: wrapper harus overflow-x: auto agar tabel bisa scroll horizontal */
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 560px;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 0.75rem;
-            border: 1px solid #e5e7eb;
-        }
-
-        /* FIX: tabel tidak boleh wrap, biarkan scroll */
-        .table-wrapper table {
-            width: 100%;
-            min-width: 860px;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        /* Lebar kolom agar proporsional */
-        .col-nama       { width: 200px; }
-        .col-institusi  { width: 180px; }
-        .col-tanggal    { width: 110px; }
-        .col-aktivitas  { width: auto;  }   /* kolom ini yang fleksibel */
-        .col-foto       { width: 90px;  }
-
-        /* Header sticky saat scroll vertikal */
-        .table-wrapper thead th {
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            background: #eff6ff;
-        }
-
-        /* Aktivitas: bisa wrap biar tidak terlalu panjang */
-        .cell-aktivitas {
-            white-space: normal;
-            word-break: break-word;
-            min-width: 200px;
-        }
-
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 1.6rem;
-            }
-
-            .action-mobile {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/pages/admin-logbook-index.css') }}?v={{ @filemtime(public_path('css/pages/admin-logbook-index.css')) }}">
 @endpush
 
 @section('content')
@@ -213,7 +97,7 @@
                                                 @if ($l->intern->photo_path)
                                                     <img src="{{ url('storage/' . $l->intern->photo_path) }}"
                                                         class="w-9 h-9 rounded-full object-cover border-2 border-blue-200 shrink-0"
-                                                        alt="{{ $l->intern->name }}">
+                                                        alt="{{ $l->intern->name }}" loading="lazy" decoding="async">
                                                 @else
                                                     <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200 shrink-0">
                                                         <i class="fas fa-user text-blue-600 text-xs"></i>
@@ -261,7 +145,7 @@
                                                     <img src="{{ $logbookUrl }}" alt="Logbook"
                                                         class="w-12 h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all mx-auto"
                                                         onclick="window.open('{{ $logbookUrl }}', '_blank')"
-                                                        title="Klik untuk melihat full size">
+                                                        title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                                 @else
                                                     <span class="text-xs text-gray-400">Tidak ada akses</span>
                                                 @endcan

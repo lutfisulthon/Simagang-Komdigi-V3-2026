@@ -173,7 +173,7 @@
                             <a href="{{ $sharingSession->documentation_photo_url }}" target="_blank">
                                 <img src="{{ $sharingSession->documentation_photo_url }}"
                                      alt="Dokumentasi Sharing Session"
-                                     class="w-full max-h-[520px] object-cover hover:scale-[1.02] transition duration-300">
+                                     class="w-full max-h-[520px] object-cover hover:scale-[1.02] transition duration-300" loading="lazy" decoding="async">
                             </a>
                         </div>
 

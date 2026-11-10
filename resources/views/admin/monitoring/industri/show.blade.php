@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -365,7 +364,7 @@
                                             <div class="avatar-cell">
                                                 @if($intern->photo_path)
                                                     <img src="{{ asset('storage/' . $intern->photo_path) }}"
-                                                        alt="{{ $intern->name }}" class="avatar-sm">
+                                                        alt="{{ $intern->name }}" class="avatar-sm" loading="lazy" decoding="async">
                                                 @else
                                                     <div class="avatar-sm-placeholder">
                                                         {{ strtoupper(substr($intern->name, 0, 1)) }}

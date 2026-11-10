@@ -30,3 +30,4 @@
     </ul>
     <p class="ws-field-error" x-show="errors.intern_ids" x-text="errors.intern_ids"></p>
 </div>
+<x-workspace.groups-js />

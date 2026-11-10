@@ -3,44 +3,7 @@
 @section('title', 'Edit Profile - Sistem Manajemen Magang')
 
 @push('styles')
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
-    *, body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .mono { font-family: 'DM Mono', monospace; }
-
-    .edit-bg { min-height: 100vh; background: #f1f5ff; }
-    .hero-header { background: linear-gradient(110deg, #0f2878 0%, #2d3ecb 55%, #4f46e5 100%); border-radius: 20px; position: relative; overflow: hidden; margin-bottom: 24px; }
-    .hero-header::before { content: ''; position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; background: rgba(255,255,255,0.05); border-radius: 50%; pointer-events: none; }
-    .hero-header::after { content: ''; position: absolute; bottom: -100px; left: 25%; width: 320px; height: 320px; background: rgba(255,255,255,0.04); border-radius: 50%; pointer-events: none; }
-
-    .panel { background: #fff; border-radius: 20px; box-shadow: 0 1px 3px rgba(20,40,120,0.06), 0 4px 18px rgba(20,40,120,0.06); overflow: hidden; margin-bottom: 24px; transition: transform .2s ease, box-shadow .2s ease; }
-    .panel:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(20,40,120,0.12); }
-    .panel-header { background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 100%); padding: 16px 22px; display: flex; align-items: center; gap: 10px; }
-    .panel-header h2 { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.01em; margin: 0; }
-    .panel-body { padding: 20px 22px; }
-
-    .btn-back { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all .2s ease; cursor: pointer; }
-    .btn-back:hover { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5); transform: translateX(-3px); }
-
-    .photo-section { display: flex; gap: 16px; align-items: flex-start; padding: 16px; background: #f9fafb; border-radius: 14px; margin-bottom: 20px; }
-    .photo-preview { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #e5e7eb; flex-shrink: 0; background: #f3f4f6; display: flex; align-items: center; justify-content: center; }
-    .file-input-label { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    #photo { display: none; }
-
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-    .form-control { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 12px; font-size: 13px; }
-    .form-control:focus { outline: none; border-color: #3b4fd8; box-shadow: 0 0 0 3px rgba(59,79,216,0.1); }
-
-    .btn-group { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; }
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
-    .btn-primary { background: linear-gradient(135deg, #3b4fd8, #3b82f6); color: #fff; }
-    .btn-secondary { background: #e5e7eb; color: #374151; }
-
-    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-    .modal-overlay.active { display: flex; }
-    .modal-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; }
-</style>
+<link rel="stylesheet" href="{{ asset('css/pages/intern-profile-edit.css') }}?v={{ @filemtime(public_path('css/pages/intern-profile-edit.css')) }}">
 @endpush
 
 @section('content')
@@ -72,7 +35,7 @@
                 <div class="panel-body">
                     <div class="photo-section">
                         @if($intern->photo_path)
-                            <img src="{{ url('storage/' . $intern->photo_path) }}" alt="Current Photo" class="photo-preview" id="photo-preview">
+                            <img src="{{ url('storage/' . $intern->photo_path) }}" alt="Current Photo" class="photo-preview" id="photo-preview" loading="lazy" decoding="async">
                         @else
                             <div class="photo-preview" id="photo-preview-placeholder">
                                 <i class="fas fa-user text-gray-400 text-3xl"></i>

@@ -27,6 +27,32 @@
     const WS = window.WS;
     if (!WS) return;
 
+    // Driver.js (JS + CSS) dan gaya tutorial dimuat HANYA saat tutorial benar-benar dimulai, jadi halaman yang tidak
+    // menampilkan tutorial tidak mengunduhnya. Alamatnya diturunkan dari alamat skrip ini (public/js/workspace/tour.js).
+    const SELF = document.currentScript ? document.currentScript.src : '';
+    const driverBase = SELF ? new URL('../../vendor/driverjs/', SELF).href : '/vendor/driverjs/';
+    const tourCss = SELF ? new URL('../../css/workspace-tour.css' + new URL(SELF).search, SELF).href : '/css/workspace-tour.css';
+    let driverLoading = null;
+    function loadDriver() {
+        if (window.driver && window.driver.js) return Promise.resolve(true);
+        if (!driverLoading) {
+            driverLoading = new Promise((resolve) => {
+                [driverBase + 'driver.css', tourCss].forEach((href) => {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = href;
+                    document.head.appendChild(link);
+                });
+                const s = document.createElement('script');
+                s.src = driverBase + 'driver.js.iife.js';
+                s.onload = () => resolve(true);
+                s.onerror = () => { driverLoading = null; resolve(false); };
+                document.head.appendChild(s);
+            });
+        }
+        return driverLoading;
+    }
+
     const cfg = WS.config || {};
     const user = cfg.user || {};
     const role = user.role; // 'mentor' | 'intern' | 'admin'
@@ -220,11 +246,13 @@
         }));
     }
 
-    function start(id, opts = {}) {
+    async function start(id, opts = {}) {
         const tour = TOURS.find((t) => t.id === id);
-        if (!tour || active || !window.driver || !window.driver.js) return false;
+        if (!tour || active) return false;
+        active = 'loading';
+        if (!(await loadDriver())) { active = null; return false; }
         const steps = resolveSteps(tour);
-        if (!steps.length) return false;
+        if (!steps.length) { active = null; return false; }
 
         let finished = false;
         const driverFactory = window.driver.js.driver;
@@ -321,7 +349,7 @@
         await storage.reset(tour.id);
         shownThisPage.delete(tour.id);
         window.dispatchEvent(new CustomEvent('ws-close-modal'));
-        setTimeout(() => { if (!start(tour.id, { manual: true })) WS.toast('Tutorial tidak dapat dimulai di halaman ini.', 'info'); }, 450);
+        setTimeout(async () => { if (!(await start(tour.id, { manual: true }))) WS.toast('Tutorial tidak dapat dimulai di halaman ini.', 'info'); }, 450);
     });
 
     WS.tour = { start, storage, prefs, tours: TOURS.map((t) => t.id) };

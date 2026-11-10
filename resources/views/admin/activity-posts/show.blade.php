@@ -239,7 +239,7 @@ allowfullscreen>
 
 src="{{ asset('storage/'.$post->thumbnail) }}"
 
-class="w-full h-full min-h-[560px] object-cover">
+class="w-full h-full min-h-[560px] object-cover" loading="lazy" decoding="async">
 
 
 @endif

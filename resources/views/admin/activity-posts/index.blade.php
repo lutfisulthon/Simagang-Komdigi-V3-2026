@@ -137,7 +137,7 @@
          alt="{{ $post->title }}"
          class="w-full h-full object-cover"
          referrerpolicy="no-referrer"
-         onerror="this.onerror=null; this.src='{{ asset('storage/photos-landingpage/default-news.jpg') }}';">
+         onerror="this.onerror=null; this.src='{{ asset('storage/photos-landingpage/default-news.jpg') }}';" loading="lazy" decoding="async">
 
     @if($post->type === 'youtube')
         <div class="absolute inset-0 bg-black/25 flex items-center justify-center text-white">

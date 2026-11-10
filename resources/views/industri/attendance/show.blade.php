@@ -33,7 +33,7 @@
                     @if ($intern->photo_path)
                         <img
                             src="{{ url('storage/' . $intern->photo_path) }}"
-                            class="w-20 h-20 rounded-2xl object-cover border-4 border-white/30">
+                            class="w-20 h-20 rounded-2xl object-cover border-4 border-white/30" loading="lazy" decoding="async">
                     @else
                         <div class="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center">
                             <i class="fas fa-user text-3xl"></i>
@@ -259,7 +259,7 @@
                                         <img
                                             src="{{ $photoUrl }}"
                                             onclick="window.open('{{ $photoUrl }}', '_blank')"
-                                            class="w-14 h-14 rounded-xl object-cover border cursor-pointer hover:scale-105 transition">
+                                            class="w-14 h-14 rounded-xl object-cover border cursor-pointer hover:scale-105 transition" loading="lazy" decoding="async">
 
                                     @else
 

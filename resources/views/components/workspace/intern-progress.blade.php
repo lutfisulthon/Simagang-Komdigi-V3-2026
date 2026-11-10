@@ -42,3 +42,4 @@
         </template>
     </div>
 @endif
+<x-workspace.page-css />

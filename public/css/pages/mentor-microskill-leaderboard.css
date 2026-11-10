@@ -1,0 +1,341 @@
+/* Dipindahkan dari resources/views/mentor/microskill/leaderboard.blade.php (sebelumnya <style> inline). */
+*,
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.mono {
+    font-family: 'DM Mono', monospace;
+}
+
+.dash-bg {
+    min-height: 100vh;
+    background: #f1f5ff;
+}
+
+/* ── Hero strip ── */
+.hero-strip {
+    background: linear-gradient(110deg, #0f2878 0%, #2d3ecb 55%, #4f46e5 100%);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-strip::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 260px;
+    height: 260px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hero-strip::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: 25%;
+    width: 320px;
+    height: 320px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* ── Panel ── */
+.panel {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(20, 40, 120, 0.06), 0 4px 18px rgba(20, 40, 120, 0.06);
+    overflow: hidden;
+}
+
+.panel-header {
+    background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 100%);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-header h2 {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0;
+}
+
+.panel-body {
+    padding: 22px;
+}
+
+/* ── Section label ── */
+.sec-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 14px;
+}
+
+/* ── Podium rows ── */
+.podium-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 1.5px solid transparent;
+    transition: all .2s ease;
+}
+
+.podium-item:hover {
+    transform: translateX(5px);
+}
+
+.podium-1 {
+    background: linear-gradient(100deg, #fffbeb, #fef3c7);
+    border-color: #fde68a;
+}
+
+.podium-2 {
+    background: linear-gradient(100deg, #f8fafc, #f1f5f9);
+    border-color: #e2e8f0;
+}
+
+.podium-3 {
+    background: linear-gradient(100deg, #fff7ed, #ffedd5);
+    border-color: #fed7aa;
+}
+
+.podium-default {
+    background: #f8faff;
+    border-color: #e8eeff;
+}
+
+.podium-default:hover {
+    background: #eff2ff;
+    border-color: #c7d2fe;
+}
+
+.rank-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(251, 191, 36, .4);
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(100, 116, 139, .3);
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(251, 146, 60, .35);
+}
+
+.rank-n {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff;
+}
+
+/* ── Score pill ── */
+.score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+}
+
+.score-pill-1 {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.score-pill-2 {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.score-pill-3 {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+/* ── Avatar ── */
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
+}
+
+.avatar-placeholder {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+    flex-shrink: 0;
+}
+
+/* ── Fade-in ── */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.a1 {
+    animation: fadeUp .5s ease both;
+}
+
+.a2 {
+    animation: fadeUp .5s .08s ease both;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.podium-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.pagination-row {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e8eeff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .panel-body {
+        padding: 16px;
+    }
+
+    .panel-header {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .panel-header span {
+        margin-left: 0 !important;
+    }
+
+    .hero-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hero-actions a {
+        justify-content: center;
+        max-width: none !important;
+    }
+
+    .podium-item {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .podium-info {
+        width: calc(100% - 52px);
+    }
+
+    .score-pill {
+        margin-left: 52px;
+    }
+
+    .pagination-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pagination-row>p {
+        text-align: center;
+    }
+
+    .pagination-row>div {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .score-pill {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+
+    .rank-badge,
+    .avatar,
+    .avatar-placeholder {
+        width: 34px;
+        height: 34px;
+    }
+
+    .avatar-placeholder {
+        font-size: 13px;
+    }
+}
+

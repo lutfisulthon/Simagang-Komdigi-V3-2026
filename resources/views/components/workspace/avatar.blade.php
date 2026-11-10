@@ -15,3 +15,4 @@
         {{ $initials }}
     @endif
 </span>
+<x-workspace.page-css />

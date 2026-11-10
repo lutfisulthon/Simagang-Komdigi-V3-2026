@@ -8,7 +8,6 @@
 
             @push('styles')
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
                 * { font-family: 'Plus Jakarta Sans', sans-serif; }
                 .hero-strip { background: linear-gradient(110deg, #0f2878 0%, #2d3ecb 55%, #4f46e5 100%); border-radius: 20px; position: relative; overflow: hidden; margin-bottom: 28px; }
                 .hero-strip::before { content: ''; position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; background: rgba(255,255,255,0.05); border-radius: 50%; pointer-events: none; }
@@ -82,7 +81,7 @@
                                     <canvas id="canvas" class="hidden"></canvas>
                                     <img id="capturedImage"
                                         class="w-full max-w-md mx-auto border-2 border-green-300 rounded-lg hidden mb-4 shadow-md"
-                                        alt="Captured image">
+                                        alt="Captured image" loading="lazy" decoding="async">
                                 </div>
 
                                 <!-- Camera Controls -->

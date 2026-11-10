@@ -151,3 +151,4 @@
         </x-slot:footer>
     </x-workspace.modal>
 </div>
+<x-workspace.groups-js />

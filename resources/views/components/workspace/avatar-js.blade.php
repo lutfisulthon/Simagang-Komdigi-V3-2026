@@ -5,3 +5,4 @@
     <template x-if="{{ $user }}.avatar_url"><img :src="{{ $user }}.avatar_url" :alt="{{ $user }}.name" loading="lazy"></template>
     <template x-if="!{{ $user }}.avatar_url"><span x-text="WS.initials({{ $user }}.name)"></span></template>
 </span>
+<x-workspace.page-css />

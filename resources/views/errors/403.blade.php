@@ -8,8 +8,8 @@
     <title>403 - Akses Ditolak | SIMAGANG</title>
     <link rel="icon" type="image/png" href="{{ url('storage/vendor/icon-komdigi.png') }}">
     <link rel="shortcut icon" href="{{ url('storage/vendor/icon-komdigi.png') }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/fa-subset.css') }}?v={{ @filemtime(public_path('vendor/fontawesome/fa-subset.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}?v={{ @filemtime(public_path('css/fonts.css')) }}">
     <style>
         @font-face {
             font-family: 'Etna';
@@ -20,6 +20,7 @@
             font-family: 'Etna', sans-serif;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}?v={{ @filemtime(public_path('css/tailwind.css')) }}">
 </head>
 <body class="min-h-screen bg-slate-950 text-white overflow-hidden">
     <div class="relative min-h-screen flex items-center justify-center px-4 py-12">

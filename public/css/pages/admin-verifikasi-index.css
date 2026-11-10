@@ -1,0 +1,275 @@
+/* Dipindahkan dari resources/views/admin/verifikasi/index.blade.php (sebelumnya <style> inline). */
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+body { background: #f4f7ff; }
+
+.page-bg {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, #dbeafe 0%, transparent 25%),
+        radial-gradient(circle at bottom right, #e0e7ff 0%, transparent 25%),
+        linear-gradient(180deg, #f8fbff 0%, #f3f6ff 100%);
+}
+
+.hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    padding: 2rem;
+    background: linear-gradient(135deg, #1e3a8a 0%, #4338ca 55%, #6366f1 100%);
+    box-shadow: 0 25px 55px rgba(37,99,235,.20);
+}
+
+.hero-card::before {
+    content: '';
+    position: absolute;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,.08);
+    border-radius: 50%;
+    top: -120px; right: -80px;
+}
+
+.hero-card::after {
+    content: '';
+    position: absolute;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,.05);
+    border-radius: 50%;
+    bottom: -70px; left: -50px;
+}
+
+.stats-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.25rem;
+    border: 1px solid #eef2ff;
+    box-shadow: 0 8px 24px rgba(15,23,42,.05);
+    transition: .25s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(15,23,42,.08);
+}
+
+.stats-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.filter-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 1.4rem;
+    border: 1px solid #eef2ff;
+    box-shadow: 0 8px 24px rgba(15,23,42,.05);
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    height: 46px;
+    border-radius: 14px;
+    border: 1px solid #dbe3f0;
+    background: #fff;
+    padding: 0 .9rem;
+    font-size: .88rem;
+    color: #334155;
+    transition: .2s;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+}
+
+/* ── Lowongan Card ── */
+.lowongan-card {
+    position: relative;
+    background: #fff;
+    border-radius: 24px;
+    padding: 1.4rem;
+    border: 1px solid #e8edf5;
+    box-shadow: 0 4px 16px rgba(15,23,42,.06);
+    transition: .22s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+}
+
+.lowongan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(15,23,42,.10);
+    border-color: #c7d7f5;
+}
+
+/* bookmark icon top-right */
+.card-bookmark {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.1rem;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: .8rem;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.card-bookmark:hover { border-color: #4f46e5; color: #4f46e5; }
+
+/* status badge top-left */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .22rem .7rem;
+    border-radius: 999px;
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    white-space: nowrap;
+}
+
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-red   { background: #fee2e2; color: #b91c1c; }
+.badge-amber { background: #fef9c3; color: #a16207; }
+
+/* main title area */
+.card-title {
+    margin-top: .9rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+    flex: 1;
+}
+
+/* meta chips */
+.card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem .75rem;
+    margin-top: .5rem;
+}
+
+.meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .7rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.meta-chip i { font-size: .6rem; color: #94a3b8; }
+
+/* ── Card footer ── */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.2rem;
+    padding-top: .9rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.card-company {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.company-logo {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #f8faff;
+    flex-shrink: 0;
+}
+
+.company-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+.company-name {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #334155;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.company-sub {
+    font-size: .65rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* View button */
+.btn-view {
+    height: 34px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: .2s;
+    white-space: nowrap;
+}
+
+.btn-view:hover { background: #4f46e5; color: #fff; text-decoration: none; }
+
+/* filter button */
+.btn-action {
+    height: 46px;
+    border-radius: 14px;
+    padding: 0 1.1rem;
+    font-size: .85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    transition: .2s;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-action:hover { transform: translateY(-1px); text-decoration: none; }
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(79,70,229,.20);
+}
+
+.btn-primary:hover { opacity: .92; color: #fff; }
+
+.empty-card {
+    background: #fff;
+    border-radius: 28px;
+    border: 1px solid #eef2ff;
+    padding: 4rem 2rem;
+    box-shadow: 0 8px 24px rgba(15,23,42,.05);
+}

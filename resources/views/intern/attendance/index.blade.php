@@ -4,150 +4,7 @@
 
 @section('content')
 @push('styles')
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
-    * { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .mono { font-family: 'DM Mono', monospace; }
-    
-    body.page-attendance { background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%); }
-
-    .dash-bg {
-        background: transparent;
-        min-height: 100vh;
-    }
-
-    /* ── Hero Header (match mentor) ── */
-    .hero-strip {
-        background: linear-gradient(110deg, #0f2878 0%, #2d3ecb 55%, #4f46e5 100%);
-        border-radius: 20px;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 28px;
-    }
-
-    .hero-strip::before {
-        content: '';
-        position: absolute;
-        top: -80px;
-        right: -60px;
-        width: 260px;
-        height: 260px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    .hero-strip::after {
-        content: '';
-        position: absolute;
-        bottom: -100px;
-        left: 25%;
-        width: 320px;
-        height: 320px;
-        background: rgba(255, 255, 255, 0.04);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    /* ── Avatar ring ── */
-    .avatar-ring {
-        background: linear-gradient(135deg, #60a5fa, #818cf8);
-        padding: 3px;
-        border-radius: 9999px;
-        display: inline-flex;
-        flex-shrink: 0;
-    }
-    .avatar-inner {
-        border-radius: 9999px;
-        width: 80px; height: 80px;
-        display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
-        background: linear-gradient(135deg, #3b82f6, #6366f1);
-    }
-
-    /* ── Panel ── */
-    .panel {
-        background: #fff;
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 20px rgba(30,58,138,0.06);
-    }
-
-    /* ── Stat tiles ── */
-    .stat-tile {
-        background: #fff;
-        border-radius: 1.25rem;
-        padding: 1.4rem;
-        box-shadow: 0 1px 3px rgba(30,58,138,0.06), 0 4px 20px rgba(30,58,138,0.06);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-direction: row-reverse;
-    }
-    .stat-tile:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(59,79,216,0.16); }
-    .stat-tile::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--stat-color, #3b82f6); }
-    .stat-content { flex: 1; }
-    .stat-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; }
-    .stat-value { font-size: 1.75rem; font-weight: 700; color: #1f2937; margin: 0.25rem 0 0; font-family: 'DM Mono', monospace; }
-    .stat-icon { width: 56px; height: 56px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; flex-shrink: 0; }
-
-    /* ── Section label ── */
-    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
-
-    /* ── Status items ── */
-    .status-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-radius: 14px; background: #f8faff; border: 1px solid #e8eeff; transition: all 0.2s ease; cursor: default; }
-    .status-item:hover { background: #eff2ff; border-color: #c7d2fe; transform: translateX(4px); }
-
-    /* ── Stat bar ── */
-    .stat-bar-track { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
-    .stat-bar-fill { height: 100%; border-radius: 999px; transition: width 1.2s cubic-bezier(.4,0,.2,1); width: 0; }
-
-    /* ── Count pill ── */
-    .count-pill { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 3px 12px; border-radius: 999px; min-width: 42px; text-align: center; }
-
-    /* ── Donut ── */
-    .donut-svg circle { transition: stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1); }
-
-    /* ── Action btn ── */
-    .action-btn { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-radius: 14px; background: #f0f4ff; border: 1.5px solid #e0e7ff; color: #3b4fd8; font-weight: 600; font-size: 14px; transition: all 0.2s ease; text-decoration: none; width: 100%; }
-    .action-btn:hover { background: #e8eeff; border-color: #a5b4fc; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.15); color: #3b4fd8; text-decoration: none; }
-
-    /* ── Modal ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display:flex;align-items:center;justify-content:center; z-index:50; backdrop-filter: blur(3px); }
-    .modal-box { background:#fff;border-radius:20px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(30,58,138,0.18);position:relative }
-
-    /* ── Leaderboard items ── */
-    .lb-item { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:14px;background:#f0f4ff;border:1px solid #e0e7ff;transition: all .2s ease; }
-    .lb-item:hover { background:#e8eeff;border-color:#c7d2fe;transform:translateX(4px);} .lb-item.is-me{background:#ede9fe;border-color:#c4b5fd}
-
-    /* ── Divider ── */
-    .divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
-
-    /* ── CTA ── */
-    .cta-btn { display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:linear-gradient(110deg,#1e3a8a,#3b4fd8);color:#fff;border-radius:12px;font-size:14px;font-weight:600;text-decoration:none;transition:all .2s ease }
-    .cta-btn:hover { box-shadow:0 6px 16px rgba(59,79,216,0.3); transform:translateY(-1px); color:#fff }
-
-    /* ── Attendance info rows ── */
-    .info-row { display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:10px;background:#f8faff;border:1px solid #e8eeff;font-size:14px }
-
-    /* ── Animations ── */
-    @keyframes fadeSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-    .anim-1{animation:fadeSlideUp .5s ease both}.anim-2{animation:fadeSlideUp .5s ease .1s both}.anim-3{animation:fadeSlideUp .5s ease .2s both}.anim-4{animation:fadeSlideUp .5s ease .3s both}
-
-    @media (max-width:640px){ 
-        .avatar-inner{width:60px;height:60px} 
-        .panel{padding:16px} 
-        .stat-grid > :last-child:nth-child(odd) { grid-column: span 2 / span 2; }
-        .stat-tile { padding: 1rem; flex-direction: row; } 
-        .stat-icon { width: 44px; height: 44px; border-radius: 10px; font-size: 1rem; flex: 0 0 44px; }
-        .stat-value { font-size: 1.25rem; }
-        .stat-label { font-size: 9px; }
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/pages/intern-attendance-index.css') }}?v={{ @filemtime(public_path('css/pages/intern-attendance-index.css')) }}">
 @endpush
 
     <div class="dash-bg py-8">
@@ -320,7 +177,7 @@
                                                 <img src="{{ $photoUrl }}" alt="Check In"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all shadow-sm mx-auto"
                                                     onclick="window.open('{{ $photoUrl }}', '_blank')"
-                                                    title="Klik untuk melihat full size">
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
@@ -345,7 +202,7 @@
                                                 <img src="{{ $photoUrl }}" alt="Check Out"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all shadow-sm mx-auto"
                                                     onclick="window.open('{{ $photoUrl }}', '_blank')"
-                                                    title="Klik untuk melihat full size">
+                                                    title="Klik untuk melihat full size" loading="lazy" decoding="async">
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif

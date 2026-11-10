@@ -73,3 +73,4 @@
         </div>
     </section>
 @endif
+<x-workspace.page-css />

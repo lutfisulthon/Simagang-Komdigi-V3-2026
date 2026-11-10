@@ -11,3 +11,4 @@
         </p>
     </div>
 </div>
+<x-workspace.page-css />

@@ -7,3 +7,4 @@
         </label>
     </template>
 </div>
+<x-workspace.groups-js />

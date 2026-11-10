@@ -4,7 +4,6 @@
 
 @push('styles')
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
         *, body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
@@ -32,7 +31,7 @@
 
                         <div class="inline-flex items-center gap-4 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm border border-white/10">
                             @if (Auth::user()->intern && Auth::user()->intern->photo_path)
-                                <img src="{{ url('storage/' . Auth::user()->intern->photo_path) }}" class="h-14 w-14 rounded-full object-cover border-4 border-white shadow" alt="{{ Auth::user()->name }}">
+                                <img src="{{ url('storage/' . Auth::user()->intern->photo_path) }}" class="h-14 w-14 rounded-full object-cover border-4 border-white shadow" alt="{{ Auth::user()->name }}" loading="lazy" decoding="async">
                             @else
                                 <div class="h-14 w-14 rounded-full bg-white flex items-center justify-center shadow"><i class="fas fa-user text-blue-600 text-2xl"></i></div>
                             @endif
@@ -116,7 +115,7 @@
                         @if ($logbook->photo_path)
                             @can('view', $logbook)
                                 <div class="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                                    <img src="{{ $logbook->photo_url }}" class="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02]" alt="Foto Logbook" onclick="window.open('{{ $logbook->photo_url }}', '_blank')" />
+                                    <img src="{{ $logbook->photo_url }}" class="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02]" alt="Foto Logbook" onclick="window.open('{{ $logbook->photo_url }}', '_blank')" loading="lazy" decoding="async" />
                                     <button type="button" class="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-blue-700 shadow-lg transition hover:bg-white" onclick="window.open('{{ $logbook->photo_url }}', '_blank')">Lihat penuh</button>
                                 </div>
                                 <p class="mt-3 text-xs text-slate-500"><i class="fas fa-circle-info mr-1 text-blue-500"></i> Klik gambar untuk membuka ukuran penuh.</p>

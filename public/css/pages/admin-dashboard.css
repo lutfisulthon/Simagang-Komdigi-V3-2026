@@ -1,0 +1,349 @@
+/* Dipindahkan dari resources/views/admin/dashboard.blade.php (sebelumnya <style> inline). */
+* {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.mono {
+    font-family: 'DM Mono', monospace;
+}
+
+body {
+    background: #f0f4ff;
+}
+
+.dash-bg {
+    background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 40%, #e4ecff 100%);
+    min-height: 100vh;
+}
+
+/* ── Profile Strip (same as institusi) ── */
+.profile-strip {
+    background: linear-gradient(100deg, #1e3a8a 0%, #3b4fd8 50%, #4f46e5 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(20, 40, 120, 0.16);
+}
+
+.profile-strip::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+}
+
+.profile-strip::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: 30%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 50%;
+}
+
+/* ── Avatar ring (same as institusi) ── */
+.avatar-ring {
+    background: linear-gradient(135deg, #60a5fa, #818cf8);
+    padding: 3px;
+    border-radius: 9999px;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.avatar-inner {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    border-radius: 9999px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Stat tiles ── */
+.stat-tile {
+    background: #fff;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.06), 0 4px 20px rgba(30, 58, 138, 0.06);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stat-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(59, 79, 216, 0.16);
+}
+
+.stat-tile::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-color, #3b82f6);
+}
+
+.stat-tile .stat-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0.5rem 0 0;
+    font-family: 'DM Mono', monospace;
+}
+
+.stat-tile .stat-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: white;
+}
+
+/* ── Panel (same as institusi) ── */
+.panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.06), 0 4px 20px rgba(30, 58, 138, 0.06);
+}
+
+/* ── Section label (same as institusi) ── */
+.section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 14px;
+}
+
+/* ── Status items (same as institusi) ── */
+.status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: #f8faff;
+    border: 1px solid #e8eeff;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.status-item:hover {
+    background: #eff2ff;
+    border-color: #c7d2fe;
+    transform: translateX(4px);
+}
+
+/* ── Progress bar (same as institusi) ── */
+.stat-bar-track {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+    width: 0;
+}
+
+/* ── Count pill (same as institusi) ── */
+.count-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 12px;
+    border-radius: 999px;
+    min-width: 42px;
+    text-align: center;
+}
+
+/* ── Quick action btn (same as institusi) ── */
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    background: #f0f4ff;
+    border: 1.5px solid #e0e7ff;
+    color: #3b4fd8;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    width: 100%;
+}
+
+.action-btn:hover {
+    background: #e8eeff;
+    border-color: #a5b4fc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    color: #3b4fd8;
+    text-decoration: none;
+}
+
+/* ── Attendance table ── */
+.attendance-table {
+    min-width: 700px;
+}
+
+.attendance-table th {
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3730a3;
+    background: #f0f4ff;
+    text-align: center;
+}
+
+.attendance-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #334155;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.attendance-table tbody tr {
+    transition: background 0.15s;
+}
+
+.attendance-table tbody tr:hover {
+    background: #f8faff !important;
+}
+
+/* ── Status badges ── */
+.att-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ── Donut chart (same as institusi) ── */
+.donut-svg circle {
+    transition: stroke-dashoffset 1.4s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ── Leaderboard items (using status-item pattern) ── */
+.lb-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: #f0f4ff;
+    border: 1px solid #e0e7ff;
+    transition: all 0.2s ease;
+}
+
+.lb-item:hover {
+    background: #e8eeff;
+    border-color: #c7d2fe;
+    transform: translateX(4px);
+}
+
+/* ── Divider ── */
+.divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 4px 0;
+}
+
+/* ── CTA button ── */
+.cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    background: linear-gradient(110deg, #1e3a8a, #3b4fd8);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.cta-btn:hover {
+    box-shadow: 0 6px 16px rgba(59, 79, 216, 0.3);
+    transform: translateY(-1px);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ── Animations (same as institusi) ── */
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.anim-1 {
+    animation: fadeSlideUp 0.5s ease both;
+}
+
+.anim-2 {
+    animation: fadeSlideUp 0.5s ease 0.1s both;
+}
+
+.anim-3 {
+    animation: fadeSlideUp 0.5s ease 0.2s both;
+}
+
+.anim-4 {
+    animation: fadeSlideUp 0.5s ease 0.3s both;
+}
+
+@media (max-width: 640px) {
+    .avatar-inner {
+        width: 60px;
+        height: 60px;
+    }
+
+    .stat-tile .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .panel {
+        padding: 16px;
+    }
+}
+

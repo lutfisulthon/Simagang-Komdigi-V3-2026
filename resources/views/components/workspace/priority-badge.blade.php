@@ -15,3 +15,4 @@
     <i class="fas {{ $icon }} text-[10px]"></i>
     {{ $label }}
 </span>
+<x-workspace.page-css />
