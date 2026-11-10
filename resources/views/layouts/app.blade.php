@@ -364,6 +364,9 @@
         <x-workspace.toasts />
         <x-workspace.guide :role="$wsRole" />
     @endif
+    @auth
+        @include('public-chat')
+    @endauth
     @stack('scripts')
     <script>
         // Judul top bar cadangan: bila title halaman generik, pakai <h1> halaman.

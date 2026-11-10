@@ -1,0 +1,389 @@
+/*
+ * Halaman Chat Publik (resources/views/chat-publik/index.blade.php, public/js/public-chat.js).
+ * Kelas pc-* = komponen percakapan, pcp-* = tata letak halaman dan panel kanan, pcl-* = panel kiri (pencarian dan daftar orang).
+ * Menunya ada di sidebar (gaya menu dan lencana merah .sb-badge: public/css/app-shell.css).
+ * Tata letak dua panel dipilih lewat container query pada lebar area konten (bukan lebar layar), karena sidebar aplikasi memakan 256px.
+ * Mode gelap: elemen akar memakai data-dm-native, jadi paletnya diatur di sini lewat html[data-theme="dark"].
+ */
+
+.pc-root {
+    --pc-blue: #2563eb;
+    --pc-grad: linear-gradient(135deg, #1d4ed8 0%, #2563eb 42%, #06b6d4 100%);
+    --pc-bg: #f2f2f2;
+    --pc-surface: #ffffff;
+    --pc-field: #f0f0f0;
+    --pc-hover: #f5f5f5;
+    --pc-active: #ebebeb;
+    --pc-text: #171717;
+    --pc-muted: #6b6b6b;
+    --pc-line: #e4e4e4;
+    --pc-bubble-in: #ffffff;
+    --pc-bubble-out: #2563eb;
+    --pc-meta: #8a8a8a;
+    --pc-dot: rgba(0, 0, 0, .05);
+    --pc-thumb: rgba(0, 0, 0, .2);
+    --pc-thumb-on: rgba(0, 0, 0, .38);
+    --pc-thumb-hover: rgba(0, 0, 0, .6);
+    --pc-pin-bg: #fffbeb;
+    --pc-pin-line: #fde68a;
+    --pc-pin-ink: #92400e;
+    --pc-pin-accent: #f59e0b;
+    --pc-ring: rgba(37, 99, 235, .55);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ---------- Kerangka: mengisi seluruh area konten (di bawah top bar) ---------- */
+.pcp {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--pc-bg);
+    color: var(--pc-text);
+    container-type: inline-size;
+    container-name: pcp;
+}
+.pcp__grid { position: relative; height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); }
+.pcp__chat { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--pc-bg); }
+
+/* Layar sempit: panel kiri menjadi lembar yang menutupi percakapan (dibuka dari tombol orang atau cari di header). */
+.pcl {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--pc-surface);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform .25s ease, visibility 0s .25s;
+}
+.pcp.is-list-open .pcl { transform: none; visibility: visible; transition: transform .25s ease; }
+
+/* Area konten cukup lebar: dua panel berdampingan */
+@container pcp (min-width: 840px) {
+    .pcp__grid { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+    .pcl { position: static; z-index: auto; transform: none; visibility: visible; transition: none; border-right: 1px solid var(--pc-line); }
+    .pcl .pcl__back, .pcp__head .pcp__people { display: none; }
+}
+
+/* ---------- Panel kiri ---------- */
+.pcl__top { display: flex; align-items: center; gap: 4px; padding: 11px 14px 10px; }
+.pcl__search {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; margin: 0; padding: 0 14px; height: 40px;
+    border-radius: 12px; background: var(--pc-field); color: var(--pc-muted); cursor: text;
+}
+.pcl__search:focus-within { box-shadow: 0 0 0 2px var(--pc-ring); }
+.pcl__search svg { width: 17px; height: 17px; flex-shrink: 0; }
+.pcl__search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--pc-text); font: inherit; font-size: 14px; }
+.pcl__search input::placeholder { color: var(--pc-muted); }
+.pcl__search input::-webkit-search-cancel-button { cursor: pointer; }
+.pcl__chips { display: flex; gap: 8px; padding: 0 14px 10px; overflow-x: auto; scrollbar-width: none; }
+.pcl__chips::-webkit-scrollbar { display: none; }
+.pcl__chips:empty { display: none; }
+.pcl-chip {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border: 1px solid var(--pc-line); border-radius: 999px;
+    background: transparent; color: var(--pc-muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s ease, color .15s ease;
+}
+.pcl-chip:hover { background: var(--pc-hover); }
+.pcl-chip[aria-pressed="true"] { background: var(--pc-active); border-color: transparent; color: var(--pc-text); font-weight: 700; }
+.pcl-chip small { font-size: 11.5px; font-weight: 700; opacity: .8; }
+.pcl-chip:focus-visible, .pcl-row:focus-visible, .pcp__iconbtn:focus-visible, .pc-tool:focus-visible { outline: 2px solid var(--pc-blue); outline-offset: 1px; }
+
+.pcl__body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 14px; overscroll-behavior: contain; }
+.pcl__cap { padding: 14px 10px 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--pc-muted); }
+.pcl__empty { padding: 26px 16px; text-align: center; font-size: 13px; color: var(--pc-muted); }
+.pcl-row {
+    width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px; border: 0; border-radius: 12px; background: transparent;
+    color: var(--pc-text); font: inherit; text-align: left; cursor: pointer; transition: background .12s ease;
+}
+.pcl-row:hover { background: var(--pc-hover); }
+.pcl-row.is-active { background: var(--pc-active); }
+.pcl-row__ava { width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 17px; font-weight: 800; }
+.pcl-row__ava svg { width: 28px; height: 28px; }
+.pcl-row__main { min-width: 0; flex: 1; }
+.pcl-row__top { display: flex; align-items: center; gap: 8px; }
+.pcl-row__name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
+.pcl-row__time { flex-shrink: 0; font-size: 11.5px; color: var(--pc-muted); }
+.pcl-row__sub { margin-top: 2px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--pc-muted); }
+.pcl-row__sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcl-row mark { background: rgba(245, 158, 11, .35); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+.pc-sys { align-self: center; max-width: 92%; margin: 4px 0 2px; padding: 6px 13px; border-radius: 8px; background: rgba(245, 158, 11, .16); color: var(--pc-pin-ink); font-size: 12px; font-weight: 600; line-height: 1.4; text-align: center; }
+.pc-rules {
+    margin: 0 14px 8px; padding: 9px 11px; border-radius: 12px; background: var(--pc-field); border: 1px solid var(--pc-line); color: var(--pc-muted);
+    font-size: 12px; line-height: 1.45; display: flex; gap: 9px; align-items: flex-start;
+}
+.pc-rules button { margin-left: auto; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 2px; opacity: .7; }
+.pc-rules button:hover { opacity: 1; }
+.pc-rules[hidden] { display: none; }
+
+/* ---------- Header percakapan ---------- */
+.pcp__head { display: flex; align-items: center; gap: 12px; padding: 9px 14px 9px 16px; min-height: 62px; background: var(--pc-surface); border-bottom: 1px solid var(--pc-line); }
+.pcp__ava { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; background: var(--pc-grad); display: grid; place-items: center; }
+.pcp__ava svg { width: 27px; height: 27px; }
+.pcp__head-txt { min-width: 0; flex: 1; }
+.pcp__head-txt h1 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--pc-text); }
+.pcp__head-txt p { margin: 1px 0 0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--pc-muted); min-width: 0; }
+.pcp__head-txt p > span { white-space: nowrap; }
+.pcp__members { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pc-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .25); flex-shrink: 0; }
+.pcp__iconbtn { width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 50%; background: transparent; color: var(--pc-muted); cursor: pointer; display: grid; place-items: center; transition: background .15s ease, color .15s ease; }
+.pcp__iconbtn:hover { background: var(--pc-hover); color: var(--pc-text); }
+.pcp__iconbtn svg { width: 20px; height: 20px; }
+
+/* ---------- Bilah pengumuman tersemat (satu baris di bawah header) ---------- */
+.pcp__pinwrap { position: relative; z-index: 6; background: var(--pc-surface); border-bottom: 1px solid var(--pc-line); }
+.pcp__pinwrap[hidden] { display: none; }
+.pcp__pinbar { display: flex; align-items: center; gap: 4px; padding: 4px 8px 4px 16px; }
+.pcp__pinseg { width: 3px; height: 34px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; margin-right: 8px; }
+.pcp__pinseg i { flex: 1; border-radius: 3px; background: var(--pc-line); }
+.pcp__pinseg i.is-on { background: var(--pc-pin-accent); }
+.pcp__pinmain {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 0; border-radius: 10px; background: transparent;
+    color: var(--pc-text); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer;
+}
+.pcp__pinmain:hover { background: var(--pc-hover); }
+.pcp__pinico { flex-shrink: 0; color: var(--pc-pin-accent); display: inline-grid; }
+.pcp__pinico svg { width: 18px; height: 18px; }
+.pcp__pintxt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcp__pintxt b { font-weight: 700; margin-right: 6px; }
+.pcp__pinlbl { flex-shrink: 0; padding: 1px 8px; border-radius: 999px; background: rgba(245, 158, 11, .16); color: var(--pc-pin-ink); font-size: 11px; font-weight: 800; }
+.pcp__pinmore svg { transition: transform .2s ease; }
+.pcp__pinmore[aria-expanded="true"] svg { transform: rotate(180deg); }
+.pcp__pindrop {
+    position: absolute; left: 0; right: 0; top: 100%; max-height: min(58vh, 460px); overflow-y: auto; padding: 4px 14px 14px;
+    background: var(--pc-surface); border-bottom: 1px solid var(--pc-line); box-shadow: 0 18px 30px -16px rgba(15, 23, 42, .45);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.pcp__pindrop[hidden] { display: none; }
+.pc-pin { padding: 10px 12px; border-radius: 12px; background: var(--pc-pin-bg); border: 1px solid var(--pc-pin-line); border-left: 4px solid var(--pc-pin-accent); }
+.pc-pin__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12.5px; color: var(--pc-text); }
+.pc-pin__meta b { font-weight: 800; }
+.pc-pin__left { margin-left: auto; padding: 1px 8px; border-radius: 999px; background: rgba(245, 158, 11, .2); color: var(--pc-pin-ink); font-size: 10.5px; font-weight: 700; }
+.pc-pin__text { margin: 5px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--pc-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pc-pin__acts { margin-top: 7px; display: flex; gap: 14px; }
+
+.pc-link { padding: 0; border: 0; background: transparent; color: var(--pc-blue); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.pc-link:hover { text-decoration: underline; }
+.pc-link--danger { color: #dc2626; }
+.pc-link:focus-visible { outline: 2px solid var(--pc-blue); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- Daftar pesan ---------- */
+.pc-body { position: relative; flex: 1; min-height: 0; background-image: radial-gradient(var(--pc-dot) 1.1px, transparent 1.4px); background-size: 22px 22px; }
+.pc-list {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    padding: 14px max(14px, calc((100% - 940px) / 2)) 12px;
+    display: flex;
+    flex-direction: column;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+}
+.pc-day { align-self: center; margin: 12px 0 6px; padding: 4px 12px; border-radius: 8px; background: var(--pc-surface); box-shadow: 0 1px 1px rgba(11, 20, 26, .1); color: var(--pc-muted); font-size: 12px; font-weight: 600; }
+.pc-empty { margin: auto; text-align: center; color: var(--pc-muted); font-size: 13px; padding: 24px; }
+
+.pc-msg { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; animation: pcMsg .22s ease; }
+.pc-msg.is-cont { margin-top: 2px; }
+.pc-msg.is-mine { justify-content: flex-end; }
+@keyframes pcMsg { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.pc-avatar { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; }
+.pc-avatar.is-ghost { visibility: hidden; }
+
+.pc-bubble {
+    position: relative;
+    max-width: min(76%, 640px);
+    padding: 6px 9px 7px 10px;
+    border-radius: 10px;
+    background: var(--pc-bubble-in);
+    color: var(--pc-text);
+    box-shadow: 0 1px 1px rgba(11, 20, 26, .13);
+    font-size: 14.2px;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+}
+.pc-msg.is-mine .pc-bubble { background: var(--pc-bubble-out); color: #fff; }
+/* ekor gelembung pada pesan pertama dalam satu rangkaian */
+.pc-msg:not(.is-cont):not(.is-mine) .pc-bubble { border-top-left-radius: 0; }
+.pc-msg:not(.is-cont).is-mine .pc-bubble { border-top-right-radius: 0; }
+.pc-msg:not(.is-cont) .pc-bubble::before { content: ""; position: absolute; top: 0; width: 9px; height: 12px; background: inherit; }
+.pc-msg:not(.is-cont):not(.is-mine) .pc-bubble::before { left: -8px; clip-path: polygon(100% 0, 100% 100%, 0 0); }
+.pc-msg:not(.is-cont).is-mine .pc-bubble::before { right: -8px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+
+.pc-msg__head { display: flex; align-items: center; gap: 6px; margin-bottom: 1px; font-size: 13px; font-weight: 700; padding-right: 22px; }
+.pc-msg__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: hsl(var(--h, 215) 62% 40%); }
+.pc-msg__text { white-space: pre-wrap; }
+.pc-msg__text.is-clamp:not(.is-open) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; line-clamp: 8; overflow: hidden; }
+.pc-msg__foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 5px; }
+.pc-msg__foot .pc-msg__meta { float: none; margin: 0; }
+.pc-more { padding: 0; border: 0; background: transparent; color: var(--pc-blue); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pc-more:hover { text-decoration: underline; }
+.pc-more:focus-visible { outline: 2px solid var(--pc-blue); outline-offset: 2px; border-radius: 4px; }
+.pc-msg.is-mine .pc-more { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+.pc-pin__text.is-clamp:not(.is-open) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
+.pc-msg__meta { float: right; margin: 9px 0 -4px 12px; display: inline-flex; align-items: center; gap: 3px; font-size: 11px; line-height: 1; color: var(--pc-meta); user-select: none; }
+.pc-msg.is-mine .pc-msg__meta { color: rgba(255, 255, 255, .75); }
+.pc-msg__pin svg { width: 11px; height: 11px; color: var(--pc-pin-accent); }
+.pc-msg.is-pinned .pc-bubble { box-shadow: 0 0 0 2px rgba(245, 158, 11, .45), 0 1px 1px rgba(11, 20, 26, .13); }
+.pc-msg.is-flash .pc-bubble { animation: pcFlash 1.6s ease; }
+@keyframes pcFlash { 0%, 60% { box-shadow: 0 0 0 5px rgba(245, 158, 11, .6); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+
+/* tombol opsi pesan (khusus pesan sendiri milik mentor) */
+.pc-msg__more {
+    position: absolute; top: 3px; right: 4px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: inherit; color: var(--pc-muted);
+    cursor: pointer; display: grid; place-items: center; opacity: 0; transition: opacity .12s ease;
+}
+.pc-msg.is-mine .pc-msg__more { color: rgba(255, 255, 255, .85); }
+.pc-msg__more svg { width: 16px; height: 16px; display: block; }
+.pc-bubble:hover .pc-msg__more, .pc-msg__more:focus-visible, .pc-msg__more[aria-expanded="true"] { opacity: 1; }
+@media (hover: none) { .pc-msg__more { opacity: .85; } }
+.pc-menu {
+    position: absolute; top: 28px; right: 4px; z-index: 12; min-width: 210px; padding: 6px; border-radius: 12px; background: var(--pc-surface); color: var(--pc-text);
+    border: 1px solid var(--pc-line); box-shadow: 0 16px 34px -10px rgba(15, 23, 42, .5); display: flex; flex-direction: column;
+}
+.pc-menu button { padding: 9px 11px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+.pc-menu button:hover { background: var(--pc-hover); }
+.pc-menu button.is-danger { color: #dc2626; }
+
+.pc-jump {
+    position: absolute; z-index: 4; right: max(18px, calc((100% - 940px) / 2 + 6px)); bottom: 14px; width: 42px; height: 42px; padding: 0; border: 1px solid var(--pc-line); border-radius: 50%;
+    background: var(--pc-surface); color: var(--pc-muted); cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(15, 23, 42, .22);
+}
+.pc-jump[hidden] { display: none; }
+.pc-jump:hover { color: var(--pc-text); }
+.pc-jump svg { width: 22px; height: 22px; }
+.pc-jump__n { position: absolute; top: -7px; right: -3px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--pc-blue); color: #fff; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; }
+.pc-jump__n[hidden] { display: none; }
+
+/* ---------- Kotak tulis ---------- */
+.pc-foot { padding: 10px max(12px, calc((100% - 940px) / 2)) 8px; background: var(--pc-surface); border-top: 1px solid var(--pc-line); }
+.pc-compose { position: relative; }
+.pc-row { display: flex; gap: 6px; align-items: flex-end; }
+.pc-tool {
+    flex-shrink: 0; width: 42px; height: 42px; border: 0; border-radius: 50%; background: transparent; color: var(--pc-muted); cursor: pointer;
+    display: grid; place-items: center; transition: background .15s ease, color .15s ease;
+}
+.pc-tool:hover { background: var(--pc-hover); color: var(--pc-text); }
+.pc-tool svg { width: 22px; height: 22px; }
+.pc-text {
+    flex: 1; width: auto; min-width: 0; resize: none; min-height: 42px; max-height: 160px; border: 0; border-radius: 22px; background: var(--pc-field); color: var(--pc-text);
+    font: inherit; font-size: 14.5px; line-height: 1.45; padding: 10px 16px; outline: none; transition: box-shadow .15s ease;
+}
+.pc-text::placeholder { color: var(--pc-muted); }
+.pc-text:focus { box-shadow: 0 0 0 2px var(--pc-ring); }
+.pc-send {
+    flex-shrink: 0; height: 44px; min-width: 44px; padding: 0 18px; border: 0; border-radius: 22px; background: var(--pc-grad); color: #fff; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-size: 14px; font-weight: 700;
+    box-shadow: 0 8px 16px -6px rgba(37, 99, 235, .6); transition: transform .15s ease, opacity .15s ease;
+}
+.pc-send svg { width: 19px; height: 19px; margin-left: -1px; }
+.pc-send:hover:not(.is-idle) { transform: translateY(-1px); }
+.pc-send.is-idle { opacity: .5; box-shadow: none; }
+.pc-send.is-busy { opacity: .7; pointer-events: none; }
+.pc-send.is-ann { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 8px 16px -6px rgba(234, 88, 12, .6); }
+.pc-ann.is-on { background: var(--pc-pin-accent); color: #fff; }
+.pc-meta { display: flex; justify-content: space-between; align-items: center; margin: 5px 6px 0; font-size: 11px; font-weight: 600; color: var(--pc-muted); }
+.pc-meta strong { color: var(--pc-text); font-weight: 700; }
+.pc-count.is-near { color: #d97706; }
+.pc-count.is-over { color: #dc2626; }
+.pc-err { margin: 0 0 8px; padding: 8px 12px; border-radius: 10px; background: rgba(220, 38, 38, .12); border: 1px solid rgba(220, 38, 38, .35); font-size: 12.5px; font-weight: 600; line-height: 1.4; color: #b91c1c; }
+.pc-err[hidden] { display: none; }
+.pc-annbar { margin: 0 0 8px; padding: 6px 8px 6px 12px; border-radius: 12px; background: var(--pc-pin-bg); border: 1px solid var(--pc-pin-line); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pc-annbar[hidden] { display: none; }
+.pc-annbar__lbl { font-size: 12px; font-weight: 800; color: var(--pc-pin-ink); }
+.pc-seg { display: inline-flex; padding: 2px; border-radius: 999px; background: rgba(245, 158, 11, .18); }
+.pc-seg button { padding: 3px 12px; border: 0; border-radius: 999px; background: transparent; color: var(--pc-pin-ink); font: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer; }
+.pc-seg button[aria-pressed="true"] { background: var(--pc-pin-accent); color: #fff; }
+
+/* pemilih emoji */
+.pc-emoji {
+    position: absolute; left: 0; bottom: calc(100% - 4px); z-index: 14; width: min(320px, 100%); padding: 8px; border-radius: 16px; background: var(--pc-surface);
+    border: 1px solid var(--pc-line); box-shadow: 0 18px 36px -12px rgba(15, 23, 42, .5); display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+}
+.pc-emoji[hidden] { display: none; }
+.pc-emoji button { height: 36px; border: 0; border-radius: 8px; background: transparent; font-size: 21px; line-height: 1; cursor: pointer; }
+.pc-emoji button:hover, .pc-emoji button:focus-visible { background: var(--pc-hover); outline: none; }
+
+/* ---------- Tag peran ---------- */
+.pc-tag { padding: 1px 7px; border-radius: 999px; background: #e2e8f0; color: #475569; font-size: 10px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; flex-shrink: 0; }
+.pc-tag--admin { background: #dbeafe; color: #1d4ed8; }
+.pc-tag--mentor { background: #ede9fe; color: #6d28d9; }
+.pc-tag--intern { background: #dcfce7; color: #15803d; }
+.pc-tag--institusi { background: #fef3c7; color: #b45309; }
+.pc-tag--industri { background: #ffe4e6; color: #be123c; }
+
+/* ---------- Scrollbar: tipis, bulat, tanpa tombol panah; makin jelas saat disorot ---------- */
+.pc-list, .pcl__body, .pcp__pindrop, .pc-text { scrollbar-width: thin; scrollbar-color: var(--pc-thumb) transparent; }
+.pc-list:hover, .pcl__body:hover, .pcp__pindrop:hover, .pc-text:hover { scrollbar-color: var(--pc-thumb-on) transparent; }
+@supports selector(::-webkit-scrollbar) {
+    .pc-list, .pcl__body, .pcp__pindrop, .pc-text { scrollbar-width: auto; scrollbar-color: auto; }
+    .pc-list::-webkit-scrollbar, .pcl__body::-webkit-scrollbar, .pcp__pindrop::-webkit-scrollbar { width: 12px; }
+    .pc-text::-webkit-scrollbar { width: 10px; }
+    .pc-list::-webkit-scrollbar-track, .pcl__body::-webkit-scrollbar-track, .pcp__pindrop::-webkit-scrollbar-track, .pc-text::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+    .pc-list::-webkit-scrollbar-button, .pcl__body::-webkit-scrollbar-button, .pcp__pindrop::-webkit-scrollbar-button, .pc-text::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    .pc-list::-webkit-scrollbar-thumb, .pcl__body::-webkit-scrollbar-thumb, .pcp__pindrop::-webkit-scrollbar-thumb, .pc-text::-webkit-scrollbar-thumb {
+        min-height: 44px;
+        border: 3px solid transparent;
+        border-radius: 999px;
+        background: var(--pc-thumb);
+        background-clip: padding-box;
+    }
+    .pc-list:hover::-webkit-scrollbar-thumb, .pcl__body:hover::-webkit-scrollbar-thumb, .pcp__pindrop:hover::-webkit-scrollbar-thumb, .pc-text:hover::-webkit-scrollbar-thumb { background: var(--pc-thumb-on); background-clip: padding-box; }
+    .pc-list::-webkit-scrollbar-thumb:hover, .pcl__body::-webkit-scrollbar-thumb:hover, .pcp__pindrop::-webkit-scrollbar-thumb:hover, .pc-text::-webkit-scrollbar-thumb:hover,
+    .pc-list::-webkit-scrollbar-thumb:active, .pcl__body::-webkit-scrollbar-thumb:active, .pcp__pindrop::-webkit-scrollbar-thumb:active { background: var(--pc-thumb-hover); background-clip: padding-box; }
+}
+
+/* ---------- Layar sangat sempit ---------- */
+@media (max-width: 520px) {
+    .pcp__head { padding: 8px 8px 8px 10px; gap: 10px; }
+    .pcp__ava { width: 38px; height: 38px; }
+    .pcp__ava svg { width: 24px; height: 24px; }
+    .pc-bubble { max-width: 84%; }
+    .pc-send { padding: 0; width: 44px; }
+    .pc-send__lbl { display: none; }
+    .pc-meta span:first-child { display: none; }
+    .pc-meta { justify-content: flex-end; }
+}
+
+/* ---------- Mode gelap ---------- */
+html[data-theme="dark"] .pc-root {
+    --pc-bg: #1a1a1a;
+    --pc-surface: #202020;
+    --pc-field: #2a2a2a;
+    --pc-hover: #262626;
+    --pc-active: #2e2e2e;
+    --pc-text: #ececec;
+    --pc-muted: #9a9a9a;
+    --pc-line: rgba(255, 255, 255, .09);
+    --pc-bubble-in: #2a2a2a;
+    --pc-bubble-out: #2457d6;
+    --pc-meta: #8c8c8c;
+    --pc-dot: rgba(255, 255, 255, .035);
+    --pc-thumb: rgba(255, 255, 255, .2);
+    --pc-thumb-on: rgba(255, 255, 255, .36);
+    --pc-thumb-hover: rgba(255, 255, 255, .6);
+    --pc-pin-bg: rgba(245, 158, 11, .1);
+    --pc-pin-line: rgba(245, 158, 11, .3);
+    --pc-pin-ink: #fcd34d;
+    --pc-blue: #6ea0ff;
+    --pc-ring: rgba(255, 255, 255, .35);
+}
+html[data-theme="dark"] .pc-msg__name { color: hsl(var(--h, 215) 70% 70%); }
+html[data-theme="dark"] .pc-day { box-shadow: none; background: #2a2a2a; }
+html[data-theme="dark"] .pc-bubble { box-shadow: none; }
+html[data-theme="dark"] .pc-err { color: #fca5a5; }
+html[data-theme="dark"] .pc-tag { background: rgba(148, 163, 184, .2); color: #cbd5e1; }
+html[data-theme="dark"] .pc-tag--admin { background: rgba(59, 130, 246, .25); color: #93c5fd; }
+html[data-theme="dark"] .pc-tag--mentor { background: rgba(139, 92, 246, .25); color: #c4b5fd; }
+html[data-theme="dark"] .pc-tag--intern { background: rgba(34, 197, 94, .2); color: #86efac; }
+html[data-theme="dark"] .pc-tag--institusi { background: rgba(245, 158, 11, .2); color: #fcd34d; }
+html[data-theme="dark"] .pc-tag--industri { background: rgba(244, 63, 94, .22); color: #fda4af; }
+html[data-theme="dark"] .pcp__pindrop, html[data-theme="dark"] .pc-menu, html[data-theme="dark"] .pc-emoji { box-shadow: 0 18px 34px -12px rgba(0, 0, 0, .8); }
+
+@media (prefers-reduced-motion: reduce) {
+    .pc-msg, .pc-msg.is-flash .pc-bubble { animation: none; }
+    .pcl { transition: none; }
+    .pcp__pinmore svg { transition: none; }
+    .pc-list { scroll-behavior: auto; }
+}

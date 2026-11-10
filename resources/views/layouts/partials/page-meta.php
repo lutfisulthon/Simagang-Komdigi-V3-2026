@@ -11,6 +11,7 @@ return [
     // Umum
     'workspace.*' => ['violet', 'Utama', null],
     'notifications.*' => ['blue', 'Utama', null],
+    'public-chat.*' => ['teal', 'Utama', null],
 
     // Mentor
     'mentor.dashboard' => ['blue', 'Utama', null],
