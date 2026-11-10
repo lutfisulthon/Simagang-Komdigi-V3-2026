@@ -366,6 +366,7 @@
     @endif
     @auth
         @include('public-chat')
+        @include('layouts.partials.page-guide')
     @endauth
     @stack('scripts')
     <script>
