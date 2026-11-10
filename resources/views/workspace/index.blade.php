@@ -142,13 +142,5 @@
         @if ($can['create_group'] ?? false)
             @include('workspace.partials.group-modals')
         @endif
-
-        @if (Route::has('workspace.preview.reset') && ($can['create_group'] ?? false))
-            <p class="mt-8 text-xs text-amber-800 flex items-center gap-2">
-                <i class="fas fa-flask" aria-hidden="true"></i>
-                Mode preview: kelompok yang Anda buat atau ubah tersimpan di sesi login ini saja.
-                <a href="{{ route('workspace.preview.reset') }}" class="font-semibold underline">Kembalikan data contoh</a>
-            </p>
-        @endif
     @endif
 @endsection

@@ -41,24 +41,19 @@ Dokumen ini adalah acuan bersama antara frontend (Blade + Alpine) dan backend (c
 
 ---
 
-## 1. Cara kerja selama backend belum ada
+## 1. Status integrasi
+
+Backend sudah terintegrasi penuh. Route preview, data contoh, galeri komponen, dan mode mock sudah dihapus
+(`routes/workspace-preview*.php`, `resources/views/workspace/preview/`, `public/js/workspace/mock*.js`).
 
 | Komponen | Lokasi | Keterangan |
 | --- | --- | --- |
-| Route preview | `routes/workspace-preview.php` | Dimuat dari `routes/web.php` **hanya** saat `APP_ENV=local`. Hanya merender view dengan data contoh. |
-| Mode mock | `public/js/workspace/mock.js` | Aktif otomatis selama route `workspace.preview.components` terdaftar. Semua panggilan `WS.api.*` dialihkan ke handler mock. |
-| Lapisan data | `public/js/workspace/api.js` | Satu-satunya tempat yang tahu URL endpoint. |
-| Mock tugas & channel | `mock-tasks.js`, `mock-channels.js` | Perubahan hanya di memori browser. Di channel, anggota lain "mengirim" pesan tiap 20–35 detik untuk menguji polling, badge, dan notifikasi mention. Pesan berisi `/gagal` gagal terkirim sekali (uji tampilan "Coba lagi"). |
-| Uji error & lambat | Console browser | `WS.mock.failing = ['tasks.move']` membuat panggilan itu gagal 500 (`WS.mock.failStatus = 0` → offline). `WS.mock.slow = 3000` menambah jeda. Kosongkan untuk kembali normal. |
+| Lapisan data | `public/js/workspace/api.js` | Satu-satunya tempat yang tahu URL endpoint. Semua panggilan `WS.api.*` langsung ke endpoint asli. |
+| Route | `routes/web.php` | Route asli bernama `workspace.index`, `workspace.show`, `notifications.index`, dst. |
 
-**Saat backend siap:**
+Sisa kode mock di JS (`WS.mock`, `WS.config.mock`, driver realtime `mock`) juga sudah dibersihkan.
 
-1. Hapus `routes/workspace-preview.php`, `routes/workspace-preview-data.php`, dan blok `require` di akhir `routes/web.php`.
-2. Daftarkan route asli dengan **nama yang sama** (`workspace.index`, `workspace.show`, `notifications.index`, …).
-3. Hapus `resources/views/workspace/preview/`.
-4. Mode mock otomatis mati, dan `WS.api` langsung memanggil endpoint asli.
-
-Layout (`layouts/app.blade.php`) hanya menampilkan menu Workspace, top bar, dan lonceng bila `Route::has('workspace.index')` dan user adalah admin (`super_admin`/`admin_full`), mentor, atau intern. Di production sebelum backend rilis, tidak ada yang berubah.
+Layout (`layouts/app.blade.php`) menampilkan menu Workspace, top bar, dan lonceng bila `Route::has('workspace.index')` dan user adalah admin (`super_admin`/`admin_full`), mentor, atau intern.
 
 ---
 
@@ -641,7 +636,6 @@ Perilaku frontend (`channels.js`):
 - **Template:** `POST /workspace/templates/{id}/assign` cukup `{ assignee_ids, due_at, start_at? }` — tugas dibuat di kelompok tiap intern (`target`/`workspace_id` dihapus). Intern tanpa kelompok → 422.
 - **Monitoring:** `GET /workspace/progress` → `teams[]` = agregat kelompok aktif per unit (`groups_count`, `stats`), `workspace_url` = `/workspace?team={id}`; `interns[id].group_url` menggantikan `space_url`.
 - **Anak Bimbingan (`mentor/intern/index`):** view menambah kolom centang & "Kelompok" (data dari roster). `InternController` tidak perlu diubah.
-- **Preview lokal:** perubahan kelompok disimpan di session login (tidak sinkron antar akun). `GET /workspace/_preview/reset` mengembalikan data contoh. Akun review berpasangan diatur di `routes/workspace-preview-data.php` (`$pair`).
 
 ---
 
@@ -713,7 +707,6 @@ Event dipakai sebagai **sinyal**: frontend lalu memanggil polling/refresh yang s
 - Otorisasi channel lewat `/broadcasting/auth` (header CSRF dikirim frontend). Aturannya sama dengan `WorkspacePolicy@view`.
 - Selama terhubung, polling diperlambat menjadi minimal 60 detik sebagai jaring pengaman. Bila koneksi putus, interval normal kembali dengan sendirinya. Indikator di top bar: "Realtime" / "Menghubungkan…" / "Polling".
 - **Perlu diubah di backend:** CSP `SecurityHeaders` menambah `connect-src 'self' wss://{REVERB_HOST}:{port}` (PRD Fase 2/3).
-- Preview lokal tanpa server: tambahkan `?realtime=mock` di URL.
 
 ## 10. Menunggu konfirmasi (memengaruhi UI)
 

@@ -344,17 +344,4 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-    <script>
-        if (WS.config.mock && WS.mock) {
-            WS.mock.seed('sprint-context', @js(['workspace_id' => $workspace['id'], 'sprints' => $sprints ?? [], 'members' => $assignableInterns]));
-            WS.mock.seed('task-context', @js(['interns' => $assignableInterns, 'labels' => $labels, 'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'type' => $workspace['type'], 'url' => $workspace['url']]]));
-            WS.mock.seed('label-context', @js(['teams' => $workspace['team'] ? [$workspace['team']] : [], 'labels' => $labels]));
-            WS.mock.seed('channel-context', @js([
-                'workspace' => ['id' => $workspace['id'], 'name' => $workspace['name'], 'url' => $workspace['url']],
-                'members' => $members,
-                'channels' => $channels,
-                'tasks' => collect($initialTasks)->map(fn ($t) => ['id' => $t['id'], 'code' => $t['code'], 'url' => $t['url']])->values(),
-            ]));
-        }
-    </script>
 @endpush

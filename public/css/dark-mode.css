@@ -10,7 +10,6 @@
 
 html[data-theme="dark"] {
     background-color: #1a1a1a !important;
-    scrollbar-color: #4b5058 #1a1a1a;
 }
 
 [data-dm-flip] {

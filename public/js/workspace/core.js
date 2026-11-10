@@ -7,7 +7,6 @@
     'use strict';
 
     const config = Object.assign({
-        mock: false,
         user: null,
         endpoints: {},
         pollInterval: 30000,

@@ -148,10 +148,6 @@
             loading: false,
             hasMore: initial.length >= 20,
 
-            init() {
-                if (WS.config.mock && WS.mock) WS.mock.seed('activities:' + workspaceId, initial);
-            },
-
             get groups() {
                 const groups = [];
                 this.items.forEach((item) => {

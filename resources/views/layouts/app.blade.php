@@ -7,7 +7,6 @@
     @include('layouts.partials.theme-head', ['splash' => true])
     @php
         // Workspace: aktif untuk admin (super_admin/admin_full), mentor, dan intern bila route-nya terdaftar.
-        // $wsMock = true selama routes/workspace-preview.php dimuat (APP_ENV=local, sebelum backend siap).
         $wsUser = auth()->user();
         $wsRole = match (true) {
             ! $wsUser => null,
@@ -17,7 +16,6 @@
             default => null,
         };
         $wsEnabled = $wsRole !== null && Route::has('workspace.index');
-        $wsMock = $wsEnabled && Route::has('workspace.preview.components');
 
         // Warna & identitas halaman (selaras warna menu sidebar): lihat layouts/partials/page-meta.php
         $pageMeta = null;

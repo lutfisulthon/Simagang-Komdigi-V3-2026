@@ -16,5 +16,6 @@
     {{-- Halaman tanpa splash (login, landing): mengirim form login membuat halaman tujuan dianggap kunjungan pertama, jadi splash pembuka tampil sekali setelah masuk. --}}
     <script>document.addEventListener('submit', function (e) { try { if (/\/login\/?$/.test(new URL(e.target.action, location.href).pathname)) sessionStorage.removeItem('simagang-splash'); } catch (err) {} });</script>
 @endif
+<link rel="stylesheet" href="{{ asset('css/scrollbar.css') }}?v={{ @filemtime(public_path('css/scrollbar.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/dark-mode.css') }}?v={{ @filemtime(public_path('css/dark-mode.css')) }}">
 <script defer src="{{ asset('js/dark-mode.js') }}?v={{ @filemtime(public_path('js/dark-mode.js')) }}"></script>

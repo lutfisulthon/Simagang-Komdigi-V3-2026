@@ -504,6 +504,25 @@ class SprintTest extends TestCase
         $this->actingAs($this->ahmad->user)->deleteJson("/workspace/tasks/{$foreign}")->assertForbidden();
     }
 
+    public function test_tugas_buatan_ketua_sprint_yang_masuk_review_memberi_tahu_mentor(): void
+    {
+        $id = $this->makeSprint(['leader_id' => $this->ahmad->id])->json('data.id');
+
+        $taskId = $this->actingAs($this->ahmad->user)->postJson("/workspace/{$this->wsGta->id}/tasks", [
+            'title' => 'Rancang wireframe', 'sprint_id' => $id, 'assignee_ids' => [$this->ahmad->id],
+        ])->assertCreated()->json('data.0.id');
+
+        $this->actingAs($this->ahmad->user)->patchJson("/workspace/tasks/{$taskId}/status", ['status' => 'in_progress', 'column_order' => [$taskId]])->assertOk();
+        $this->actingAs($this->ahmad->user)->patchJson("/workspace/tasks/{$taskId}/status", ['status' => 'review', 'column_order' => [$taskId]])->assertOk();
+
+        $review = collect($this->actingAs($this->mentor())->getJson('/notifications?limit=50')->json('data'))->firstWhere('type', 'task_in_review');
+        $this->assertNotNull($review, 'Mentor harus diberi tahu bila tugas buatan ketua sprint masuk Review.');
+        $this->assertStringContainsString('menunggu review', $review['title']);
+
+        // Intern pelaku tidak diberi tahu tentang aksinya sendiri.
+        $this->assertNull(collect($this->actingAs($this->ahmad->user)->getJson('/notifications?limit=50')->json('data'))->firstWhere('type', 'task_in_review'));
+    }
+
     public function test_ketua_tidak_bisa_membagi_ke_intern_tim_lain_dan_kehilangan_hak_setelah_sprint_selesai(): void
     {
         $id = $this->makeSprint(['leader_id' => $this->ahmad->id])->json('data.id');
