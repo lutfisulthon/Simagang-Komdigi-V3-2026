@@ -11,7 +11,7 @@
     {{-- ================= Daftar channel ================= --}}
     <aside class="ws-chat__side" :class="view === 'chat' && 'ws-chat__side--away'" aria-label="Daftar channel">
         <div class="ws-chat__side-head">
-            <p class="font-bold text-gray-800">Channel</p>
+            <p class="font-bold text-gray-800">Channel <x-workspace.help term="channel" label="Apa itu Channel?" /></p>
             <span class="text-xs ws-text-faint ml-auto" x-show="$store.wsChat.unreadTotal > 0" x-text="$store.wsChat.unreadTotal + ' belum dibaca'"></span>
             <button type="button" class="ws-icon-btn ws-icon-btn--sm" x-show="canCreateChannel" x-on:click="openChannelForm()"
                     title="Buat channel" aria-label="Buat channel">

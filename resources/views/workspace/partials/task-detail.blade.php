@@ -38,7 +38,7 @@
                 <h2 class="{{ $mode === 'page' ? 'text-2xl' : 'text-xl' }} font-bold text-gray-800 leading-snug" x-text="task.title" id="ws-task-title"></h2>
             </div>
 
-            <div class="relative shrink-0" x-data="{ menu: false }" x-on:click.outside="menu = false" x-on:keydown.escape="if (menu) { menu = false; $event.preventDefault(); $el.querySelector('button').focus(); }">
+            <div class="relative shrink-0" data-tour="task-menu" x-data="{ menu: false }" x-on:click.outside="menu = false" x-on:keydown.escape="if (menu) { menu = false; $event.preventDefault(); $el.querySelector('button').focus(); }">
                 <button type="button" class="ws-icon-btn" x-on:click="menu = !menu" :aria-expanded="menu.toString()" aria-label="Aksi lain">
                     <i class="fas fa-ellipsis-vertical"></i>
                 </button>
@@ -58,7 +58,7 @@
         </div>
 
         {{-- Aksi status --}}
-        <div class="ws-tile !bg-white flex flex-wrap items-center gap-2 mb-5" x-show="primaryActions.length || statusOptions.length || waitingNote || task.can.extend_deadline">
+        <div class="ws-tile !bg-white flex flex-wrap items-center gap-2 mb-5" data-tour="task-actions" x-show="primaryActions.length || statusOptions.length || waitingNote || task.can.extend_deadline">
             <template x-for="action in primaryActions" :key="action.target">
                 <button type="button" class="ws-btn ws-btn--sm" :class="action.style === 'primary' ? 'ws-btn--primary' : 'ws-btn--soft'"
                         :disabled="moving" x-on:click="moveTo(action.target)">
@@ -100,7 +100,7 @@
         </template>
 
         {{-- Info --}}
-        <dl class="ws-detail-meta ws-detail-section">
+        <dl class="ws-detail-meta ws-detail-section" data-tour="task-meta">
             <dt>Assignee</dt>
             <dd class="flex flex-wrap gap-2">
                 <template x-for="a in task.assignees" :key="a.id">
@@ -160,7 +160,7 @@
         </section>
 
         {{-- Checklist --}}
-        <section class="ws-detail-section" x-show="task.checklist_items.length">
+        <section class="ws-detail-section" data-tour="task-checklist" x-show="task.checklist_items.length">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="ws-section-label">Checklist</h3>
                 <span class="ws-mono text-xs text-slate-500" x-text="task.checklist.done + '/' + task.checklist.total + ' · ' + checklistPercent + '%'"></span>
@@ -223,7 +223,7 @@
         </section>
 
         {{-- Komentar --}}
-        <section class="ws-detail-section">
+        <section class="ws-detail-section" data-tour="task-comments">
             <h3 class="ws-section-label mb-3">Komentar · <span x-text="task.comments.length"></span></h3>
             <ul class="space-y-4 mb-4" x-ref="comments">
                 <template x-for="c in task.comments" :key="c.id">
@@ -259,7 +259,7 @@
         </section>
 
         {{-- Riwayat --}}
-        <section class="ws-detail-section" x-data="{ all: false }" x-show="task.activities.length">
+        <section class="ws-detail-section" data-tour="task-history" x-data="{ all: false }" x-show="task.activities.length">
             <h3 class="ws-section-label mb-3">Riwayat</h3>
             <ol class="space-y-2.5">
                 <template x-for="item in (all ? task.activities : task.activities.slice(0, 6))" :key="item.id">

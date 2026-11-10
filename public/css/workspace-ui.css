@@ -332,6 +332,11 @@ a.ws-card.ws-card--finished:hover { border-color: #cbd5e1; box-shadow: 0 12px 24
 .ws-guide__faq button i { font-size: 11px; color: #94a3b8; transition: transform .2s ease; }
 .ws-guide__faq.is-open button i { transform: rotate(180deg); }
 .ws-guide__faq p { margin: 0; padding: 0 14px 14px; font-size: 13px; line-height: 1.55; color: #475569; }
+.ws-guide__feat-title { display: inline-flex; align-items: center; gap: 10px; }
+/* Ikon judul tidak ikut berputar seperti panah buka-tutup. */
+.ws-guide__faq .ws-guide__feat-title > i.fas { width: 16px; text-align: center; font-size: 13px; color: #4f46e5; transform: none; }
+.ws-guide__feat ul { margin: 0; padding: 0 14px 14px 36px; list-style: disc; display: flex; flex-direction: column; gap: 6px; }
+.ws-guide__feat li { font-size: 13px; line-height: 1.55; color: #475569; }
 
 /* ---------- Tutorial pertama kali (public/js/workspace/tour.js, Driver.js) ---------- */
 .driver-popover.ws-tour {

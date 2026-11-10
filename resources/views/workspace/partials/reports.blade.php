@@ -15,7 +15,7 @@
         <section class="ws-panel ws-rp xl:col-span-2" aria-labelledby="ws-rp-burn">
             <header class="ws-rp__head">
                 <div class="min-w-0">
-                    <h2 id="ws-rp-burn" class="ws-rp__title">Burndown sprint</h2>
+                    <h2 id="ws-rp-burn" class="ws-rp__title">Burndown sprint <x-workspace.help term="burndown" label="Apa itu Burndown?" /></h2>
                     <p class="ws-rp__desc">Sisa tugas di sprint dibanding rencana ideal (garis putus-putus). Garis ungu di bawah garis ideal berarti pekerjaan lebih cepat dari rencana.</p>
                 </div>
                 <label class="shrink-0" x-show="sprintOptions.length > 1" x-cloak>
@@ -82,7 +82,7 @@
         <section class="ws-panel ws-rp" aria-labelledby="ws-rp-points">
             <header class="ws-rp__head">
                 <div>
-                    <h2 id="ws-rp-points" class="ws-rp__title">Velocity (story point)</h2>
+                    <h2 id="ws-rp-points" class="ws-rp__title">Velocity (story point) <x-workspace.help term="velocity" label="Apa itu Velocity?" /></h2>
                     <p class="ws-rp__desc">Story point yang selesai di tiap sprint. Rata-rata sprint selesai dipakai untuk memperkirakan kapasitas sprint berikutnya.</p>
                 </div>
             </header>

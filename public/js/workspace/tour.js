@@ -1,10 +1,13 @@
 /*
  * Workspace — tutorial pertama kali (tur sorotan), memakai Driver.js (public/vendor/driverjs).
  *
- * Tiga tutorial, masing-masing hanya tampil sekali per pengguna dan bisa diulang dari Panduan:
+ * Enam tutorial, masing-masing hanya tampil sekali per pengguna dan bisa diulang dari Panduan:
  *   dasar            semua halaman: menu Workspace, lonceng, mode gelap, Panduan
  *   daftar-kelompok  /workspace
+ *   channel          /workspace/{id} saat tab Channel dibuka
+ *   backlog          /workspace/{id} saat tab Backlog dibuka (penanda [data-tour] di partials/backlog)
  *   halaman-kelompok /workspace/{id}
+ *   detail-tugas     /workspace/tasks/{id} (penanda [data-tour] di partials/task-detail)
  * Naikkan `version` sebuah tutorial untuk menampilkannya lagi ke semua orang (mis. setelah ada fitur baru).
  *
  * Penyimpanan ("sudah pernah lihat") lewat satu lapisan kecil `storage` di bawah:
@@ -184,13 +187,64 @@
                 { el: () => visible('a.ws-card'), title: 'Kartu kelompok', text: 'Tiap kartu menampilkan progres tugas, tugas yang menunggu review atau terlambat, dan anggotanya. Klik "Buka" untuk masuk.', side: 'top' },
             ],
         },
+        // Tutorial tab (Channel, Backlog) didahulukan dari halaman-kelompok supaya "Tutorial halaman ini" memilihnya saat tab itu terbuka.
+        {
+            id: 'channel',
+            version: 1,
+            match: () => /^\/workspace\/\d+$/.test(path()) && !!visible('#ws-panel-channel'),
+            steps: () => [
+                { el: () => visible('#ws-panel-channel .ws-chat__side'), title: 'Daftar channel', text: 'Channel kelompok Anda dan #pengumuman. Angka merah menandai pesan yang belum dibaca.', side: 'right' },
+                { el: () => visible('#ws-panel-channel .ws-composer'), title: 'Tulis pesan', text: 'Enter untuk kirim, Shift+Enter untuk baris baru. Ketik @ untuk menyebut anggota atau # untuk merujuk tugas. Lampirkan file lewat ikon klip.', side: 'top' },
+                { el: () => visible('#ws-panel-channel [aria-label="Cari pesan"]'), title: 'Cari pesan', text: 'Cari pesan lama di channel ini, termasuk balasan di thread.', side: 'bottom' },
+                { el: () => visible('#ws-panel-channel [aria-label^="Pesan disematkan"]'), title: 'Pesan disematkan', text: 'Pesan penting yang disematkan mentor dikumpulkan di sini.', side: 'bottom' },
+                { el: () => visible('#ws-panel-channel [aria-label="Opsi channel"]'), title: 'Opsi channel', text: role === 'intern' ? 'Bisukan channel bila terlalu ramai. Pesan tetap bisa dibaca kapan saja.' : 'Bisukan channel, ubah info, atau arsipkan channel.', side: 'left' },
+                { el: null, title: 'Aksi pada pesan', text: 'Arahkan kursor ke sebuah pesan untuk memberi reaksi, membalas di thread, menyalin, atau mengedit dan menghapus pesan Anda sendiri.' },
+            ],
+        },
+        {
+            id: 'backlog',
+            version: 1,
+            match: () => /^\/workspace\/\d+$/.test(path()) && !!visible('#ws-panel-backlog'),
+            steps: () => {
+                const bl = (sel) => visible('#ws-panel-backlog ' + sel);
+                const btn = (text) => byText('#ws-panel-backlog button', text);
+                const staff = role !== 'intern';
+                return [
+                    {
+                        el: () => bl('[data-tour="bl-intro"]'), title: 'Backlog dan sprint',
+                        text: staff ? 'Alurnya dari bawah ke atas: tugas dicatat dulu di Backlog (paling bawah), lalu diseret naik ke sprint, dan dikerjakan di Board saat sprintnya berjalan. Sprint ditaruh di atas supaya sprint yang sedang berjalan langsung terlihat.'
+                            : 'Rencana tugas kelompok, dibaca dari bawah ke atas: tugas dicatat di Backlog (paling bawah), lalu dimasukkan mentor ke sprint di atasnya. Tugas sprint yang sedang berjalan dikerjakan di Board.',
+                        side: 'bottom',
+                    },
+                    staff && { el: () => bl('[data-tour="bl-new-sprint"]'), title: 'Buat sprint', text: 'Isi nama, deadline sprint, tujuan, ketua, dan tugas-tugasnya. Sprint baru berstatus terencana sampai dimulai.', side: 'bottom' },
+                    {
+                        el: () => bl('.ws-bl-section--active') || bl('[data-tour="bl-sprint"]'), title: 'Kotak sprint',
+                        text: 'Kepalanya menampilkan tanggal, jumlah tugas, total story point, dan Ketua. Sprint yang sedang berjalan ditandai "Berjalan". Tiga angka di kanan: To Do, dikerjakan, dan selesai.',
+                        side: 'bottom',
+                    },
+                    {
+                        el: () => bl('.ws-leader-chip'), title: 'Ketua sprint',
+                        text: 'Ketua membagi tugas sprint ke anggota di Board. Tanda "belum dibagi" menunjukkan jumlah tugas yang belum punya assignee.',
+                        side: 'bottom',
+                    },
+                    staff && { el: () => btn('Mulai sprint'), title: 'Mulai sprint', text: 'Tentukan durasi atau tanggal, lalu pilih Ketua. Hanya satu sprint yang dapat berjalan sekaligus.', side: 'left' },
+                    staff && { el: () => btn('Selesaikan sprint'), title: 'Selesaikan sprint', text: 'Di akhir periode, tutup sprint dan pilih ke mana tugas yang belum selesai dipindahkan.', side: 'left' },
+                    staff && { el: () => bl('[aria-label^="Opsi "]'), title: 'Opsi sprint', text: 'Ubah sprint, atau hapus sprint yang belum dimulai. Tugasnya kembali ke Backlog, tidak ikut terhapus.', side: 'left' },
+                    staff && { el: () => bl('.ws-bl-row__handle'), title: 'Pindahkan tugas', text: 'Seret baris dari pegangan ini ke sprint atau ke Backlog. Bisa juga lewat menu titik tiga di ujung baris.', side: 'right' },
+                    { el: () => bl('[data-tour="bl-backlog"]'), title: 'Backlog', text: staff ? 'Titik awal setiap tugas. Klik "Buat tugas" di sini untuk mencatat tugas yang belum dijadwalkan, lalu seret naik ke sprint saat siap dikerjakan.' : 'Titik awal setiap tugas: dicatat mentor di sini, lalu dinaikkan ke sprint saat siap dikerjakan.', side: 'top' },
+                    staff && { el: () => bl('[data-tour="bl-epic"]'), title: 'Epic', text: 'Kelompokkan tugas yang bertema sama lintas sprint. Epic dipilih saat membuat atau mengubah tugas.', side: 'bottom' },
+                    !staff && { el: () => bl('.ws-bl-create'), title: 'Anda Ketua Sprint', text: 'Tambahkan tugas ke sprint yang Anda pimpin dari sini, lalu bagi ke anggota di Board.', side: 'top' },
+                    { el: () => bl('[data-tour="bl-done"]'), title: 'Sprint selesai', text: staff ? 'Riwayat sprint yang sudah ditutup beserta hasilnya. "Buka kembali" tersedia bila tidak ada sprint yang sedang berjalan.' : 'Riwayat sprint yang sudah ditutup beserta jumlah tugas yang selesai.', side: 'top' },
+                ];
+            },
+        },
         {
             id: 'halaman-kelompok',
-            version: 1,
+            version: 2,
             match: () => /^\/workspace\/\d+$/.test(path()),
             steps: () => [
                 { el: () => visible('.ws-stats'), title: 'Ringkasan tugas', text: 'Jumlah tugas per status, termasuk yang terlambat.', side: 'bottom' },
-                { el: () => visible('.ws-tabs'), title: 'Bagian kelompok', text: 'Backlog untuk merencanakan, Board untuk mengerjakan, Timeline untuk jadwal, Laporan untuk grafik, dan Channel untuk chat.', side: 'bottom' },
+                { el: () => visible('.ws-tabs'), title: 'Bagian kelompok', text: 'Backlog untuk merencanakan, Board untuk mengerjakan, List untuk mencari dan menyaring, Timeline dan Deadline untuk jadwal, Laporan untuk grafik, Channel untuk chat, dan Aktivitas untuk riwayat perubahan.', side: 'bottom' },
                 { el: () => visible('.ws-sprint-bar'), title: 'Sprint berjalan', text: 'Periode kerja saat ini beserta targetnya. Klik ikon ? di sampingnya untuk penjelasan istilah.', side: 'bottom' },
                 {
                     el: () => visible('.ws-task-card'),
@@ -200,7 +254,23 @@
                         : 'Klik kartu untuk melihat detail tugas.',
                     side: 'right',
                 },
-                role !== 'admin' && { el: () => byText('button', 'Buat tugas'), title: 'Buat tugas', text: 'Tambahkan tugas baru dari sini.', side: 'left' },
+                { el: () => [...document.querySelectorAll('.ws-hero-btn')].find((b) => b.getClientRects().length && /anggota\s*$/.test(b.textContent.trim())) || null, title: 'Anggota', text: 'Lihat daftar mentor dan anak magang di kelompok ini.', side: 'bottom' },
+                role !== 'intern' && { el: () => byText('.ws-hero-btn', 'Kelola'), title: 'Kelola kelompok', text: 'Ganti nama dan warna, tambah anggota, atau tandai kelompok selesai magang.', side: 'bottom' },
+                { el: () => byText('button', 'Buat tugas'), title: 'Buat tugas', text: role === 'intern' ? 'Sebagai Ketua Sprint, Anda dapat menambah tugas ke sprint yang Anda pimpin.' : 'Tambahkan tugas baru dari sini.', side: 'left' },
+                { el: () => isDesktop() ? visible('.sb-help') : null, title: 'Ingin tahu lebih banyak?', text: 'Tab Fitur di Panduan menjelaskan setiap bagian, dari Channel sampai rekap nilai.', side: 'right' },
+            ],
+        },
+        {
+            id: 'detail-tugas',
+            version: 1,
+            match: () => /^\/workspace\/tasks\/\d+$/.test(path()),
+            steps: () => [
+                { el: () => visible('[data-tour="task-actions"]'), title: 'Aksi tugas', text: role === 'intern' ? 'Tombol di sini mengikuti status: Mulai kerjakan, Kirim untuk review, atau Perbaiki sekarang. Bila deadline lewat, minta mentor memperpanjangnya.' : 'Setujui & beri nilai atau Minta revisi untuk tugas di Review. Perpanjang deadline bila anak magang terlambat.', side: 'bottom' },
+                { el: () => visible('[data-tour="task-meta"]'), title: 'Info tugas', text: 'Assignee, pembuat, deadline, epic, story point, dan label tugas ini.', side: 'bottom' },
+                { el: () => visible('[data-tour="task-checklist"]'), title: 'Checklist', text: 'Langkah kecil di dalam tugas. Centang yang sudah selesai; persentasenya tampil di kartu.', side: 'top' },
+                { el: () => visible('[data-tour="task-comments"]'), title: 'Komentar', text: 'Diskusi khusus tugas ini. Tekan Ctrl+Enter untuk mengirim.', side: 'top' },
+                { el: () => visible('[data-tour="task-history"]'), title: 'Riwayat', text: 'Siapa mengubah apa dan kapan pada tugas ini.', side: 'top' },
+                { el: () => visible('[data-tour="task-menu"]'), title: 'Menu lain', text: role === 'intern' ? 'Salin link untuk membagikan tugas ini.' : 'Salin link, edit, atau hapus tugas.', side: 'left' },
             ],
         },
     ];
@@ -312,6 +382,11 @@
     }
 
     document.addEventListener('alpine:initialized', () => { syncUI(); whenReady(autoStart); });
+
+    // Tutorial yang terikat tab (mis. Channel) menyusul saat tab itu dibuka.
+    document.addEventListener('click', (e) => {
+        if (e.target.closest && e.target.closest('.ws-tab[data-tab]')) setTimeout(autoStart, 500);
+    });
 
     // Ulangi dari Panduan: detail { id } atau { id: 'halaman' } (tutorial yang cocok dengan halaman ini).
     window.addEventListener('ws-tour-start', async (e) => {

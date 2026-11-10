@@ -99,7 +99,7 @@
                 {{-- Label --}}
                 <div x-show="labels.length || canManageLabels">
                     <div class="flex items-center justify-between">
-                        <p class="ws-label" id="ws-f-labels">Label</p>
+                        <p class="ws-label" id="ws-f-labels">Label <x-workspace.help term="label" label="Apa itu Label?" /></p>
                         <button type="button" class="text-xs font-semibold text-indigo-600 hover:underline py-1" x-show="canManageLabels" x-on:click="manageLabels()">
                             <i class="fas fa-tags mr-1"></i>Kelola label
                         </button>

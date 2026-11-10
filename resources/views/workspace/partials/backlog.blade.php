@@ -6,7 +6,7 @@
 @php($canManage = $can['manage_sprints'] ?? false)
 
 <div x-data="wsBacklog(@js(['canManage' => $canManage]))" class="ws-backlog">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4" data-tour="bl-intro">
         <p class="text-sm text-slate-600">
             <x-workspace.help term="backlog" label="Apa itu Backlog dan Sprint?" />
             @if ($canManage)
@@ -18,10 +18,10 @@
         </p>
         @if ($canManage)
             <div class="flex flex-wrap items-center gap-2">
-                <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" x-on:click="$dispatch('ws-epics-open')">
+                <button type="button" class="ws-btn ws-btn--ghost ws-btn--sm" data-tour="bl-epic" x-on:click="$dispatch('ws-epics-open')">
                     <i class="fas fa-bolt"></i> Epic <span class="text-slate-500" x-text="'(' + $store.wsTasks.epics.length + ')'"></span>
                 </button>
-                <button type="button" class="ws-btn ws-btn--soft ws-btn--sm" x-on:click="$dispatch('ws-sprint-form', {})">
+                <button type="button" class="ws-btn ws-btn--soft ws-btn--sm" data-tour="bl-new-sprint" x-on:click="$dispatch('ws-sprint-form', {})">
                     <i class="fas fa-plus"></i> Buat sprint
                 </button>
             </div>
@@ -30,7 +30,7 @@
 
     <div class="space-y-4">
         <template x-for="sec in sections" :key="sec.key">
-            <section class="ws-bl-section" :class="sec.sprint && sec.sprint.status === 'active' && 'ws-bl-section--active'"
+            <section class="ws-bl-section" :data-tour="sec.sprint ? 'bl-sprint' : 'bl-backlog'" :class="sec.sprint && sec.sprint.status === 'active' && 'ws-bl-section--active'"
                      :aria-label="sec.sprint ? sec.sprint.name : 'Backlog'">
                 {{-- Kepala bagian --}}
                 <header class="ws-bl-head">
@@ -159,7 +159,7 @@
     </div>
 
     {{-- Sprint selesai (riwayat, hanya baca) --}}
-    <div class="mt-6" x-show="completed.length">
+    <div class="mt-6" data-tour="bl-done" x-show="completed.length">
         <button type="button" class="ws-section-label inline-flex items-center gap-2 py-1" x-on:click="showCompleted = !showCompleted" :aria-expanded="showCompleted.toString()">
             <i class="fas fa-chevron-down text-[10px] transition-transform" :class="!showCompleted && '-rotate-90'" aria-hidden="true"></i>
             <span x-text="'Sprint selesai (' + completed.length + ')'"></span>
