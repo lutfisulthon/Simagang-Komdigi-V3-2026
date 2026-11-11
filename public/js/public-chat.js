@@ -32,8 +32,8 @@
     const badges = Array.from(document.querySelectorAll('[data-pc-badge]'));
     const cfg = Object.assign({ mock: true, endpoints: null, maxLen: 10000, maxPins: 3, rateMs: 600, perMinute: 40, pollViewMs: 5000, pollIdleMs: 30000, pollLiveViewMs: 30000, pollLiveIdleMs: 60000, realtime: null, authEndpoint: '/broadcasting/auth', user: {} }, window.PublicChatConfig || {});
 
-    const ROLES = { admin: 'ADMIN', mentor: 'MENTOR', intern: 'PESERTA', institusi: 'INSTITUSI', industri: 'INDUSTRI' };
-    const ROLE_CHIP = { mentor: 'Mentor', intern: 'Peserta', institusi: 'Institusi', industri: 'Industri', admin: 'Admin' };
+    const ROLES = { admin: 'ADMIN', mentor: 'MENTOR', intern: 'MAGANG', institusi: 'INSTITUSI', industri: 'INDUSTRI' };
+    const ROLE_CHIP = { mentor: 'Mentor', intern: 'Magang', institusi: 'Institusi', industri: 'Industri', admin: 'Admin' };
     const me = { id: String(cfg.user.id || 'tamu'), name: String(cfg.user.name || 'Pengguna'), role: ROLES[cfg.user.role] ? cfg.user.role : 'intern' };
     const canPin = me.role === 'mentor';
     const DAY = 864e5;

@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $roleLabels = ['admin' => 'Admin', 'mentor' => 'Mentor', 'intern' => 'Peserta', 'institusi' => 'Institusi', 'industri' => 'Industri'];
+    $roleLabels = ['admin' => 'Admin', 'mentor' => 'Mentor', 'intern' => 'Magang', 'institusi' => 'Institusi', 'industri' => 'Industri'];
     $tabs = [
         'all' => ['Semua', 'fa-comment-dots'],
         'visible' => ['Tampil', 'fa-eye'],
