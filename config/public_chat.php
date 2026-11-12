@@ -21,8 +21,9 @@ return [
     'max_pins' => 3,
     'pin_days' => [7, 30],
 
-    // Hitungan "online": user yang polling dalam N detik terakhir.
-    'online_window' => 45,
+    // Hitungan "online": user yang polling dalam N detik terakhir. Harus lebih besar dari polling paling lambat
+    // saat realtime tersambung (60 detik, tab tidak aktif), kalau tidak user yang diam ikut dihitung offline.
+    'online_window' => 90,
 
     // Tautan (http, www, domain) hanya boleh dikirim admin dan mentor. Peran lain ditolak (cegah spam/phishing).
     'links_allowed_roles' => ['admin', 'mentor'],
