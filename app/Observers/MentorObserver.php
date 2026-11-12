@@ -26,6 +26,17 @@ class MentorObserver implements ShouldHandleEventsAfterCommit
         if ($mentor->wasChanged(['is_active', 'team_id', 'user_id'])) {
             $this->sync($mentor, resyncInterns: true);
         }
+
+        // Profil dialihkan ke akun lain: akun lama tidak boleh tetap menjadi mentor di workspace.
+        $previousUserId = $mentor->getPrevious()['user_id'] ?? null;
+
+        if ($mentor->wasChanged('user_id') && $previousUserId) {
+            try {
+                $this->provisioner->revokeFormerMentorUser((int) $previousUserId);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
     }
 
     /** Kegagalan tidak boleh menggagalkan penyimpanan mentor; perbaiki lewat `workspace:backfill`. */

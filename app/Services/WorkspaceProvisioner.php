@@ -108,13 +108,26 @@ class WorkspaceProvisioner
             if ($mentor->is_active) {
                 $this->joinMentor($mentor);
             } else {
-                $this->releaseMentorAccess($mentor->user);
+                $this->releaseMentorAccess($mentor->user->id);
             }
         }
 
         if ($resyncInterns) {
             $mentor->interns()->where('is_active', true)->get()->each(fn (Intern $intern) => $this->sync($intern));
         }
+    }
+
+    /**
+     * Profil mentor dialihkan ke akun user lain: cabut akses akun lama (workspace tim, Space, #pengumuman),
+     * kecuali akun itu masih dipakai profil mentor aktif lain. Riwayat tetap tersimpan.
+     */
+    public function revokeFormerMentorUser(int $userId): void
+    {
+        if (Mentor::where('user_id', $userId)->where('is_active', true)->exists()) {
+            return;
+        }
+
+        $this->releaseMentorAccess($userId);
     }
 
     private function joinMentor(Mentor $mentor): void
@@ -160,16 +173,16 @@ class WorkspaceProvisioner
     }
 
     /** Mentor nonaktif: keluar dari semua workspace (tim dan Space) serta #pengumuman. Riwayat tetap tersimpan. */
-    private function releaseMentorAccess(User $user): void
+    private function releaseMentorAccess(int $userId): void
     {
         $workspaceIds = DB::table('workspace_members')
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('role', 'mentor')
             ->whereNull('left_at')
             ->pluck('workspace_id')
             ->all();
 
-        $this->leaveWorkspaces($user->id, $workspaceIds, includeAnnouncement: true);
+        $this->leaveWorkspaces($userId, $workspaceIds, includeAnnouncement: true);
     }
 
     /** @param  array<int, int>  $workspaceIds */
