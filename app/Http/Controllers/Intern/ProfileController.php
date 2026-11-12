@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Support\SafeUpload;
 
 class ProfileController extends Controller
 {
@@ -86,10 +87,7 @@ class ProfileController extends Controller
             if ($photo->isValid() && $photo->getError() === UPLOAD_ERR_OK) {
                 try {
                     // Generate unique filename
-                    $extension = $photo->getClientOriginalExtension();
-                    if (empty($extension)) {
-                        $extension = $photo->guessExtension() ?: 'jpg';
-                    }
+                    $extension = SafeUpload::extension($photo, SafeUpload::IMAGE, 'jpg');
                     $filename = 'photo_' . time() . '_' . uniqid() . '.' . $extension;
                     
                     // Use direct move method - most reliable on Windows

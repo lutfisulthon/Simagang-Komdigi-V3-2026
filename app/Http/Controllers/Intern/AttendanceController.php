@@ -16,6 +16,7 @@ use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Support\SafeUpload;
 
 class AttendanceController extends Controller
 {
@@ -298,11 +299,7 @@ class AttendanceController extends Controller
                 }
 
                 try {
-                    $extension = $document->getClientOriginalExtension();
-
-                    if (empty($extension)) {
-                        $extension = $document->guessExtension() ?: 'pdf';
-                    }
+                    $extension = SafeUpload::extension($document, SafeUpload::ATTENDANCE_DOCUMENT, 'pdf');
 
                     $filename = Str::uuid() . '.' . $extension;
                     $path = 'private/attendance-documents/' . $filename;

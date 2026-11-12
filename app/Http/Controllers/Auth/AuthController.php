@@ -8,8 +8,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use App\Support\SafeUpload;
 
 class AuthController extends Controller
 {
@@ -53,10 +56,7 @@ class AuthController extends Controller
             if ($photo->isValid() && $photo->getError() === UPLOAD_ERR_OK) {
                 try {
                     // Generate unique filename
-                    $extension = $photo->getClientOriginalExtension();
-                    if (empty($extension)) {
-                        $extension = $photo->guessExtension() ?: 'jpg';
-                    }
+                    $extension = SafeUpload::extension($photo, SafeUpload::IMAGE, 'jpg');
                     $filename = 'photo_' . time() . '_' . uniqid() . '.' . $extension;
                     
                     // Use direct move method - most reliable on Windows
@@ -128,7 +128,19 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        // Batasi tebakan password: maksimal 5 kali gagal per kombinasi email dan IP dalam 5 menit.
+        $throttleKey = Str::transliterate(Str::lower($credentials['email']).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()->withErrors([
+                'email' => "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.",
+            ])->onlyInput('email');
+        }
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
             $user = Auth::user();
@@ -148,8 +160,10 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
+        RateLimiter::hit($throttleKey, 300);
+
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 

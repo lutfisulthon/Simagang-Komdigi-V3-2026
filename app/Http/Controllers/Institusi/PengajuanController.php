@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Services\PengajuanWhatsappService;
 use Illuminate\Support\Facades\DB;
+use App\Support\SafeUpload;
 
 
 
@@ -151,8 +152,7 @@ class PengajuanController extends Controller
             // ==================================================
             $file = $request->file('surat_magang');
 
-            $extension = $file->getClientOriginalExtension()
-                ?: ($file->guessExtension() ?: 'pdf');
+            $extension = SafeUpload::extension($file, ['pdf'], 'pdf');
 
             $storedFileName =
                 'surat_' . time() . '_' . uniqid() . '.' . $extension;
@@ -266,7 +266,7 @@ class PengajuanController extends Controller
         if ($request->hasFile('surat_magang')) {
             $file = $request->file('surat_magang');
             $fileName = $file->getClientOriginalName();
-            $extension = $file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'pdf');
+            $extension = SafeUpload::extension($file, ['pdf'], 'pdf');
             $storedFileName = 'surat_' . time() . '_' . uniqid() . '.' . $extension;
             $destinationPath = storage_path('app/private/surat_magang');
 
@@ -349,6 +349,13 @@ class PengajuanController extends Controller
 
     public function generateSuratBalasan(Pengajuan $pengajuan)
     {
+        // Hanya institusi pemilik pengajuan yang boleh mencetak surat balasannya.
+        abort_unless(
+            Auth::user()->institusi?->id !== null && $pengajuan->institusi_id === Auth::user()->institusi->id,
+            403,
+            'Anda tidak memiliki akses ke pengajuan ini.'
+        );
+
         $pengajuan->load('details');
 
         $pdf = new \setasign\Fpdi\Tcpdf\Fpdi();

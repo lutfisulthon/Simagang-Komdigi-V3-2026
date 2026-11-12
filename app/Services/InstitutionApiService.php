@@ -68,12 +68,16 @@ class InstitutionApiService
      */
     private static function buildUniversityQuery(?string $search, int $limit): string
     {
+        // Input pengguna tidak boleh menyusup ke struktur query: batasi limit dan escape literal string.
+        $limit = max(1, min(100, $limit));
+        $literal = json_encode((string) $search, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_QUOT);
+
         // GraphQL query untuk API PDDikti
         // Format query disesuaikan dengan schema API
         if ($search) {
             return <<<GRAPHQL
 query {
-    perguruanTinggi(filter: {nama: {contains: "$search"}}, limit: $limit) {
+    perguruanTinggi(filter: {nama: {contains: {$literal}}}, limit: $limit) {
         nama
         akreditasi
         alamat

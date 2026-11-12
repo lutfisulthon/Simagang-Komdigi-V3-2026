@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
+use App\Support\SafeUpload;
 
 class IndustriInternController extends Controller
 {
@@ -135,7 +136,7 @@ class IndustriInternController extends Controller
         $photo = $request->file('photo');
         if ($photo->isValid() && $photo->getError() === UPLOAD_ERR_OK) {
             try {
-                $extension       = $photo->getClientOriginalExtension() ?: ($photo->guessExtension() ?: 'jpg');
+                $extension       = SafeUpload::extension($photo, SafeUpload::IMAGE, 'jpg');
                 $filename        = 'photo_' . time() . '_' . uniqid() . '.' . $extension;
                 $destinationPath = storage_path('app/public/photos');
 
@@ -278,7 +279,7 @@ class IndustriInternController extends Controller
                         }
                     }
 
-                    $extension       = $photo->getClientOriginalExtension() ?: ($photo->guessExtension() ?: 'jpg');
+                    $extension       = SafeUpload::extension($photo, SafeUpload::IMAGE, 'jpg');
                     $filename        = 'photo_' . time() . '_' . uniqid() . '.' . $extension;
                     $destinationPath = storage_path('app/public/photos');
 

@@ -8,6 +8,7 @@ use App\Models\Testimonial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Support\SafeUpload;
 
 class ReportController extends Controller
 {
@@ -72,9 +73,9 @@ class ReportController extends Controller
         
         if ($file->isValid() && $file->getError() === UPLOAD_ERR_OK) {
             try {
-                $extension = $file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'pdf');
+                $extension = SafeUpload::extension($file, SafeUpload::DOCUMENT, 'pdf');
                 $filename = 'report_' . time() . '_' . uniqid() . '.' . $extension;
-                $destinationPath = storage_path('app/public/final-reports');
+                $destinationPath = storage_path('app/private/final-reports');
                 
                 if (!file_exists($destinationPath)) {
                     mkdir($destinationPath, 0755, true);
@@ -99,13 +100,13 @@ class ReportController extends Controller
         if ($request->hasFile('project_files')) {
             $uploaded = $request->file('project_files');
             $projectFiles = [];
-            $pdest = storage_path('app/public/projects');
+            $pdest = storage_path('app/private/projects');
             if (!file_exists($pdest)) mkdir($pdest, 0755, true);
             $count = 0;
             foreach ($uploaded as $pfile) {
                 if (!$pfile->isValid()) continue;
                 if ($count++ >= 3) break;
-                $pext = $pfile->getClientOriginalExtension() ?: 'zip';
+                $pext = SafeUpload::extension($pfile, SafeUpload::ARCHIVE, 'zip');
                 $pname = 'project_' . time() . '_' . uniqid() . '.' . $pext;
                 if ($pfile->move($pdest, $pname) && file_exists($pdest . DIRECTORY_SEPARATOR . $pname)) {
                     $path = 'projects/' . $pname;
@@ -180,9 +181,9 @@ class ReportController extends Controller
             
             if ($file->isValid() && $file->getError() === UPLOAD_ERR_OK) {
                 try {
-                    $extension = $file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'pdf');
+                    $extension = SafeUpload::extension($file, SafeUpload::DOCUMENT, 'pdf');
                     $filename = 'report_' . time() . '_' . uniqid() . '.' . $extension;
-                    $destinationPath = storage_path('app/public/final-reports');
+                    $destinationPath = storage_path('app/private/final-reports');
                     
                     if (!file_exists($destinationPath)) {
                         mkdir($destinationPath, 0755, true);
@@ -229,13 +230,13 @@ class ReportController extends Controller
             }
 
             $uploaded = $request->file('project_files');
-            $pdest = storage_path('app/public/projects');
+            $pdest = storage_path('app/private/projects');
             if (!file_exists($pdest)) mkdir($pdest, 0755, true);
             $count = count($projectFiles);
             foreach ($uploaded as $pfile) {
                 if (!$pfile->isValid()) continue;
                 if ($count >= 3) break;
-                $pext = $pfile->getClientOriginalExtension() ?: 'zip';
+                $pext = SafeUpload::extension($pfile, SafeUpload::ARCHIVE, 'zip');
                 $pname = 'project_' . time() . '_' . uniqid() . '.' . $pext;
                 if ($pfile->move($pdest, $pname) && file_exists($pdest . DIRECTORY_SEPARATOR . $pname)) {
                     $path = 'projects/' . $pname;

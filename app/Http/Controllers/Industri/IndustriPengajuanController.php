@@ -16,6 +16,18 @@ class IndustriPengajuanController extends Controller
     /**
      * Redirect ke halaman buat profil jika industri belum melengkapi profil.
      */
+    /** Pengajuan harus ditujukan ke lowongan milik industri yang sedang login. */
+    private function ensureOwnsPengajuan(Pengajuan $pengajuan): void
+    {
+        $industriId = auth()->user()->industri?->id;
+
+        abort_unless(
+            $industriId !== null && $pengajuan->lowongan?->industri_id === $industriId,
+            403,
+            'Anda tidak memiliki akses ke pengajuan ini.'
+        );
+    }
+
     private function requireIndustriProfile(): \Illuminate\Http\RedirectResponse|null
     {
         if (! auth()->user()->industri) {
@@ -116,7 +128,9 @@ class IndustriPengajuanController extends Controller
      */
     public function show(int $id, PengajuanWhatsappService $whatsappService)
     {
+        // Hanya pengajuan ke lowongan milik industri yang login; selain itu 404 (tidak membocorkan keberadaan).
         $pengajuan = Pengajuan::with(['details', 'institusi', 'lowongan', 'lowongan.industri'])
+            ->whereHas('lowongan', fn ($q) => $q->where('industri_id', auth()->user()->industri?->id))
             ->findOrFail($id);
 
         $whatsapp = $whatsappService->payloadFor($pengajuan);
@@ -153,6 +167,8 @@ class IndustriPengajuanController extends Controller
         Pengajuan $pengajuan,
         PengajuanWhatsappService $whatsappService
     ) {
+        $this->ensureOwnsPengajuan($pengajuan);
+
         // Status final tidak boleh diubah lagi
         if (in_array($pengajuan->status, ['approved', 'rejected'], true)) {
 
@@ -279,6 +295,8 @@ class IndustriPengajuanController extends Controller
 
     public function generateSuratBalasan(Pengajuan $pengajuan)
     {
+        $this->ensureOwnsPengajuan($pengajuan);
+
         $pengajuan->load('details');
 
         $pdf = new \setasign\Fpdi\Tcpdf\Fpdi();

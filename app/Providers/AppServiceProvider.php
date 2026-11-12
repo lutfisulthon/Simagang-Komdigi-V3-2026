@@ -10,6 +10,7 @@ use App\Observers\InternObserver;
 use App\Observers\MentorObserver;
 use App\Services\WorkspaceProvisioner;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Kebijakan password untuk pendaftaran dan reset: minimal 8 karakter, memuat huruf dan angka.
+        Password::defaults(fn () => Password::min(8)->letters()->numbers());
+
         Intern::observe(InternObserver::class);
         Mentor::observe(MentorObserver::class);
 

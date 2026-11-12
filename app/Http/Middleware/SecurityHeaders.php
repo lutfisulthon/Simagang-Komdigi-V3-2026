@@ -35,6 +35,12 @@ class SecurityHeaders
             . "frame-ancestors 'none';";
 
         $response->headers->set('Content-Security-Policy', $csp);
+        $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self), payment=()');
+
+        // HSTS hanya bermakna lewat HTTPS; jangan dikirim di HTTP lokal.
+        if ($request->isSecure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
 
         // Prevent stale authenticated pages/files from being reused after user switch.
         if ($request->user()) {

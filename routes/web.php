@@ -273,7 +273,8 @@ Route::get('/daftar-lowongan', function () {
 
 
 
-Route::get('/convert-font', function () {
+// Alat sekali pakai yang menulis berkas font ke vendor TCPDF: hanya admin, tidak boleh publik.
+Route::middleware(['auth', 'admin'])->get('/convert-font', function () {
     $fontPath = storage_path('app/fonts/Poppins-Reguler.ttf');
 
     TCPDF_FONTS::addTTFfont(
@@ -300,8 +301,8 @@ Route::get('/artikel3', function () {
 })->name('artikel_3');
 
 // API Routes for Institution Search
-Route::get('/api/institutions/search', [InstitutionController::class, 'searchUniversities'])->name('api.institutions.search');
-Route::get('/api/institutions/all', [InstitutionController::class, 'getAllUniversities'])->name('api.institutions.all');
+Route::get('/api/institutions/search', [InstitutionController::class, 'searchUniversities'])->middleware('throttle:30,1')->name('api.institutions.search');
+Route::get('/api/institutions/all', [InstitutionController::class, 'getAllUniversities'])->middleware('throttle:30,1')->name('api.institutions.all');
 
 // API Route cek hari libur (real-time, butuh auth)
 Route::middleware('auth')->get('/api/attendance/is-holiday', [HolidayController::class, 'check'])->name('api.attendance.is-holiday');
@@ -314,20 +315,22 @@ Route::get('/pengajuan/{pengajuan}/surat', PengajuanFileController::class)
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,10');
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1');
 
     Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])
         ->name('password.request');
 
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetPasswordForm'])
         ->name('password.reset');
 
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+        ->middleware('throttle:10,1')
         ->name('password.update');
 });
 
@@ -381,13 +384,16 @@ Route::middleware(['auth', 'institusi'])->prefix('institusi')->name('institusi.'
     Route::get('/lowongan', [LowonganController::class, 'index'])->name('lowongan.index');
     Route::get('/lowongan/{id}', [LowonganController::class, 'show'])->name('lowongan.show');
 }); 
-Route::resource('institusi', DaftarInstitusiController::class)->only(['create', 'store']);
+// Pendaftaran institusi publik: hanya halaman daftar dan simpan, dengan pembatasan laju.
+Route::get('/institusi/create', [DaftarInstitusiController::class, 'create'])->name('institusi.create');
+Route::post('/institusi', [DaftarInstitusiController::class, 'store'])->middleware('throttle:5,10')->name('institusi.store');
 
 // Routes untuk pendaftaran akun industri
 Route::get('/register-industri', [DaftarAkunController::class, 'create'])
     ->name('industri.create');
 
 Route::post('/register-industri', [DaftarAkunController::class, 'store'])
+    ->middleware('throttle:5,10')
     ->name('industri.store');
 
 // Routes Role Industri
@@ -714,7 +720,7 @@ Route::middleware(['auth', 'mentor'])->prefix('mentor')->name('mentor.')->group(
     Route::put('/profile', [MentorProfileController::class, 'update'])->name('profile.update');
 });
 
-Route::post('/chatbot', [\App\Http\Controllers\ChatbotController::class, 'ask'])->name('chatbot.ask');
+Route::post('/chatbot', [\App\Http\Controllers\ChatbotController::class, 'ask'])->middleware('throttle:15,1')->name('chatbot.ask');
 
 require __DIR__.'/workspace.php';
 require __DIR__.'/public-chat.php';

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Institusi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class DaftarInstitusiController extends Controller
 {
@@ -26,7 +27,7 @@ class DaftarInstitusiController extends Controller
         $validated = $request->validate([
             'nama_admin' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required'],
+            'password' => ['required', 'string', Password::defaults()],
 
             'nama_institusi' => ['required', 'string', 'max:255'],
             'jenis_institusi' => ['required', 'in:sekolah,kampus'],

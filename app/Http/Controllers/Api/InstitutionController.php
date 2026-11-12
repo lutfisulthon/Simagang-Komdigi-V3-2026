@@ -13,8 +13,13 @@ class InstitutionController extends Controller
      */
     public function searchUniversities(Request $request)
     {
-        $search = $request->input('search', '');
-        $limit = $request->input('limit', 50);
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $search = (string) ($validated['search'] ?? '');
+        $limit = (int) ($validated['limit'] ?? 50);
         
         try {
             $universities = InstitutionApiService::searchUniversities($search, $limit);
