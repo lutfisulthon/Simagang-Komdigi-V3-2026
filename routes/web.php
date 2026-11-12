@@ -381,7 +381,7 @@ Route::middleware(['auth', 'institusi'])->prefix('institusi')->name('institusi.'
     Route::get('/lowongan', [LowonganController::class, 'index'])->name('lowongan.index');
     Route::get('/lowongan/{id}', [LowonganController::class, 'show'])->name('lowongan.show');
 }); 
-Route::resource('institusi', DaftarInstitusiController::class);
+Route::resource('institusi', DaftarInstitusiController::class)->only(['create', 'store']);
 
 // Routes untuk pendaftaran akun industri
 Route::get('/register-industri', [DaftarAkunController::class, 'create'])
