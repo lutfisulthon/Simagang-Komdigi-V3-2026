@@ -369,8 +369,9 @@
                     }) : false;
                     if (off) { await prefs.setAuto(false); return; }
                 }
-                // Tutorial berikutnya yang cocok dengan halaman ini (mis. dasar → daftar-kelompok) menyusul sebentar lagi.
-                setTimeout(autoStart, 700);
+                // Tutorial berikutnya yang cocok dengan halaman ini (mis. dasar → daftar-kelompok) menyusul sebentar lagi,
+                // tetapi hanya bila yang ini diselesaikan. "Lewati" berarti "jangan sekarang": tidak langsung disodori tutorial lain.
+                if (finished) setTimeout(autoStart, 700);
             },
         });
         active = drv;

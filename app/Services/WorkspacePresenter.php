@@ -93,7 +93,7 @@ class WorkspacePresenter
         $rows = DB::table('tasks')
             ->where('workspace_id', $workspace->id)
             ->whereNull('deleted_at')
-            ->selectRaw('status, count(*) as total, sum(case when overdue_at is not null and status != ? then 1 else 0 end) as late', [TaskStatus::Done->value])
+            ->selectRaw('status, count(*) as total, sum(case when ' . Task::lateSql() . ' then 1 else 0 end) as late')
             ->groupBy('status')
             ->get();
 
@@ -297,7 +297,7 @@ class WorkspacePresenter
             'start_at' => $this->iso($task->start_at),
             'due_at' => $this->iso($task->due_at),
             'completed_at' => $this->iso($task->completed_at),
-            'is_late' => ! $done && $task->overdue_at !== null,
+            'is_late' => $task->isLate(),
             'labels' => $task->relationLoaded('labels')
                 ? $task->labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color])->values()->all()
                 : [],

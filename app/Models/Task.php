@@ -74,6 +74,35 @@ class Task extends Model
         return $date->setTimezone(config('app.timezone'))->format($this->getDateFormat());
     }
 
+    /**
+     * Definisi tunggal "terlambat": belum selesai dan sudah lewat deadline. `overdue_at` hanya penanda yang diisi
+     * job terjadwal (tiap jam), jadi tidak boleh jadi satu-satunya acuan: tanpa cron, atau sebelum job berikutnya
+     * jalan, dashboard dan laporan menampilkan 0 padahal board sudah menandai tugasnya terlambat.
+     */
+    public function isLate(): bool
+    {
+        if ($this->status === TaskStatus::Done) {
+            return false;
+        }
+
+        return $this->overdue_at !== null || ($this->due_at !== null && $this->due_at->isPast());
+    }
+
+    /** Padanan isLate() untuk query Eloquent. */
+    public function scopeLate($query)
+    {
+        return $query->where('status', '!=', TaskStatus::Done->value)
+            ->where(fn ($w) => $w->whereNotNull('overdue_at')->orWhere('due_at', '<', now()));
+    }
+
+    /** Padanan isLate() untuk agregat SQL mentah. `$p` = awalan kolom, mis. "t." atau "tasks.". Nilai waktu dibuat server. */
+    public static function lateSql(string $p = ''): string
+    {
+        $now = now()->format('Y-m-d H:i:s');
+
+        return "({$p}status != 'done' and ({$p}overdue_at is not null or {$p}due_at < '{$now}'))";
+    }
+
     /** Kode tugas yang dirujuk di chat, misalnya T-12. */
     public function getCodeAttribute(): string
     {

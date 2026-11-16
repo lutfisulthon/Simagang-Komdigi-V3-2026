@@ -92,6 +92,28 @@ class InsightContractTest extends TestCase
         $this->actingAs($this->admin)->getJson('/workspace/summary')->assertJsonPath('to_review.total', 2);
     }
 
+    public function test_tugas_lewat_deadline_terhitung_terlambat_walau_job_terjadwal_belum_jalan(): void
+    {
+        // overdue_at sengaja dibiarkan kosong: meniru cron workspace:check-deadlines belum (atau tidak) berjalan.
+        $late = $this->makeTaskForAhmad(['title' => 'Lewat deadline']);
+        Task::whereKey($late)->update(['due_at' => now()->subDays(3), 'overdue_at' => null]);
+        $this->makeTaskForAhmad(['title' => 'Masih lama']);
+
+        $mentor = $this->actingAs($this->rudy->user)->getJson('/workspace/summary')->assertOk();
+        $mentor->assertJsonCount(1, 'late_by_intern')
+            ->assertJsonPath('late_by_intern.0.late_count', 1)
+            ->assertJsonPath('late_by_intern.0.tasks.0.title', 'Lewat deadline');
+
+        // Kartu dan ringkasan status workspace memakai definisi yang sama.
+        $this->actingAs($this->rudy->user)->getJson("/workspace/{$this->spAhmad->id}/tasks")
+            ->assertJsonPath('data.0.is_late', true)
+            ->assertJsonPath('data.1.is_late', false);
+
+        // Tugas selesai tidak dihitung terlambat walau deadline sudah lewat.
+        Task::whereKey($late)->update(['status' => 'done']);
+        $this->actingAs($this->rudy->user)->getJson('/workspace/summary')->assertJsonCount(0, 'late_by_intern');
+    }
+
     // ------------------------------------------------------------------ Monitoring
 
     public function test_progress_monitoring_hanya_untuk_admin(): void

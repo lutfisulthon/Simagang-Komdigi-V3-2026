@@ -9,17 +9,37 @@ use App\Models\Intern;
 use App\Models\Attendance;
 use App\Models\MicroSkillSubmission;
 use App\Models\MicroSkill;
+use App\Models\Mentor;
 use setasign\Fpdi\Tcpdf\Fpdi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CertificateController extends Controller
 {
+    /** Profil mentor yang sedang login; akun tanpa profil mentor tidak boleh mengelola sertifikat. */
+    private function mentor(): Mentor
+    {
+        $mentor = Auth::user()?->mentor;
+        abort_unless($mentor, 403);
+
+        return $mentor;
+    }
+
+    /** Mentor hanya boleh mengelola sertifikat intern bimbingannya sendiri. */
+    private function authorizeIntern(int $internId): void
+    {
+        abort_unless($this->mentor()->interns()->whereKey($internId)->exists(), 403, 'Intern ini bukan bimbingan Anda.');
+    }
+
     /**
      * List sertifikat
      */
     public function index()
     {
-        $certificates = Certificate::with(['intern', 'score'])->latest()->get();
+        $certificates = Certificate::with(['intern', 'score'])
+            ->whereIn('intern_id', $this->mentor()->interns()->select('interns.id'))
+            ->latest()
+            ->get();
         // return view('mentor.certificate.create', compact('certificates'));
     }
 
@@ -28,12 +48,14 @@ class CertificateController extends Controller
      */
     public function create(Request $request)
     {
-        $interns = Intern::orderBy('name')->get();
+        $interns = $this->mentor()->interns()->orderBy('name')->get();
         $selectedIntern = null;
         $certificate = null;
         $mode = 'create';
 
         if ($request->has('intern_id')) {
+            $this->authorizeIntern((int) $request->intern_id);
+
             $selectedIntern = Intern::with(['certificate.score'])
                 ->find($request->intern_id);
 
@@ -102,6 +124,8 @@ class CertificateController extends Controller
             'initiative_creativity' => 'required|integer|min:0|max:100',
         ]);
 
+        $this->authorizeIntern((int) $request->intern_id);
+
         /** Simpan sertifikat */
         $certificate = Certificate::create([
             'intern_id' => $request->intern_id,
@@ -131,6 +155,7 @@ class CertificateController extends Controller
 
     public function update(Request $request, Certificate $certificate)
     {
+        $this->authorizeIntern((int) $certificate->intern_id);
 
         // Jika hari ini sama ATAU sudah lewat dari tanggal terbit
         if (now()->startOfDay()->greaterThanOrEqualTo(
@@ -198,6 +223,8 @@ class CertificateController extends Controller
 
     public function print(Certificate $certificate)
     {
+        $this->authorizeIntern((int) $certificate->intern_id);
+
         $certificate->load(['intern', 'score']);
 
         $pdf = new \setasign\Fpdi\Tcpdf\Fpdi();

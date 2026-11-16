@@ -66,7 +66,7 @@ class WorkspaceInsightService
                 'counts' => [
                     'active' => $active()->count(),
                     'revision' => $active()->where('status', TaskStatus::Revision->value)->count(),
-                    'late' => $active()->whereNotNull('overdue_at')->count(),
+                    'late' => $active()->late()->count(),
                 ],
             ],
             'unread_channels' => $this->unreadChannels($user, $space),
@@ -151,8 +151,7 @@ class WorkspaceInsightService
             ->sortBy(fn (Task $t) => \Illuminate\Support\Carbon::parse($t->submitted_at)->timestamp);
 
         $late = $scope()
-            ->where('status', '!=', TaskStatus::Done->value)
-            ->whereNotNull('overdue_at')
+            ->late()
             ->with(['assignees', 'workspace'])
             ->orderBy('due_at')
             ->get();
@@ -227,7 +226,7 @@ class WorkspaceInsightService
             ->whereNull('deleted_at')
             ->whereIn('workspace_id', $this->managedWorkspaceIds($user))
             ->groupBy('workspace_id')
-            ->selectRaw("workspace_id, count(*) as total, sum(case when status = 'done' then 1 else 0 end) as done, sum(case when status != 'done' and overdue_at is not null then 1 else 0 end) as overdue")
+            ->selectRaw("workspace_id, count(*) as total, sum(case when status = 'done' then 1 else 0 end) as done, sum(case when " . Task::lateSql() . " then 1 else 0 end) as overdue")
             ->get();
 
         $workspaces = Workspace::whereIn('id', $rows->pluck('workspace_id'))->get()->keyBy('id');
@@ -257,7 +256,7 @@ class WorkspaceInsightService
             ->whereIn('tasks.workspace_id', $this->managedWorkspaceIds($user))
             ->where('tasks.status', '!=', TaskStatus::Done->value)
             ->groupBy('task_assignees.intern_id', 'tasks.workspace_id', 'tasks.status')
-            ->selectRaw('task_assignees.intern_id, tasks.workspace_id, tasks.status, count(*) as total, sum(case when tasks.overdue_at is not null then 1 else 0 end) as overdue')
+            ->selectRaw('task_assignees.intern_id, tasks.workspace_id, tasks.status, count(*) as total, sum(case when ' . Task::lateSql('tasks.') . ' then 1 else 0 end) as overdue')
             ->get();
 
         $perIntern = $rows->groupBy('intern_id')->map(function (Collection $internRows) {
@@ -300,7 +299,7 @@ class WorkspaceInsightService
      */
     public function progress(array $internIds): array
     {
-        $late = "sum(case when t.status != 'done' and t.overdue_at is not null then 1 else 0 end)";
+        $late = 'sum(case when ' . Task::lateSql('t.') . ' then 1 else 0 end)';
 
         $rows = DB::table('task_assignees as ta')
             ->join('tasks as t', 't.id', '=', 'ta.task_id')
@@ -345,7 +344,7 @@ class WorkspaceInsightService
             ->whereNull('t.deleted_at')
             ->where('w.is_archived', false)
             ->groupByRaw("{$teamOf}, t.status")
-            ->selectRaw("{$teamOf} as team_id, t.status, count(*) as total, sum(case when t.status != 'done' and t.overdue_at is not null then 1 else 0 end) as late")
+            ->selectRaw("{$teamOf} as team_id, t.status, count(*) as total, sum(case when " . Task::lateSql('t.') . " then 1 else 0 end) as late")
             ->get()
             ->groupBy('team_id');
 
@@ -414,7 +413,7 @@ class WorkspaceInsightService
         }
 
         $scores = $tasks->where('status', TaskStatus::Done)->pluck('score')->filter(fn ($s) => $s !== null);
-        $stats['late'] = $tasks->filter(fn (Task $t) => $t->status !== TaskStatus::Done && $t->overdue_at !== null)->count();
+        $stats['late'] = $tasks->filter(fn (Task $t) => $t->isLate())->count();
         $stats['avg_score'] = $scores->isEmpty() ? null : round($scores->avg(), 1);
 
         $space = $this->groups->homeWorkspaces([$intern], activeOnly: false)->first();

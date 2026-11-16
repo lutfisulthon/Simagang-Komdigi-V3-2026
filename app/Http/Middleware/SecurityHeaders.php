@@ -32,6 +32,9 @@ class SecurityHeaders
             . "img-src 'self' data: blob: https://i.ytimg.com https://img.youtube.com https://i3.ytimg.com https://i4.ytimg.com https://ui-avatars.com; "
             . "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "
             . "object-src 'none'; "
+            // Mencegah <base> disusupkan (membelokkan URL relatif) dan form dikirim ke domain luar bila ada XSS.
+            . "base-uri 'self'; "
+            . "form-action 'self'; "
             . "frame-ancestors 'none';";
 
         $response->headers->set('Content-Security-Policy', $csp);
