@@ -1100,7 +1100,7 @@
                 list.forEach((file) => {
                     this.files.push(WS.files.item(file, ++this.seq));
                     const item = this.files[this.files.length - 1];
-                    if (item.status === 'uploading') WS.files.upload(file, item);
+                    if (item.status === 'uploading') WS.files.upload(file, item, this.$store.wsChat.workspaceId);
                 });
                 this.$refs.input.focus();
             },

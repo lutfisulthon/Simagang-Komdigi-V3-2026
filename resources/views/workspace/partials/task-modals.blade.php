@@ -152,7 +152,7 @@
                 {{-- Lampiran --}}
                 <div>
                     <p class="ws-label">Lampiran</p>
-                    @include('workspace.partials.uploader', ['model' => 'files'])
+                    @include('workspace.partials.uploader', ['model' => 'files', 'workspaceId' => $workspace['id']])
                 </div>
             </div>
         </form>
@@ -242,7 +242,7 @@
                     </div>
                     <div>
                         <p class="ws-label">Berkas</p>
-                        @include('workspace.partials.uploader', ['model' => 'files'])
+                        @include('workspace.partials.uploader', ['model' => 'files', 'workspaceId' => $workspace['id']])
                     </div>
                     <div>
                         <label class="ws-label" for="ws-s-note">Catatan untuk mentor</label>

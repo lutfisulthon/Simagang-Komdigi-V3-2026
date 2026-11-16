@@ -7,6 +7,7 @@ use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class Task extends Model
 {
@@ -46,6 +47,32 @@ class Task extends Model
         'reminded_at' => 'datetime',
         'result_links' => 'array',
     ];
+
+    /**
+     * Frontend mengirim waktu sebagai ISO 8601 UTC (`...Z`). Kolom datetime dibaca sebagai zona waktu
+     * aplikasi, jadi nilai bertanda zona wajib dikonversi dulu; kalau tidak, jam UTC tersimpan apa adanya
+     * dan deadline bergeser sebesar selisih zona (WITA: -8 jam) setiap kali tugas dibuat atau disunting.
+     */
+    public function setStartAtAttribute($value): void
+    {
+        $this->attributes['start_at'] = $this->toAppTimezone($value);
+    }
+
+    public function setDueAtAttribute($value): void
+    {
+        $this->attributes['due_at'] = $this->toAppTimezone($value);
+    }
+
+    private function toAppTimezone($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $date = $value instanceof \DateTimeInterface ? Carbon::instance($value) : Carbon::parse($value);
+
+        return $date->setTimezone(config('app.timezone'))->format($this->getDateFormat());
+    }
 
     /** Kode tugas yang dirujuk di chat, misalnya T-12. */
     public function getCodeAttribute(): string

@@ -95,7 +95,19 @@
                 // Realtime: perubahan tugas oleh orang lain langsung tampil di board & list.
                 if (WS.realtime) {
                     const ch = 'workspace.' + config.workspace.id;
-                    WS.realtime.subscribe(ch, 'task.changed', (e) => { if (e && e.card && !this.busy[e.card.id]) this.upsert(e.card); });
+                    WS.realtime.subscribe(ch, 'task.changed', async (e) => {
+                        if (!e) return;
+                        if (e.card) {
+                            if (!this.busy[e.card.id]) this.upsert(e.card);
+                            return;
+                        }
+                        // Sinyal ringan { id }: muat kartu sebagai diri sendiri, jadi hak akses dan `can` dihitung server.
+                        if (!e.id || this.busy[e.id]) return;
+                        try {
+                            const res = await WS.api.tasks.show(e.id);
+                            if (res && res.data && !this.busy[e.id]) this.upsert(WS.tasks.cardOf(res.data));
+                        } catch (_) { /* sudah tidak bisa diakses atau dihapus: abaikan */ }
+                    });
                     WS.realtime.subscribe(ch, 'task.deleted', (e) => { if (e && e.id) this.remove(e.id); });
                 }
                 // Label tim berubah (nama/warna/hapus): perbarui chip label di semua kartu.

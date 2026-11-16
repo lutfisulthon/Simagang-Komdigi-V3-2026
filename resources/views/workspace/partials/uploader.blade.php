@@ -1,8 +1,9 @@
 {{--
     Uploader lampiran (PDF, DOC/DOCX, XLS/XLSX, PNG/JPG, ZIP; maks. 10 MB per file).
     Variabel: $model — nama properti Alpine induk yang menampung daftar file (x-model).
+              $workspaceId — id workspace tujuan unggahan (wajib di server).
 --}}
-<div x-data="wsUploader" x-modelable="items" x-model="{{ $model }}">
+<div x-data="wsUploader(@js($workspaceId ?? null))" x-modelable="items" x-model="{{ $model }}">
     <input type="file" class="sr-only" multiple x-ref="input" :accept="accept" x-on:change="onInput($event)" tabindex="-1" aria-hidden="true">
     <button type="button" class="ws-dropzone w-full" :class="dragging && 'ws-dropzone--active'" x-on:click="pick()"
             x-on:dragover.prevent="dragging = true" x-on:dragleave.prevent="dragging = false" x-on:drop.prevent="onDrop($event)">

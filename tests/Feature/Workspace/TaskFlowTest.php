@@ -41,6 +41,35 @@ class TaskFlowTest extends TestCase
             ->assertJsonPath('data.0.code', 'T-2');
     }
 
+    public function test_waktu_iso_utc_dari_frontend_dikonversi_ke_zona_waktu_aplikasi(): void
+    {
+        // Frontend mengirim 17.00 WITA sebagai 09.00 UTC (`Z`); harus tersimpan 17.00, bukan 09.00.
+        $this->assertSame('Asia/Makassar', config('app.timezone'));
+
+        $response = $this->postTask($this->rudy->user, $this->spAhmad, [
+            'assignee_ids' => [$this->ahmad->id],
+            'start_at' => '2030-11-18T01:00:00.000Z',
+            'due_at' => '2030-11-20T09:00:00.000Z',
+        ])->assertCreated();
+
+        $id = $response->json('data.0.id');
+        $response->assertJsonPath('data.0.due_at', '2030-11-20T17:00:00+08:00');
+
+        $this->assertSame('2030-11-20 17:00:00', Task::whereKey($id)->first()->getRawOriginal('due_at'));
+        $this->assertSame('2030-11-18 09:00:00', Task::whereKey($id)->first()->getRawOriginal('start_at'));
+
+        // Menyunting dengan nilai yang sama (bolak-balik form) tidak boleh menggeser jam.
+        $this->actingAs($this->rudy->user)->putJson("/workspace/tasks/{$id}", [
+            'title' => 'Judul sama',
+            'start_at' => '2030-11-18T09:00:00+08:00',
+            'due_at' => '2030-11-20T09:00:00.000Z',
+        ])->assertOk();
+
+        $task = Task::findOrFail($id);
+        $this->assertSame('2030-11-20 17:00:00', $task->getRawOriginal('due_at'));
+        $this->assertSame('2030-11-18 09:00:00', $task->getRawOriginal('start_at'));
+    }
+
     public function test_validasi_pembuatan_tugas(): void
     {
         $mentor = $this->rudy->user;

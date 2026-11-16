@@ -37,9 +37,11 @@
         },
 
         // `item` harus versi reaktif (sudah dimasukkan ke array Alpine) supaya progres tampil.
-        async upload(file, item) {
+        // `workspaceId` wajib di server (POST /workspace/attachments): berkas yatim terikat ke satu workspace.
+        async upload(file, item, workspaceId) {
             const form = new FormData();
             form.append('file', file);
+            if (workspaceId) form.append('workspace_id', workspaceId);
             try {
                 const res = await WS.api.attachments.upload(form, (p) => { item.progress = p; });
                 item.attachment = res.data;
@@ -62,8 +64,8 @@
         const Alpine = window.Alpine;
 
         // ---------- Uploader (dipakai form tugas & modal kirim hasil) ----------
-        // Pakai: <div x-data="wsUploader" x-modelable="items" x-model="files">
-        Alpine.data('wsUploader', () => ({
+        // Pakai: <div x-data="wsUploader(workspaceId)" x-modelable="items" x-model="files">
+        Alpine.data('wsUploader', (workspaceId) => ({
             items: [],
             dragging: false,
             seq: 0,
@@ -88,7 +90,7 @@
                 files.forEach((file) => {
                     this.items.push(WS.files.item(file, ++this.seq));
                     const item = this.items[this.items.length - 1];
-                    if (item.status === 'uploading') WS.files.upload(file, item);
+                    if (item.status === 'uploading') WS.files.upload(file, item, workspaceId);
                 });
             },
 

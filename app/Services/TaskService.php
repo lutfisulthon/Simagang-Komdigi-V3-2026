@@ -11,6 +11,7 @@ use App\Models\TaskActivity;
 use App\Models\TaskLabel;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Support\WorkspaceBroadcast;
 use Illuminate\Support\Facades\DB;
 
 class TaskService
@@ -60,14 +61,24 @@ class TaskService
         });
     }
 
+    /**
+     * Catat satu perubahan tugas di riwayat. Semua perubahan tugas lewat sini, jadi ini juga titik
+     * tunggal sinyal realtime: anggota workspace yang sedang membuka board memuat ulang kartunya.
+     */
     public function record(Task $task, ?User $user, string $action, array $meta = []): TaskActivity
     {
-        return TaskActivity::create([
+        $activity = TaskActivity::create([
             'task_id' => $task->id,
             'user_id' => $user?->id,
             'action' => $action,
             'meta' => $meta ?: null,
         ]);
+
+        $action === 'deleted'
+            ? WorkspaceBroadcast::taskDeleted($task->workspace_id, $task->id)
+            : WorkspaceBroadcast::taskChanged($task->workspace_id, $task->id);
+
+        return $activity;
     }
 
     /**

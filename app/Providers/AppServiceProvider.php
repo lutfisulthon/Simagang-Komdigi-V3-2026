@@ -4,11 +4,16 @@ namespace App\Providers;
 
 use App\Models\Intern;
 use App\Models\Mentor;
+use App\Models\Message;
+use App\Models\MessageReaction;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Observers\InternObserver;
 use App\Observers\MentorObserver;
+use App\Observers\MessageObserver;
 use App\Services\WorkspaceProvisioner;
+use App\Support\WorkspaceBroadcast;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,6 +37,25 @@ class AppServiceProvider extends ServiceProvider
 
         Intern::observe(InternObserver::class);
         Mentor::observe(MentorObserver::class);
+        Message::observe(MessageObserver::class);
+
+        // Notifikasi baru tersimpan → sinyal realtime ke lonceng user (bila realtime aktif).
+        DatabaseNotification::created(function (DatabaseNotification $notification) {
+            if ($notification->notifiable_type === User::class) {
+                WorkspaceBroadcast::notified((int) $notification->notifiable_id);
+            }
+        });
+
+        // Reaksi emoji tidak menyentuh baris pesan, jadi diteruskan sebagai perubahan pesan juga.
+        $reactionChanged = function (MessageReaction $reaction): void {
+            $channel = $reaction->message?->channel;
+
+            if ($channel) {
+                WorkspaceBroadcast::messageChanged($channel);
+            }
+        };
+        MessageReaction::created($reactionChanged);
+        MessageReaction::deleted($reactionChanged);
 
         // Intern dihapus: arsipkan Space-nya agar tidak menjadi workspace yatim yang masih bisa ditulisi.
         // Harus sebelum baris terhapus, karena setelah itu workspaces.intern_id menjadi NULL oleh foreign key.
