@@ -171,6 +171,10 @@ class NotificationContractTest extends TestCase
         // Email hanya untuk jenis yang dikirim lewat email (default aktif); lainnya null.
         $this->assertTrue($intern->every(fn ($t) => in_array($t['type'], \App\Services\NotificationPreferences::EMAIL_TYPES, true) ? $t['email'] === true : $t['email'] === null));
 
+        // Chat belum dibaca hanya email: toggle Aplikasi-nya disembunyikan; jenis lain punya toggle Aplikasi.
+        $this->assertFalse($intern->firstWhere('type', 'chat_unread')['in_app_available']);
+        $this->assertTrue($intern->where('type', '!=', 'chat_unread')->every(fn ($t) => $t['in_app_available'] === true));
+
         $mentor = collect($this->actingAs($this->rudy->user)->getJson('/notifications/preferences')->json('data.types'));
         $this->assertNotNull($mentor->firstWhere('type', 'task_in_review'));
         $this->assertNull($mentor->firstWhere('type', 'task_assigned'));

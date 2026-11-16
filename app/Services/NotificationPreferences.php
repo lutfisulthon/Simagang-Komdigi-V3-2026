@@ -41,6 +41,9 @@ class NotificationPreferences
         'mentioned', 'chat_unread',
     ];
 
+    /** Jenis yang hanya dikirim lewat email; toggle "Aplikasi"-nya tidak berpengaruh, jadi tidak ditampilkan. */
+    public const EMAIL_ONLY_TYPES = ['chat_unread'];
+
     public function roleOf(User $user): string
     {
         return match (true) {
@@ -99,6 +102,7 @@ class NotificationPreferences
             'label' => $c['label'],
             'description' => $c['description'],
             'in_app' => (bool) ($stored[$c['type']] ?? true),
+            'in_app_available' => ! in_array($c['type'], self::EMAIL_ONLY_TYPES, true),
             'email' => in_array($c['type'], self::EMAIL_TYPES, true) ? (bool) ($storedEmail[$c['type']] ?? true) : null,
         ], $this->catalogFor($user));
     }

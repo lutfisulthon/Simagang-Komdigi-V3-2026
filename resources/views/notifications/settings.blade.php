@@ -60,8 +60,13 @@
                                             <span class="block text-xs text-slate-500" x-text="t.description"></span>
                                         </span>
                                         <span class="ws-ns-cols">
-                                            <button type="button" role="switch" class="ws-switch" :aria-checked="t.in_app.toString()"
-                                                    :aria-label="t.label + ' di aplikasi'" x-on:click="t.in_app = !t.in_app"><span></span></button>
+                                            <template x-if="t.in_app_available !== false">
+                                                <button type="button" role="switch" class="ws-switch" :aria-checked="t.in_app.toString()"
+                                                        :aria-label="t.label + ' di aplikasi'" x-on:click="t.in_app = !t.in_app"><span></span></button>
+                                            </template>
+                                            <template x-if="t.in_app_available === false">
+                                                <span class="ws-ns-na" title="Tidak tersedia di aplikasi">—<span class="sr-only">Tidak tersedia di aplikasi</span></span>
+                                            </template>
                                             <template x-if="t.email !== null">
                                                 <button type="button" role="switch" class="ws-switch" :aria-checked="t.email.toString()"
                                                         :aria-label="t.label + ' lewat email'" x-on:click="t.email = !t.email"><span></span></button>
