@@ -31,8 +31,8 @@ class WorkspacePolicy
     }
 
     /**
-     * Atur sprint, backlog, dan otomasi: admin atau mentor workspace tim. Space pribadi intern
-     * tidak memakai sprint (satu orang, tanpa pembagian tugas).
+     * Atur sprint, backlog, dan otomasi: mentor workspace tim. Admin hanya memantau (sprint membuat dan memindahkan
+     * tugas). Space pribadi intern tidak memakai sprint (satu orang, tanpa pembagian tugas).
      */
     public function manageSprints(User $user, Workspace $workspace): bool
     {
@@ -40,7 +40,7 @@ class WorkspacePolicy
             return false;
         }
 
-        return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
+        return $this->isWorkspaceMentor($user, $workspace);
     }
 
     /** Membuat kelompok: mentor (admin tidak membuatkan kelompok untuk mentor). */

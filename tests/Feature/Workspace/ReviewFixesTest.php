@@ -23,17 +23,16 @@ class ReviewFixesTest extends TestCase
         $super = $this->makeAdmin('Super Uji', 'super_admin');
         $id = $this->makeTaskForAhmad();
 
-        // Sebelum diarsipkan super admin tetap bisa menulis.
-        $this->postTask($super, $this->spAhmad, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
+        // Sebelum diarsipkan super admin boleh berkomentar dan chat, tetapi tidak mengubah tugas (hanya memantau).
+        $this->postTask($super, $this->spAhmad, ['assignee_ids' => [$this->ahmad->id]])->assertForbidden();
+        $this->setStatus($super, $id, 'in_progress')->assertForbidden();
         $this->actingAs($super)->postJson("/workspace/tasks/{$id}/comments", ['body' => 'ok'])->assertCreated();
         $this->sendMessage($super, $this->dmAhmad, 'halo')->assertCreated();
 
         $this->spAhmad->update(['is_archived' => true]);
         $this->wsGta->update(['is_archived' => true]);
 
-        $this->postTask($super, $this->spAhmad, ['assignee_ids' => [$this->ahmad->id]])->assertForbidden();
         $this->actingAs($super)->postJson("/workspace/tasks/{$id}/comments", ['body' => 'masih bisa?'])->assertForbidden();
-        $this->setStatus($super, $id, 'in_progress')->assertForbidden();
         $this->sendMessage($super, $this->umumGta, 'masih bisa?')->assertForbidden();
 
         // Membaca tetap boleh.

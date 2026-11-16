@@ -20,7 +20,7 @@ class TimelineReportTest extends TestCase
 
     private function task($workspace, string $title, array $attributes = [], array $assignees = []): Task
     {
-        $id = $this->postTask($this->admin, $workspace, ['title' => $title, 'assignee_ids' => $assignees])->assertCreated()->json('data.0.id');
+        $id = $this->postTaskAsMentor($workspace, ['title' => $title, 'assignee_ids' => $assignees])->assertCreated()->json('data.0.id');
         $task = Task::findOrFail($id);
         $task->forceFill($attributes)->save();
 

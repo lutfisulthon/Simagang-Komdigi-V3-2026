@@ -51,8 +51,8 @@ class GroupIntegrationTest extends TestCase
     public function test_monitoring_menunjuk_ke_kelompok_bila_ada_dan_ke_space_bila_belum(): void
     {
         $group = $this->makeGroup([$this->ahmad->id]);
-        $this->postTask($this->admin, $this->spSiti, ['assignee_ids' => [$this->siti->id]])->assertCreated();
-        $this->postTask($this->admin, $group, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
+        $this->postTaskAsMentor($this->spSiti, ['assignee_ids' => [$this->siti->id]])->assertCreated();
+        $this->postTaskAsMentor($group, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
 
         $res = $this->actingAs($this->admin)->getJson("/workspace/progress?intern_ids[]={$this->ahmad->id}&intern_ids[]={$this->siti->id}")->assertOk();
 
@@ -64,7 +64,7 @@ class GroupIntegrationTest extends TestCase
     public function test_tugas_intern_membawa_kelompok_bukan_space_bila_berkelompok(): void
     {
         $group = $this->makeGroup([$this->ahmad->id]);
-        $this->postTask($this->admin, $group, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
+        $this->postTaskAsMentor($group, ['assignee_ids' => [$this->ahmad->id]])->assertCreated();
 
         $this->actingAs($this->admin)->getJson("/workspace/interns/{$this->ahmad->id}/tasks")->assertOk()
             ->assertJsonPath('group.id', $group->id)

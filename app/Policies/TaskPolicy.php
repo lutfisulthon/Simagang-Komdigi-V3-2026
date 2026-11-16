@@ -21,9 +21,15 @@ class TaskPolicy
         return $this->canViewWorkspace($user, $task->workspace);
     }
 
+    /*
+     * Admin hanya memantau tugas: boleh melihat dan berkomentar, tetapi tidak membuat, mengubah, memindahkan,
+     * mereview, menghapus, membagi, memperpanjang deadline, atau mencentang checklist. Semua itu urusan mentor
+     * workspace (dan intern sesuai batasnya). Keputusan ini mengubah tabel hak akses di PRD (semula admin ✓).
+     */
+
     /**
-     * Admin dan mentor workspace boleh membuat tugas. Intern hanya boleh membuat
-     * to-do pribadi di Space-nya sendiri.
+     * Mentor workspace boleh membuat tugas. Intern hanya boleh membuat
+     * to-do pribadi di Space-nya sendiri atau tugas di sprint yang ia pimpin.
      *
      * Pemakaian: $user->can('create', [Task::class, $workspace])
      */
@@ -33,7 +39,7 @@ class TaskPolicy
             return false;
         }
 
-        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+        if ($this->isWorkspaceMentor($user, $workspace)) {
             return true;
         }
 
@@ -53,7 +59,7 @@ class TaskPolicy
             return false;
         }
 
-        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+        if ($this->isWorkspaceMentor($user, $workspace)) {
             return true;
         }
 
@@ -67,13 +73,9 @@ class TaskPolicy
             && $this->canWrite($user, $workspace);
     }
 
-    /** Soft delete: admin, atau mentor untuk tugas buatannya. Intern tidak boleh. */
+    /** Soft delete: mentor untuk tugas buatannya, atau ketua sprint untuk tugas buatannya. Admin dan intern lain tidak boleh. */
     public function delete(User $user, Task $task): bool
     {
-        if ($this->isWorkspaceAdmin($user)) {
-            return true;
-        }
-
         if ($this->isWorkspaceMentor($user, $task->workspace) && $task->created_by === $user->id) {
             return true;
         }
@@ -86,8 +88,8 @@ class TaskPolicy
 
     /**
      * Pindah status / posisi di board.
-     * Admin dan mentor bebas. Intern hanya pada tugas yang di-assign ke dia, dan hanya
-     * sampai Review: Selesai dan Revisi hanya lewat review mentor.
+     * Mentor workspace bebas. Intern hanya pada tugas yang di-assign ke dia, dan hanya
+     * sampai Review: Selesai dan Revisi hanya lewat review mentor. Admin tidak memindahkan kartu.
      *
      * Pemakaian: $user->can('updateStatus', [$task, TaskStatus::Review])
      */
@@ -99,7 +101,7 @@ class TaskPolicy
             return false;
         }
 
-        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+        if ($this->isWorkspaceMentor($user, $workspace)) {
             return true;
         }
 
@@ -125,7 +127,7 @@ class TaskPolicy
         return true;
     }
 
-    /** Menandai Selesai atau Revisi: hanya admin dan mentor workspace. Status Review dicek di controller. */
+    /** Menandai Selesai atau Revisi: hanya mentor workspace. Status Review dicek di controller. */
     public function review(User $user, Task $task): bool
     {
         $workspace = $task->workspace;
@@ -134,11 +136,11 @@ class TaskPolicy
             return false;
         }
 
-        return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
+        return $this->isWorkspaceMentor($user, $workspace);
     }
 
     /**
-     * Membagi tugas ke anggota: mentor/admin, atau intern yang menjadi ketua sprint tugas itu
+     * Membagi tugas ke anggota: mentor workspace, atau intern yang menjadi ketua sprint tugas itu
      * (selama sprint belum selesai). Tugas di Space pribadi tidak dibagi.
      */
     public function assign(User $user, Task $task): bool
@@ -149,14 +151,14 @@ class TaskPolicy
             return false;
         }
 
-        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+        if ($this->isWorkspaceMentor($user, $workspace)) {
             return true;
         }
 
         return $this->isSprintLeader($user, $task) && $this->canWrite($user, $workspace);
     }
 
-    /** Perpanjang deadline: mentor/admin, selama tugas belum Selesai. */
+    /** Perpanjang deadline: mentor workspace, selama tugas belum Selesai. */
     public function extendDeadline(User $user, Task $task): bool
     {
         $workspace = $task->workspace;
@@ -165,10 +167,10 @@ class TaskPolicy
             return false;
         }
 
-        return $this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace);
+        return $this->isWorkspaceMentor($user, $workspace);
     }
 
-    /** Mencentang checklist: admin, mentor workspace, atau intern yang di-assign. */
+    /** Mencentang checklist: mentor workspace, atau intern yang di-assign. */
     public function updateChecklist(User $user, Task $task): bool
     {
         $workspace = $task->workspace;
@@ -177,7 +179,7 @@ class TaskPolicy
             return false;
         }
 
-        if ($this->isWorkspaceAdmin($user) || $this->isWorkspaceMentor($user, $workspace)) {
+        if ($this->isWorkspaceMentor($user, $workspace)) {
             return true;
         }
 

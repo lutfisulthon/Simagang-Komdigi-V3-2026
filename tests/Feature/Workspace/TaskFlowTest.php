@@ -243,7 +243,7 @@ class TaskFlowTest extends TestCase
         $this->actingAs($this->ahmad->user)->putJson("/workspace/tasks/{$id}", ['title' => 'x'])->assertForbidden();
     }
 
-    public function test_hapus_tugas_soft_delete_hanya_mentor_pembuat_atau_admin(): void
+    public function test_hapus_tugas_soft_delete_hanya_mentor_pembuat(): void
     {
         $id = $this->makeTaskForAhmad();
 

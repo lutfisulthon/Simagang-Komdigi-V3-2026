@@ -152,7 +152,7 @@ Disimpan sebagai string (PHP Enum `TaskStatus`, `TaskPriority`). Label harus sam
 - `end_date` = **deadline sprint**, wajib sejak sprint dibuat (v1.2). `start_date` diisi saat sprint dimulai.
 - `leader` (v1.2) = ketua tim sprint ini, anggota kelompok. Boleh `null` saat `planned`; **wajib** untuk memulai.
 - `Workspace.active_sprint` ikut membawa `leader`.
-- `TaskCard.can` menambah `assign` (mentor/admin, atau ketua sprint tugas itu bila sprint belum `completed`) dan `extend_deadline` (mentor/admin, tugas belum `done`).
+- `TaskCard.can` menambah `assign` (mentor workspace, atau ketua sprint tugas itu bila sprint belum `completed`) dan `extend_deadline` (mentor workspace, tugas belum `done`). Admin hanya memantau, jadi semua `can` tugas `false` untuk admin.
 - `status`: `planned` (tanggal boleh `null`) → `active` (tanggal wajib) → `completed` (`completed_at` diisi).
 - **Maksimal satu sprint `active` per kelompok.** Urutan sprint `planned` = urutan dibuat.
 - TaskCard menambah `sprint_id` (`null` = Backlog) dan `rank` (urutan di dalam sprint/backlog; terpisah dari `position` kolom board).
@@ -182,10 +182,10 @@ Arti setiap izin di `can`:
 
 | Izin | Arti | Aturan (meniru `TaskPolicy`) |
 | --- | --- | --- |
-| `update` | Edit tugas | Mentor/admin, atau pembuat tugas (intern untuk to-do pribadinya) |
-| `move` | Boleh drag & ubah status | Mentor/admin, atau intern yang di-assign |
-| `review` | Tandai Selesai/Revisi | Mentor/admin |
-| `delete` | Hapus tugas | Admin, atau mentor pembuat tugas |
+| `update` | Edit tugas | Mentor workspace, atau pembuat tugas (intern untuk to-do pribadinya). Admin hanya memantau: selalu `false` |
+| `move` | Boleh drag & ubah status | Mentor workspace, atau intern yang di-assign. Admin: `false` |
+| `review` | Tandai Selesai/Revisi | Mentor workspace. Admin: `false` |
+| `delete` | Hapus tugas | Mentor pembuat tugas (atau ketua sprint untuk tugas buatannya). Admin: `false` |
 
 Semua bernilai `false` bila workspace `is_read_only`. Status tujuan tetap divalidasi server. Intern hanya boleh memindahkan sampai `review`, dan tidak bisa memindahkan tugas yang sedang di `review` atau `done`. Frontend menyembunyikan target yang tidak diizinkan (`WS.tasks.allowedTargets` di `tasks.js`).
 

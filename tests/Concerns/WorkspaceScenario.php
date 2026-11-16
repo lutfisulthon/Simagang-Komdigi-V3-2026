@@ -78,6 +78,24 @@ trait WorkspaceScenario
         ]);
     }
 
+    /** Mentor aktif yang memegang workspace ini (admin hanya memantau, jadi bukan pembuat tugas). */
+    protected function mentorUserOf(Workspace $workspace): User
+    {
+        $userId = DB::table('workspace_members')
+            ->where('workspace_id', $workspace->id)
+            ->where('role', 'mentor')
+            ->whereNull('left_at')
+            ->value('user_id');
+
+        return User::findOrFail($userId);
+    }
+
+    /** Buat tugas lewat API sebagai mentor workspace tersebut. */
+    protected function postTaskAsMentor(Workspace $workspace, array $payload = []): TestResponse
+    {
+        return $this->postTask($this->mentorUserOf($workspace), $workspace, $payload);
+    }
+
     /** Buat tugas di Space Ahmad oleh Rudy dan kembalikan id-nya. */
     protected function makeTaskForAhmad(array $payload = []): int
     {

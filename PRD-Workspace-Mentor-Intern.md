@@ -60,16 +60,18 @@ Modul ini dipakai tiga role yang sudah ada: Admin, Mentor, dan Intern. Role Inst
 | --- | --- | --- | --- |
 | Melihat workspace | Semua tim | Tim sendiri + space intern bimbingan | Tim sendiri + space pribadi |
 | Membuat / mengarsipkan workspace tim | ✓ | — | — |
-| Membuat tugas dan meng-assign intern | ✓ | ✓ (intern bimbingan / satu tim) | Hanya tugas pribadi (to-do sendiri) |
-| Memindahkan status sampai Review | ✓ | ✓ | ✓ (tugas yang di-assign ke dia) |
-| Menandai Selesai atau Revisi | ✓ | ✓ | — |
-| Menghapus tugas (soft delete) | ✓ | ✓ (tugas buatannya) | — |
+| Membuat tugas dan meng-assign intern | — | ✓ (intern bimbingan / satu tim) | Hanya tugas pribadi (to-do sendiri) |
+| Memindahkan status sampai Review | — | ✓ | ✓ (tugas yang di-assign ke dia) |
+| Menandai Selesai atau Revisi | — | ✓ | — |
+| Menghapus tugas (soft delete) | — | ✓ (tugas buatannya) | — |
 | Mengelola template tugas onboarding | ✓ | ✓ (tim sendiri) | — |
 | Membuat channel | ✓ | ✓ | — |
 | Posting di #pengumuman | ✓ | ✓ | — |
 | Mengirim pesan, membalas thread, mention | ✓ | ✓ | ✓ |
 | Mengedit / menghapus pesan sendiri | ✓ | ✓ | ✓ |
 | Menghapus pesan orang lain, pin pesan | ✓ | ✓ (channel timnya) | — |
+
+**Keputusan 2026-11-16:** admin hanya **memantau** tugas. Admin tetap melihat semua workspace, board, laporan, dan Monitoring, serta boleh berkomentar dan chat, tetapi tidak membuat, mengedit, memindahkan, mereview, menghapus, membagi, atau memperpanjang deadline tugas, dan tidak mengatur sprint. Semua itu urusan mentor workspace (tabel di atas sudah mengikuti keputusan ini).
 
 Aturan akses ditulis sebagai Laravel Policy (`WorkspacePolicy`, `TaskPolicy`, `ChannelPolicy`) sehingga tidak bergantung pada prefix route per role.
 
@@ -152,7 +154,7 @@ Intern memindahkan tugas sampai Review; dari sana hanya mentor yang memutuskan S
 **Aturan alur**
 
 - Intern hanya bisa memindahkan tugas sampai **Review**.
-- Hanya mentor/admin yang bisa menandai **Selesai** atau mengembalikan ke **Revisi**. Revisi wajib disertai catatan.
+- Hanya mentor workspace yang bisa menandai **Selesai** atau mengembalikan ke **Revisi** (admin hanya memantau). Revisi wajib disertai catatan.
 - Tugas yang melewati deadline dan belum Selesai otomatis diberi label **Terlambat** oleh scheduler harian (polanya sama dengan `MarkAlfaCommand`).
 - Pengingat dikirim H-1 sebelum deadline.
 - Mentor bisa menyimpan tugas sebagai **template** dan meng-assign-nya ke banyak intern sekaligus. Tiap intern mendapat salinan tugasnya sendiri.

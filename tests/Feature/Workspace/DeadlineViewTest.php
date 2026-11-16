@@ -19,7 +19,7 @@ class DeadlineViewTest extends TestCase
 
     private function task($workspace, string $title, string $due, array $attributes = [], array $assignees = []): Task
     {
-        $id = $this->postTask($this->admin, $workspace, ['title' => $title, 'due_at' => $due, 'assignee_ids' => $assignees])
+        $id = $this->postTaskAsMentor($workspace, ['title' => $title, 'due_at' => $due, 'assignee_ids' => $assignees])
             ->assertCreated()->json('data.0.id');
 
         $task = Task::findOrFail($id);
