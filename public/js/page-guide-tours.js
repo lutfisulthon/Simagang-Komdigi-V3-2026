@@ -94,7 +94,7 @@
     T('mentor-report', ['^/mentor/report$'], 'Laporan Akhir Anak Bimbingan', 'Memeriksa dan menilai laporan akhir yang dikirim anak bimbingan.', [
         S(HERO, 'Laporan akhir', 'Laporan yang dikirim anak bimbingan di akhir masa magang.'),
         S(FILTER, 'Saring laporan', 'Saring menurut anak magang, status laporan, dan yang perlu revisi.'),
-        S(TABLE, 'Daftar laporan', 'Kolom File membuka berkas laporan. Nilai dan Revisi menunjukkan hasil penilaian. Buka Detail untuk membaca laporan, memberi nilai 0 sampai 100, lalu menyetujui atau meminta revisi dengan catatan.'),
+        S(TABLE, 'Daftar laporan', 'Kolom File membuka berkas laporan. Nilai dan Revisi menunjukkan hasil penilaian. Buka Detail untuk membaca laporan, isi nilai 0 sampai 100 (catatan boleh dikosongkan), lalu Simpan Nilai. Laporan otomatis Disetujui; perubahan status berikutnya dilakukan admin.'),
         S(PAGER, 'Halaman data', HELP_PAGER),
     ]);
 
@@ -192,7 +192,7 @@
     ]);
 
     T('admin-lowongan', ['^/admin/lowongan$'], 'Manajemen Lowongan Magang', 'Mengelola lowongan magang yang tersedia bagi institusi.', [
-        S(btn('Tambah Lowongan'), 'Tambah lowongan', 'Buat lowongan magang baru: posisi, divisi, kuota, dan tanggalnya.', 'left'),
+        S(btn('Tambah Lowongan'), 'Tambah lowongan', 'Buat lowongan magang baru: judul, posisi, tim/bagian, deskripsi, persyaratan, fasilitas, dan kuota.', 'left'),
         S(FILTER, 'Cari dan saring', 'Cari lowongan dan saring menurut divisi.'),
         S(TABLE, 'Daftar lowongan', 'Menampilkan posisi, divisi, kuota, dan tanggal. Gunakan kolom Aksi untuk membuka, mengubah, atau menghapus. Lowongan dari industri mitra ditinjau di menu Verifikasi Lowongan.'),
     ]);
