@@ -2,10 +2,20 @@
 <div class="sb-foot">
     {{-- Panduan untuk semua peran: tutorial halaman ini, ringkasan cara pakai, dan tutorial halaman lain (public/js/page-guide.js). --}}
     @auth
-        <button type="button" class="sb-help" onclick="window.PageGuide && window.PageGuide.open()">
-            <span class="sb-help__ico"><i class="fas fa-circle-question"></i></span>
-            <span>Panduan penggunaan</span>
-        </button>
+        {{-- Dua tombol bantuan berdampingan dalam satu baris supaya footer tidak memakan tinggi sidebar. --}}
+        <div class="sb-helprow">
+            <button type="button" class="sb-help" title="Panduan penggunaan: tutorial tiap halaman" onclick="window.PageGuide && window.PageGuide.open()">
+                <span class="sb-help__ico"><i class="fas fa-circle-question"></i></span>
+                <span>Panduan</span>
+            </button>
+            {{-- Petunjuk Teknis (PDF A5): klik = pratinjau di dalam aplikasi (ada tombol Unduh). Tanpa JS, tautan membuka PDF-nya langsung.
+                 Berkas: public/unduhan/Petunjuk-Teknis-SIMAGANG.pdf; sumber: docs/juknis/; pratinjau: public/js/juknis-viewer.js. --}}
+            <a href="{{ asset('unduhan/Petunjuk-Teknis-SIMAGANG.pdf') }}" target="_blank" rel="noopener" class="sb-help sb-help--doc" title="Petunjuk Teknis (PDF): baca atau unduh"
+               onclick="if (window.PageGuide) { event.preventDefault(); window.PageGuide.juknis(); }">
+                <span class="sb-help__ico"><i class="fas fa-file-pdf"></i></span>
+                <span>Juknis</span>
+            </a>
+        </div>
     @endauth
     @auth
         @php
