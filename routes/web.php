@@ -39,6 +39,7 @@ use App\Http\Controllers\Admin\ActivityPostController;
 use App\Http\Controllers\Intern\SharingSessionController;
 use App\Http\Controllers\Mentor\ProfileController as MentorProfileController;
 use App\Http\Controllers\Mentor\CertificateController;
+use App\Http\Controllers\Intern\CertificateController as InternCertificateController;
 use App\Http\Controllers\Admin\AdminCertificateController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Institusi\DaftarInstitusiController;
@@ -489,9 +490,9 @@ Route::put('/sharing-session/{sharingSession}/update-materi', [SharingSessionCon
 
     Route::get(
             'certificates/{certificate}/print',
-            [CertificateController::class, 'print']
+            [InternCertificateController::class, 'print']
         )->name('certificates.print');
-    
+
     // Attendance Routes
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
