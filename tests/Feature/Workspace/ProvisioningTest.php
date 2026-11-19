@@ -83,6 +83,68 @@ class ProvisioningTest extends TestCase
         $this->assertSame($first, $this->snapshot());
     }
 
+    public function test_observer_terpicu_berulang_tidak_membuat_data_ganda(): void
+    {
+        $this->makeAdmin();
+        $team = $this->makeTeam('TIM GTA');
+        $mentor = $this->makeMentor('Rudy', $team);
+        $intern = $this->makeIntern('Ahmad Fauzi', $mentor, $team);
+
+        $first = $this->snapshot();
+
+        // Setiap update ini memicu InternObserver::updated (end_date ada di daftar kolom yang dipantau)
+        $intern->update(['end_date' => now()->addMonths(3)->toDateString()]);
+        $intern->update(['end_date' => now()->addMonths(4)->toDateString()]);
+        // Simpan tanpa perubahan: observer tidak boleh menyentuh apa pun
+        $intern->fresh()->save();
+
+        $this->assertSame($first, $this->snapshot());
+    }
+
+    public function test_observer_intern_tanpa_mentor_tidak_menumpuk_notifikasi_admin(): void
+    {
+        $admin = $this->makeAdmin();
+        $team = $this->makeTeam('TIM GTA');
+        $intern = $this->makeIntern('Budi', null, $team);
+
+        $intern->update(['end_date' => now()->addMonths(3)->toDateString()]);
+        $intern->update(['end_date' => now()->addMonths(4)->toDateString()]);
+
+        $this->assertSame(1, $admin->notifications()->where('type', InternWithoutMentorNotification::class)->count());
+        $this->assertSame(0, Workspace::count());
+    }
+
+    public function test_observer_ganti_mentor_bolak_balik_tetap_idempoten(): void
+    {
+        $this->makeAdmin();
+        $team = $this->makeTeam('TIM GTA');
+        $mentorA = $this->makeMentor('Rudy', $team);
+        $mentorB = $this->makeMentor('Sari', $team);
+        $intern = $this->makeIntern('Ahmad Fauzi', $mentorA, $team);
+
+        $initial = $this->snapshot();
+
+        $intern->update(['mentor_id' => $mentorB->id]);
+        $intern->update(['mentor_id' => $mentorA->id]);
+        $afterFirstCycle = $this->snapshot();
+
+        $intern->update(['mentor_id' => $mentorB->id]);
+        $intern->update(['mentor_id' => $mentorA->id]);
+
+        // Siklus kedua tidak menambah baris apa pun
+        $this->assertSame($afterFirstCycle, $this->snapshot());
+
+        // Ganti mentor tidak membuat workspace/channel baru, pesan sambutan ulang, atau notifikasi "intern bergabung"
+        foreach (['workspaces', 'channels', 'messages', 'notifications'] as $key) {
+            $this->assertSame($initial[$key], $afterFirstCycle[$key], "Jumlah {$key} berubah saat ganti mentor");
+        }
+
+        $space = $this->internSpace($intern);
+        $this->assertEquals([$intern->user_id => 'owner', $mentorA->user_id => 'mentor'], $this->activeMembers($space));
+        $dm = Channel::where('workspace_id', $space->id)->where('type', 'direct')->firstOrFail();
+        $this->assertEqualsCanonicalizing([$mentorA->user_id, $intern->user_id], $dm->members()->pluck('users.id')->all());
+    }
+
     public function test_perintah_backfill_idempoten_dan_membuat_workspace_intern_lama(): void
     {
         $this->makeAdmin();
