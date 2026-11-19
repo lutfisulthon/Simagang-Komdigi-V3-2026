@@ -283,5 +283,18 @@ a.sb-user:hover { background: #eff6ff; }
 .sb-help__ico { width: 28px; height: 28px; border-radius: 9px; background: #dbeafe; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
 .sb-help:hover { background: #dbeafe; }
 
+/* Panduan + Juknis berdampingan: satu baris, tombol saling berbagi lebar */
+.sb-helprow { display: flex; gap: 8px; margin-bottom: 8px; }
+.sb-helprow .sb-help { flex: 1 1 0; min-width: 0; width: auto; margin-bottom: 0; padding: 7px 8px; gap: 7px; justify-content: flex-start; }
+.sb-helprow .sb-help > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-helprow .sb-help__ico { width: 26px; height: 26px; font-size: 13px; }
+/* "Baru" di tombol yang sempit: cukup titik merah di sudut */
+.sb-helprow .sb-help.has-new::after { content: ""; position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; padding: 0; margin: 0; }
+
+/* Tautan Petunjuk Teknis (di sebelah tombol Panduan) */
+.sb-help--doc { color: #b45309; background: #fffbeb; }
+.sb-help--doc .sb-help__ico { background: #fef3c7; color: #d97706; }
+.sb-help--doc:hover { background: #fef3c7; }
+
 .sb-help { position: relative; }
 .sb-help.has-new::after { content: "Baru"; margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .03em; }

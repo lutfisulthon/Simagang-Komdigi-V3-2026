@@ -245,6 +245,21 @@
             body.appendChild(sec);
         }
 
+        // 3b) Petunjuk Teknis (PDF) untuk semua peran
+        {
+            const sec = mk('section', 'pg-card');
+            sec.appendChild(mk('p', 'pg-kicker', 'Petunjuk Teknis'));
+            sec.appendChild(mk('p', 'pg-hint', 'Panduan lengkap penggunaan SIMAGANG untuk semua peran (PDF, ukuran A5, siap dicetak).'));
+            const row = mk('div', 'pg-btnrow');
+            const a = mk('button', 'pg-btn'); a.type = 'button'; a.textContent = 'Lihat Petunjuk Teknis';
+            a.addEventListener('click', () => { closePanel(true); setTimeout(() => window.PageGuide.juknis(), 260); });
+            const d = mk('a', 'pg-btn'); d.textContent = 'Unduh PDF';
+            d.href = '/unduhan/Petunjuk-Teknis-SIMAGANG.pdf'; d.setAttribute('download', 'Petunjuk-Teknis-SIMAGANG.pdf');
+            row.append(a, d);
+            sec.appendChild(row);
+            body.appendChild(sec);
+        }
+
         // 4) Khusus peran yang memakai Workspace: istilah, alur kerja, dan FAQ
         if (window.WS) {
             const sec = mk('section', 'pg-card');

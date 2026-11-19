@@ -1,0 +1,128 @@
+/* Petunjuk Teknis SIMAGANG — gaya mengikuti Juknis resmi Kominfo/Komdigi, ukuran A5 untuk dicetak. */
+@page { size: 148mm 210mm; margin: 0; }
+:root {
+    --blue: #14388a;
+    --navy: #0f2557;
+    --lav: #d9d4f2;
+    --lav2: #ece9f8;
+    --gold: #f2b01e;
+    --ink: #16181d;
+    --mute: #5b6070;
+    --line: #b9bccb;
+    --gray: #e7e8ee;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #888; }
+body { font-family: "Century Schoolbook", "Georgia", serif; color: var(--ink); font-size: 9.3pt; line-height: 1.42; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media screen { body { padding: 10mm 0; } .pg { margin: 0 auto 8mm; box-shadow: 0 2px 10px rgba(0,0,0,.4); } }
+.sans { font-family: "Segoe UI", Calibri, Arial, sans-serif; }
+
+.pg { width: 148mm; height: 210mm; position: relative; overflow: hidden; background: #fff; break-after: page; page-break-after: always; }
+.pg:last-child { break-after: auto; page-break-after: auto; }
+.body { position: absolute; top: 15mm; bottom: 21mm; overflow: hidden; }
+.pg.odd .body { left: 18mm; right: 13mm; }
+.pg.even .body { left: 13mm; right: 18mm; }
+
+/* label halaman (tab lavender di sudut bawah) */
+.tab { position: absolute; bottom: 9mm; height: 8mm; min-width: 17mm; background: var(--lav); color: var(--navy); font: 700 9pt/8mm "Segoe UI", Arial, sans-serif; text-align: center; padding: 0 4mm; }
+.pg.odd .tab { right: 0; border-radius: 4mm 0 0 4mm; }
+.pg.even .tab { left: 0; border-radius: 0 4mm 4mm 0; }
+.run { position: absolute; top: 7mm; font: 600 6.6pt "Segoe UI", Arial, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #8d92a8; }
+.pg.odd .run { right: 13mm; } .pg.even .run { left: 13mm; }
+
+/* judul bab: diapit dua garis biru, kotak angka romawi lavender */
+.chap { display: flex; align-items: center; gap: 3.2mm; border-top: 2.2pt solid var(--blue); border-bottom: 2.2pt solid var(--blue); padding: 2.2mm 0; margin-bottom: 4mm; }
+.chap .no { background: var(--lav); color: var(--blue); font: 700 15pt/1 "Century Schoolbook", Georgia, serif; min-width: 12mm; padding: 2.6mm 2mm; text-align: center; }
+.chap h1 { font: 700 14.5pt/1.15 "Century Schoolbook", Georgia, serif; color: var(--blue); text-transform: uppercase; letter-spacing: .01em; }
+
+h2 { font: 700 10.8pt/1.25 "Century Schoolbook", Georgia, serif; color: var(--blue); margin: 3.4mm 0 1.6mm; }
+h2:first-child { margin-top: 0; }
+h3 { font: 700 9.4pt/1.3 "Century Schoolbook", Georgia, serif; color: var(--navy); margin: 3mm 0 1.2mm; padding-left: 3.4mm; position: relative; }
+h3::before { content: ""; position: absolute; left: 0; top: .42em; width: 1.9mm; height: 1.9mm; background: var(--gold); }
+p { text-align: justify; hyphens: auto; margin-bottom: 1.8mm; }
+p.dc::first-letter { float: left; font: 700 29pt/.82 "Century Schoolbook", Georgia, serif; color: var(--blue); padding: 1.2mm 1.6mm 0 0; }
+ul, ol { margin: 0 0 1.8mm 4.6mm; text-align: justify; }
+li { margin-bottom: .7mm; }
+ul.tight, ol.tight { margin-bottom: 1mm; }
+b, strong { font-weight: 700; }
+i, em { font-style: italic; }
+
+/* langkah bernomor ala "Cara ..." */
+ol.steps { list-style: none; margin-left: 0; counter-reset: s; }
+ol.steps > li { counter-increment: s; position: relative; padding-left: 6mm; margin-bottom: 1.2mm; }
+ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: .15em; width: 4.2mm; height: 4.2mm; border-radius: 50%; background: var(--blue); color: #fff; font: 700 6.6pt/4.2mm "Segoe UI", Arial, sans-serif; text-align: center; }
+.hasil { margin: .6mm 0 2.4mm; padding: 1.1mm 2.4mm; background: var(--lav2); border-left: 1.4mm solid var(--lav); font-size: 8.4pt; line-height: 1.35; text-align: left; }
+.hasil b { color: var(--blue); }
+
+table.t { width: 100%; border-collapse: collapse; margin: 1mm 0 2.6mm; font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 7.9pt; line-height: 1.32; }
+table.t th { background: var(--gray); color: var(--navy); text-align: left; font-weight: 700; border: .45pt solid var(--line); padding: 1.15mm 1.8mm; }
+table.t td { border: .45pt solid var(--line); padding: 1mm 1.8mm; vertical-align: top; text-align: left; }
+table.t td:first-child { font-weight: 600; }
+table.t.nobold td:first-child { font-weight: 400; }
+table.t.sm { font-size: 7.4pt; line-height: 1.28; }
+table.t.sm td { padding: .75mm 1.6mm; }
+.cap { font: italic 7.6pt/1.3 "Century Schoolbook", Georgia, serif; text-align: center; color: var(--mute); margin: .8mm 0 2.4mm; }
+figure img { display: block; width: 100%; height: 50mm; object-fit: cover; object-position: left top; border: .5pt solid var(--line); }
+.note { border-left: 1.4mm solid var(--gold); background: #fff8e4; padding: 1.5mm 2.6mm; margin: 1.4mm 0 2.4mm; font-size: 8.5pt; line-height: 1.38; text-align: left; }
+.note b { color: #8a5b00; }
+.ph { background: #fff1a8; padding: 0 1mm; font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: .92em; border-radius: .6mm; }
+.role { display: inline-block; font: 700 6.6pt/1 "Segoe UI", Arial, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: var(--blue); padding: 1.1mm 2mm; border-radius: 1mm; margin-right: 1.4mm; vertical-align: .1em; }
+
+/* diagram alir */
+.flow { margin: 1.5mm 0 2.6mm; font-family: "Segoe UI", Calibri, Arial, sans-serif; }
+.fl { display: grid; grid-template-columns: 19mm 1fr; align-items: stretch; gap: 2mm; margin-bottom: 4mm; position: relative; }
+.fl:last-child { margin-bottom: 0; }
+.fl .who { background: var(--lav); color: var(--navy); font-weight: 700; font-size: 7.2pt; text-align: center; border-radius: 1.4mm; display: flex; align-items: center; justify-content: center; padding: 1mm; line-height: 1.15; }
+.fl .box { border: .8pt solid var(--blue); border-radius: 1.6mm; padding: 1.4mm 2.4mm; font-size: 8pt; line-height: 1.3; background: #fff; }
+.fl .box b { color: var(--blue); }
+.fl:not(:last-child)::after { content: ""; position: absolute; left: calc(19mm + 2mm + 6mm); bottom: -3.5mm; width: 0; height: 0; border-left: 1.6mm solid transparent; border-right: 1.6mm solid transparent; border-top: 2.6mm solid var(--blue); }
+.fl.dec .box { border-style: dashed; background: var(--lav2); }
+.chevs { display: flex; margin: 1.5mm 0 2.4mm; font-family: "Segoe UI", Calibri, Arial, sans-serif; }
+.chevs .c { flex: 1; background: var(--blue); color: #fff; text-align: center; padding: 3.6mm 3mm 3.6mm 5.2mm; margin-left: -2.4mm; clip-path: polygon(0 0, calc(100% - 3.6mm) 0, 100% 50%, calc(100% - 3.6mm) 100%, 0 100%, 3.6mm 50%); font-weight: 700; font-size: 7.5pt; line-height: 1.2; }
+.chevs .c:first-child { margin-left: 0; padding-left: 3mm; clip-path: polygon(0 0, calc(100% - 3.6mm) 0, 100% 50%, calc(100% - 3.6mm) 100%, 0 100%); }
+.chevs .c:nth-child(2) { background: #1d4fb0; } .chevs .c:nth-child(3) { background: #2b6cd0; } .chevs .c:nth-child(4) { background: #0b8fcf; } .chevs .c:nth-child(5) { background: #e0a000; color: #1a1a1a; }
+.hflow { display: flex; align-items: stretch; margin: 1.5mm 0 2.6mm; font-family: "Segoe UI", Calibri, Arial, sans-serif; }
+.hflow .hb { flex: 1; border: .8pt solid var(--blue); border-radius: 1.6mm; padding: 1.5mm 1.4mm; font-size: 7.3pt; line-height: 1.25; text-align: center; background: #fff; display: flex; flex-direction: column; justify-content: center; }
+.hflow .hb b { color: var(--blue); display: block; margin-bottom: .6mm; }
+.hflow .ar { width: 5mm; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700; font-size: 11pt; }
+
+/* daftar isi */
+.toc { list-style: none; margin: 0; font-family: "Segoe UI", Calibri, Arial, sans-serif; }
+.toc li { display: flex; align-items: baseline; gap: 1.2mm; margin: 0; padding: .15mm 0; font-size: 8.3pt; line-height: 1.3; text-align: left; }
+.toc li .l { flex: 0 1 auto; }
+.toc li .d { flex: 1; border-bottom: .8pt dotted #8a8fa4; transform: translateY(-.7mm); min-width: 4mm; }
+.toc li .n { flex: none; font-variant-numeric: tabular-nums; }
+.toc li.c1 { margin-top: 1.8mm; font-weight: 700; color: var(--blue); font-size: 8.8pt; }
+.toc li.c2 { padding-left: 11mm; }
+.toc li.c1 .r { display: inline-block; min-width: 9mm; }
+
+/* sampul & halaman judul */
+.cover { background: #ececf0; }
+.cover .blk { position: absolute; left: 0; top: 0; width: 38mm; height: 38mm; background: var(--gold); }
+.cover .blk2 { position: absolute; left: 38mm; top: 0; width: 19mm; height: 19mm; background: #f6c14d; opacity: .65; }
+.cover .logo { position: absolute; right: 12mm; top: 12mm; width: 34mm; mix-blend-mode: multiply; }
+.cover .t1 { position: absolute; left: 12mm; right: 12mm; top: 78mm; font: 700 24pt/1.05 "Century Schoolbook", Georgia, serif; color: #111; letter-spacing: .01em; }
+.cover .band { position: absolute; left: 0; right: 0; top: 94mm; height: 46mm; background: var(--navy); padding: 7mm 12mm 0; }
+.cover .band .a { font: 700 21pt/1.15 "Century Schoolbook", Georgia, serif; color: var(--gold); }
+.cover .band .b { margin-top: 2.4mm; font: 400 10pt/1.3 "Century Schoolbook", Georgia, serif; color: #e8ecff; }
+.cover .who { position: absolute; left: 12mm; right: 12mm; top: 150mm; font: 400 9.2pt/1.45 "Century Schoolbook", Georgia, serif; color: #333; }
+.cover .who b { color: var(--blue); }
+.cover .foot { position: absolute; left: 0; right: 0; bottom: 0; height: 19mm; background: var(--navy); color: #fff; padding: 5mm 12mm 0; font: 600 8pt/1.35 "Segoe UI", Arial, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.cover .foot span { color: var(--gold); }
+.inner { background: #eeeef2; }
+.inner .geo { position: absolute; right: 0; top: 0; width: 52mm; height: 52mm; background: linear-gradient(135deg, transparent 50%, var(--lav) 50%); }
+.inner .geo2 { position: absolute; left: 0; bottom: 0; width: 20mm; height: 20mm; background: linear-gradient(315deg, transparent 50%, #dcd6f3 50%); }
+.inner .h { position: absolute; left: 15mm; right: 15mm; top: 60mm; }
+.inner .h .k { font: 700 11pt/1.2 "Segoe UI", Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
+.inner .h .j { margin-top: 3mm; font: 700 22pt/1.12 "Century Schoolbook", Georgia, serif; color: #111; }
+.inner .h .s { margin-top: 3.4mm; font: 400 10pt/1.4 "Century Schoolbook", Georgia, serif; color: #333; }
+.inner .lg { position: absolute; left: 15mm; bottom: 26mm; display: flex; align-items: center; gap: 5mm; }
+.inner .lg img { width: 25mm; mix-blend-mode: multiply; }
+.inner .lg div { font: 700 9pt/1.35 "Segoe UI", Arial, sans-serif; color: #222; }
+.inner .lg div small { display: block; font-weight: 400; font-size: 8pt; color: #555; }
+.back { background: var(--navy); }
+.back .card { position: absolute; left: 50%; top: 66mm; width: 40mm; margin-left: -20mm; background: #fff; border-radius: 3mm; padding: 4mm; }
+.back .card img { width: 100%; display: block; }
+.back .tx { position: absolute; left: 12mm; right: 12mm; top: 120mm; text-align: center; color: #fff; font: 700 11pt/1.35 "Century Schoolbook", Georgia, serif; }
+.back .tx small { display: block; margin-top: 3mm; font: 400 8pt/1.5 "Segoe UI", Arial, sans-serif; color: #c9d1f0; letter-spacing: .04em; }
+.back .blk { position: absolute; right: 0; bottom: 0; width: 38mm; height: 38mm; background: var(--gold); }
