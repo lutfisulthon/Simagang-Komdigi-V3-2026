@@ -58,7 +58,7 @@
         open() { closeDrawer(); return load().then((ui) => { if (ui) ui.open(); return !!ui; }); },
         start(opts) { return load().then((ui) => (ui ? ui.start(opts || {}) : false)); },
         load,
-        // Pratinjau Petunjuk Teknis (PDF) + tombol Unduh; skrip pratinjau baru diunduh saat dipakai.
+        // Pratinjau Buku Manual (PDF) + tombol Unduh; skrip pratinjau baru diunduh saat dipakai.
         juknis() {
             closeDrawer();
             if (window.JuknisViewer) { window.JuknisViewer.open(); return Promise.resolve(true); }

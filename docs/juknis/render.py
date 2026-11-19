@@ -1,4 +1,4 @@
-"""Membuat juknis.html -> Petunjuk-Teknis-SIMAGANG.pdf (A5) dan memeriksa teks yang meluap.
+"""Membuat juknis.html -> Buku-Manual-SIMAGANG.pdf (A5) dan memeriksa teks yang meluap.
 Pakai: python render.py [folder_pratinjau_png]"""
 import os, subprocess, sys, json
 from playwright.sync_api import sync_playwright
@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 HERE = os.path.dirname(os.path.abspath(__file__))
 subprocess.check_call([sys.executable, os.path.join(HERE, "build.py")])
 URL = "file:///" + os.path.join(HERE, "juknis.html").replace("\\", "/")
-PDF = os.path.join(HERE, "Petunjuk-Teknis-SIMAGANG.pdf")
+PDF = os.path.join(HERE, "Buku-Manual-SIMAGANG.pdf")
 PREV = sys.argv[1] if len(sys.argv) > 1 else None
 
 with sync_playwright() as p:

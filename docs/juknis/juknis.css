@@ -1,4 +1,4 @@
-/* Petunjuk Teknis SIMAGANG — gaya mengikuti Juknis resmi Kominfo/Komdigi, ukuran A5 untuk dicetak. */
+/* Buku Manual SIMAGANG — gaya mengikuti juknis resmi Kominfo/Komdigi, ukuran A5 untuk dicetak. */
 @page { size: 148mm 210mm; margin: 0; }
 :root {
     --blue: #14388a;
@@ -100,7 +100,9 @@ figure img { display: block; width: 100%; height: 50mm; object-fit: cover; objec
 .cover { background: #ececf0; }
 .cover .blk { position: absolute; left: 0; top: 0; width: 38mm; height: 38mm; background: var(--gold); }
 .cover .blk2 { position: absolute; left: 38mm; top: 0; width: 19mm; height: 19mm; background: #f6c14d; opacity: .65; }
-.cover .logo { position: absolute; right: 12mm; top: 12mm; width: 34mm; mix-blend-mode: multiply; }
+.cover .logowrap { position: absolute; right: 12mm; top: 12mm; width: 34mm; text-align: center; }
+.cover .logowrap img { width: 100%; display: block; mix-blend-mode: multiply; }
+.cover .logowrap .cap { margin-top: 1.8mm; font: 700 6.4pt/1.25 "Segoe UI", Arial, sans-serif; color: #333; letter-spacing: .02em; }
 .cover .t1 { position: absolute; left: 12mm; right: 12mm; top: 78mm; font: 700 24pt/1.05 "Century Schoolbook", Georgia, serif; color: #111; letter-spacing: .01em; }
 .cover .band { position: absolute; left: 0; right: 0; top: 94mm; height: 46mm; background: var(--navy); padding: 7mm 12mm 0; }
 .cover .band .a { font: 700 21pt/1.15 "Century Schoolbook", Georgia, serif; color: var(--gold); }
