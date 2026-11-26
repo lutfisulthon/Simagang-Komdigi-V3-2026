@@ -4,16 +4,112 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/pages/admin-monitoring-index.css') }}?v={{ @filemtime(public_path('css/pages/admin-monitoring-index.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/live-filter-ajax.css') }}?v={{ @filemtime(public_path('css/live-filter-ajax.css')) }}">
 @endpush
 
 @section('content')
+    {{-- Chart.js dimuat sekali di sini (di luar area yang di-swap AJAX) supaya tidak diunduh ulang tiap filter. --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <div class="dash-bg py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="monitoring-ajax" data-ajax-content>
 
             <div class="hero-strip mb-6">
                 <div class="relative z-10 px-6 py-7">
                     <h1 class="hero-title text-3xl sm:text-4xl font-bold leading-tight mb-2">Monitoring Bulanan</h1>
                     <p class="text-blue-100">Pantau dan kelola data peserta magang secara bulanan</p>
+                </div>
+            </div>
+
+            <!-- Komposisi Peserta Magang: Aktif vs Alumni -->
+            <div class="panel mb-8">
+                <div class="panel-header px-6 py-4">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fas fa-chart-pie mr-3"></i>
+                        Komposisi Peserta Magang
+                    </h2>
+                </div>
+                <div class="panel-body p-6">
+                    @if ($compositionTotal > 0)
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 items-center">
+
+                            <!-- Donut + legenda -->
+                            <div class="lg:col-span-2">
+                                <div class="composition-chart-wrap">
+                                    <canvas id="compositionChart" role="img"
+                                        aria-label="Diagram komposisi {{ $compositionActive }} peserta aktif berbanding {{ $compositionAlumni }} alumni"></canvas>
+                                    <div class="composition-chart-center" aria-hidden="true">
+                                        <span class="composition-chart-center__value">{{ $compositionTotal }}</span>
+                                        <span class="composition-chart-center__label">Total Peserta</span>
+                                    </div>
+                                </div>
+                                <div class="composition-legend">
+                                    <div class="composition-legend__item">
+                                        <span class="composition-legend__dot" style="background:#10b981"></span>
+                                        <span class="composition-legend__text">Aktif</span>
+                                        <span class="composition-legend__value">
+                                            {{ $compositionActive }}
+                                            <span class="composition-legend__pct">({{ $compositionTotal ? round($compositionActive / $compositionTotal * 100) : 0 }}%)</span>
+                                        </span>
+                                    </div>
+                                    <div class="composition-legend__item">
+                                        <span class="composition-legend__dot" style="background:#64748b"></span>
+                                        <span class="composition-legend__text">Alumni</span>
+                                        <span class="composition-legend__value">
+                                            {{ $compositionAlumni }}
+                                            <span class="composition-legend__pct">({{ $compositionTotal ? round($compositionAlumni / $compositionTotal * 100) : 0 }}%)</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Wawasan -->
+                            <div class="lg:col-span-3">
+                                <p class="section-label">Wawasan</p>
+                                <div class="insight-list">
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#eff6ff;color:#1d4ed8;"><i class="fas fa-percentage"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Rasio Aktif : Alumni</p>
+                                            <p class="insight-item__value">{{ $compositionActive }} : {{ $compositionAlumni }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#f0fdf4;color:#15803d;"><i class="fas fa-hourglass-half"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Rata-rata Lama Magang Alumni</p>
+                                            <p class="insight-item__value">
+                                                @if ($avgDurationDays)
+                                                    {{ round($avgDurationDays) }} hari <span class="text-sm text-gray-500 font-normal">(~{{ round($avgDurationDays / 30, 1) }} bulan)</span>
+                                                @else
+                                                    <span class="text-sm text-gray-400 font-normal">Belum ada alumni untuk dihitung</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#fff7ed;color:#c2410c;"><i class="fas fa-university"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Institusi dengan Alumni Terbanyak</p>
+                                            <p class="insight-item__value">
+                                                @if ($topAlumniInstitution)
+                                                    {{ $topAlumniInstitution->institution }}
+                                                    <span class="text-sm text-gray-500 font-normal">({{ $topAlumniInstitution->total }} orang)</span>
+                                                @else
+                                                    <span class="text-sm text-gray-400 font-normal">Belum ada alumni untuk dihitung</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center py-10 text-gray-500">
+                            <i class="fas fa-chart-pie text-5xl mb-3 text-gray-300"></i>
+                            <p class="text-sm">Belum ada peserta magang yang sesuai filter saat ini.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -27,8 +123,19 @@
                 </div>
                 <div class="filter-body p-6">
                     <p class="section-label">Filter Monitoring</p>
-                    <form method="GET" action="{{ route('admin.monitoring.index') }}">
-                        <div class="filter-grid grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <form method="GET" action="{{ route('admin.monitoring.index') }}" data-live-filter data-suggest-url="{{ route('admin.monitoring.search-suggest') }}">
+                        <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-4">
+
+                            <!-- Cari Nama -->
+                            <div class="md:col-span-2">
+                                <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Cari Nama Peserta</label>
+                                <div class="relative" data-search-wrap>
+                                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                    <input type="text" name="search" id="search" value="{{ $selectedSearch }}"
+                                        placeholder="Ketik nama peserta magang..."
+                                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
 
                             <!-- Bulan -->
                             <div>
@@ -46,8 +153,13 @@
                                     <option value="masuk"          {{ $selectedStatus === 'masuk'          ? 'selected' : '' }}>Masuk</option>
                                     <option value="aktif"          {{ $selectedStatus === 'aktif'          ? 'selected' : '' }}>Aktif</option>
                                     <option value="akan_pelepasan" {{ $selectedStatus === 'akan_pelepasan' ? 'selected' : '' }}>Akan Pelepasan</option>
+                                    <option value="pelepasan"      {{ $selectedStatus === 'pelepasan'      ? 'selected' : '' }}>Pelepasan (Alumni)</option>
                                 </select>
                             </div>
+
+                        </div>
+
+                        <div class="filter-grid grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
 
                             <!-- Mentor -->
                             <div>
@@ -77,30 +189,61 @@
                                 </select>
                             </div>
 
-                            <!-- Buttons -->
-                            <div class="filter-actions flex gap-3">
-                                <button type="submit"
-                                    class="flex-1 h-[42px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
-                                    <i class="fas fa-filter mr-1"></i> Filter
-                                </button>
-                                @if (request()->anyFilled(['month', 'status', 'mentor_id', 'institution']))
-                                    <a href="{{ route('admin.monitoring.index') }}"
-                                        class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg transition duration-200">
-                                        <i class="fas fa-times"></i>
-                                    </a>
-                                @endif
+                            <!-- Tim/Bagian -->
+                            <div>
+                                <label for="team_id" class="block text-sm font-semibold text-gray-700 mb-2">Tim/Bagian</label>
+                                <select name="team_id" id="team_id"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <option value="">Semua Tim</option>
+                                    @foreach ($teams as $team)
+                                        <option value="{{ $team->id }}" {{ (string) $selectedTeam === (string) $team->id ? 'selected' : '' }}>
+                                            {{ $team->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
 
+                            <!-- Urutkan -->
+                            <div>
+                                <label for="sort" class="block text-sm font-semibold text-gray-700 mb-2">Urutkan</label>
+                                <select name="sort" id="sort"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <option value="">Default</option>
+                                    <option value="name_asc"  {{ $selectedSort === 'name_asc'  ? 'selected' : '' }}>Nama A-Z</option>
+                                    <option value="start_desc" {{ $selectedSort === 'start_desc' ? 'selected' : '' }}>Tanggal Mulai Terbaru</option>
+                                    <option value="start_asc" {{ $selectedSort === 'start_asc' ? 'selected' : '' }}>Tanggal Mulai Terlama</option>
+                                    <option value="end_asc"   {{ $selectedSort === 'end_asc'   ? 'selected' : '' }}>Rencana Pelepasan Terdekat</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="filter-actions flex gap-3 mt-4">
+                            <button type="submit"
+                                class="h-[42px] px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                                <i class="fas fa-filter mr-1"></i> Filter
+                            </button>
+                            @if (request()->anyFilled(['month', 'status', 'mentor_id', 'institution', 'team_id', 'search', 'sort']))
+                                <a href="{{ route('admin.monitoring.index') }}"
+                                    class="h-[42px] flex items-center bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg transition duration-200">
+                                    <i class="fas fa-times mr-1"></i> Reset
+                                </a>
+                            @endif
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- Statistics Cards -->
+            {{-- Kartu bisa diklik: langsung menerapkan filter status terkait, filter lain (bulan/mentor/kampus/tim/cari) tetap dipertahankan. --}}
+            @php
+                $cardQuery = fn ($status) => array_merge(request()->except(['status', 'active_page', 'alumni_page']), ['status' => $status]);
+            @endphp
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
                 <!-- Card 1: Masuk -->
-                <div class="stat-card group">
+                <a href="{{ route('admin.monitoring.index', $cardQuery('masuk')) }}"
+                    class="stat-card group block {{ $selectedStatus === 'masuk' ? 'ring-2 ring-blue-500' : '' }}" title="Klik untuk filter: Masuk bulan ini">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
@@ -115,10 +258,11 @@
                         </div>
                     </div>
                     <div class="h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
-                </div>
+                </a>
 
-                <!-- Card 2: Keluar -->
-                <div class="stat-card group">
+                <!-- Card 2: Keluar (pakai filter "Akan Pelepasan": is_active masih true, tapi end_date jatuh bulan ini) -->
+                <a href="{{ route('admin.monitoring.index', $cardQuery('akan_pelepasan')) }}"
+                    class="stat-card group block {{ $selectedStatus === 'akan_pelepasan' ? 'ring-2 ring-red-500' : '' }}" title="Klik untuk filter: Akan Pelepasan bulan ini">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
@@ -133,10 +277,11 @@
                         </div>
                     </div>
                     <div class="h-1 bg-gradient-to-r from-red-500 to-rose-600"></div>
-                </div>
+                </a>
 
                 <!-- Card 3: Total Aktif -->
-                <div class="stat-card group">
+                <a href="{{ route('admin.monitoring.index', $cardQuery('aktif')) }}"
+                    class="stat-card group block {{ $selectedStatus === 'aktif' ? 'ring-2 ring-green-500' : '' }}" title="Klik untuk filter: Aktif">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
@@ -151,10 +296,11 @@
                         </div>
                     </div>
                     <div class="h-1 bg-gradient-to-r from-green-500 to-emerald-600"></div>
-                </div>
+                </a>
 
                 <!-- Card 4: Pelepasan -->
-                <div class="stat-card group">
+                <a href="{{ route('admin.monitoring.index', $cardQuery('pelepasan')) }}"
+                    class="stat-card group block {{ $selectedStatus === 'pelepasan' ? 'ring-2 ring-orange-500' : '' }}" title="Klik untuk filter: Pelepasan (Alumni) bulan ini">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
@@ -169,7 +315,7 @@
                         </div>
                     </div>
                     <div class="h-1 bg-gradient-to-r from-orange-500 to-orange-600"></div>
-                </div>
+                </a>
 
             </div>
 
@@ -214,6 +360,8 @@
                             <input type="hidden" name="status"       value="{{ request('status') }}">
                             <input type="hidden" name="mentor_id"    value="{{ request('mentor_id') }}">
                             <input type="hidden" name="institution"  value="{{ request('institution') }}">
+                            <input type="hidden" name="team_id"      value="{{ request('team_id') }}">
+                            <input type="hidden" name="search"       value="{{ request('search') }}">
                             <input type="hidden" name="final_project" value="{{ request('final_project') }}">
                             <button type="submit"
                                 class="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 whitespace-nowrap">
@@ -353,6 +501,8 @@
                             <input type="hidden" name="status"      value="pelepasan">
                             <input type="hidden" name="mentor_id"   value="{{ request('mentor_id') }}">
                             <input type="hidden" name="institution" value="{{ request('institution') }}">
+                            <input type="hidden" name="team_id"     value="{{ request('team_id') }}">
+                            <input type="hidden" name="search"      value="{{ request('search') }}">
                             <button type="submit"
                                 class="bg-white text-gray-800 hover:bg-gray-100 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 whitespace-nowrap">
                                 <i class="fas fa-download mr-2"></i>Export Alumni
@@ -532,65 +682,105 @@
 
             </div>
 
+            {{-- Skrip chart ditaruh di DALAM area data-ajax-content supaya ikut dieksekusi ulang
+                 tiap konten diganti lewat AJAX (lihat public/js/live-filter-ajax.js: execScripts). --}}
+            <script>
+                @if ($compositionTotal > 0)
+                (function () {
+                    const compCtx = document.getElementById('compositionChart').getContext('2d');
+                    new Chart(compCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Aktif', 'Alumni'],
+                            datasets: [{
+                                data: [{{ $compositionActive }}, {{ $compositionAlumni }}],
+                                backgroundColor: ['#10b981', '#64748b'],
+                                borderWidth: 0,
+                                hoverOffset: 6,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '72%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => {
+                                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                            const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+                                            return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    });
+                })();
+                @endif
+
+                (function () {
+                    const ctx = document.getElementById('monthlyChart').getContext('2d');
+                    const monthlyData = @json($monthlyStats);
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: monthlyData.map(item => item.month),
+                            datasets: [{
+                                    label: 'Masuk',
+                                    data: monthlyData.map(item => item.masuk),
+                                    borderColor: 'rgb(59, 130, 246)',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Keluar',
+                                    data: monthlyData.map(item => item.keluar),
+                                    borderColor: 'rgb(239, 68, 68)',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Aktif',
+                                    data: monthlyData.map(item => item.aktif),
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'top' },
+                                title: {
+                                    display: true,
+                                    text: 'Tren Masuk, Keluar, dan Aktif Per Bulan'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1 }
+                                }
+                            }
+                        }
+                    });
+                })();
+            </script>
+
         </div>
     </div>
 
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <script src="{{ asset('js/live-filter-ajax.js') }}?v={{ @filemtime(public_path('js/live-filter-ajax.js')) }}"></script>
         <script>
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            const monthlyData = @json($monthlyStats);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: monthlyData.map(item => item.month),
-                    datasets: [{
-                            label: 'Masuk',
-                            data: monthlyData.map(item => item.masuk),
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Keluar',
-                            data: monthlyData.map(item => item.keluar),
-                            borderColor: 'rgb(239, 68, 68)',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Aktif',
-                            data: monthlyData.map(item => item.aktif),
-                            borderColor: 'rgb(34, 197, 94)',
-                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: {
-                            display: true,
-                            text: 'Tren Masuk, Keluar, dan Aktif Per Bulan'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    }
-                }
-            });
-
-
             document.querySelectorAll('.alert').forEach(alert => {
                 setTimeout(() => {
                     alert.style.transition = 'opacity 0.5s ease';

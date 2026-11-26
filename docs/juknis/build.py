@@ -47,8 +47,8 @@ def ph(t):
 # ======================================================================
 P("cover", f'''
 <div class="blk"></div><div class="blk2"></div>
-<img class="logo" src="{LOGO}" alt="Komdigi">
-<div class="t1">PETUNJUK TEKNIS</div>
+<div class="logowrap"><img src="{LOGO}" alt="Komdigi"><div class="cap">BBLSDM Komdigi Makassar</div></div>
+<div class="t1">BUKU MANUAL</div>
 <div class="band"><div class="a">Penggunaan Sistem Manajemen Magang (SIMAGANG)</div>
 <div class="b">Panduan ringkas untuk seluruh pengguna aplikasi</div></div>
 <div class="who"><b>Untuk:</b> Peserta Magang · Mentor · Admin dan Super Admin · Institusi Pendidikan · Industri Mitra</div>
@@ -57,7 +57,7 @@ P("cover", f'''
 
 P("inner", f'''
 <div class="geo"></div><div class="geo2"></div>
-<div class="h"><div class="k">Petunjuk Teknis</div>
+<div class="h"><div class="k">Buku Manual</div>
 <div class="j">Penggunaan Sistem Manajemen Magang (SIMAGANG)</div>
 <div class="s">Dokumen ini menjelaskan cara memakai aplikasi SIMAGANG bagi setiap peran, dari pendaftaran magang sampai penilaian akhir.</div></div>
 <div class="lg"><img src="{LOGO}" alt="Komdigi"><div>BBLSDM Komdigi Makassar<small>Kementerian Komunikasi dan Digital<br>Makassar, November 2026 · Edisi 1</small></div></div>
@@ -66,9 +66,9 @@ P("inner", f'''
 P("front", f'''
 <div class="chap" style="margin-bottom:5mm"><div class="no" style="font-size:11pt">iii</div><h1 style="font-size:13pt">Kata Pengantar</h1></div>
 <p class="dc">Magang merupakan sarana penting untuk menyiapkan talenta digital yang siap bekerja. Pelaksanaannya melibatkan banyak pihak, yaitu peserta, mentor, pengelola program, institusi pendidikan, dan industri mitra, sehingga memerlukan pengelolaan yang tertib, mudah dipantau, dan dapat dipertanggungjawabkan.</p>
-<p>Sistem Manajemen Magang (SIMAGANG) disediakan untuk menyatukan seluruh proses tersebut dalam satu aplikasi web: pendaftaran, pengajuan, absensi, logbook, penugasan, sampai laporan akhir dan penilaian. Agar aplikasi ini dipakai dengan cara yang sama oleh semua pihak, disusunlah Petunjuk Teknis ini.</p>
-<p>Petunjuk Teknis ini sengaja dibuat ringkas dan berorientasi pada tindakan. Setiap peran dapat langsung menuju bagiannya, mengikuti langkah-langkah yang disajikan dalam bentuk “Cara …”, dan memperoleh hasil yang jelas pada tiap langkah. Dokumen ini akan diperbarui bila aplikasi atau ketentuan berubah.</p>
-<p>Kami berharap Petunjuk Teknis ini membantu seluruh pengguna memanfaatkan SIMAGANG secara optimal, sehingga penyelenggaraan magang menjadi lebih tertib, transparan, dan berkualitas.</p>
+<p>Sistem Manajemen Magang (SIMAGANG) disediakan untuk menyatukan seluruh proses tersebut dalam satu aplikasi web: pendaftaran, pengajuan, absensi, logbook, penugasan, sampai laporan akhir dan penilaian. Agar aplikasi ini dipakai dengan cara yang sama oleh semua pihak, disusunlah Buku Manual ini.</p>
+<p>Buku Manual ini sengaja dibuat ringkas dan berorientasi pada tindakan. Setiap peran dapat langsung menuju bagiannya, mengikuti langkah-langkah kerja yang disajikan secara berurutan, dan memperoleh hasil yang jelas pada tiap langkah. Dokumen ini akan diperbarui bila aplikasi atau ketentuan berubah.</p>
+<p>Kami berharap Buku Manual ini membantu seluruh pengguna memanfaatkan SIMAGANG secara optimal, sehingga penyelenggaraan magang menjadi lebih tertib, transparan, dan berkualitas.</p>
 <div style="margin:7mm 0 0 auto;width:68mm;text-align:center"><p style="text-align:center;margin:0">Makassar, November 2026</p><p style="text-align:center;margin:0">Kepala BBLSDM Komdigi Makassar,</p><div style="height:26mm"></div></div>
 ''')
 
@@ -81,11 +81,11 @@ P("body", f'''
 {chap(1, "Pendahuluan")}
 {h2("A", "Latar Belakang")}
 <p class="dc">Program magang di lingkungan BBLSDM Komdigi Makassar diikuti peserta dari berbagai institusi pendidikan dan industri mitra. Tanpa sistem terpadu, data pendaftaran, kehadiran, catatan harian, tugas, dan penilaian tersebar di banyak berkas sehingga sulit dipantau.</p>
-<p>SIMAGANG dikembangkan untuk menyatukan seluruh proses itu dalam satu aplikasi web bagi enam peran. Petunjuk Teknis ini disusun agar setiap peran memahami tugasnya dan memakai aplikasi dengan cara yang seragam.</p>
+<p>SIMAGANG dikembangkan untuk menyatukan seluruh proses itu dalam satu aplikasi web bagi enam peran. Buku Manual ini disusun agar setiap peran memahami tugasnya dan memakai aplikasi dengan cara yang seragam.</p>
 {h2("B", "Maksud dan Tujuan")}
 <p><b>Maksud:</b> pedoman praktis yang dapat diikuti langkah demi langkah tanpa pelatihan khusus. <b>Tujuan:</b></p>
 <ul class="tight"><li>menyeragamkan cara kerja seluruh peran di dalam aplikasi;</li><li>mempercepat pengguna baru memahami tugas dan menu yang relevan; dan</li><li>memastikan data magang tercatat lengkap, tepat waktu, dan dapat ditelusuri.</li></ul>
-{h2("C", "Cara Menggunakan Petunjuk Teknis")}
+{h2("C", "Cara Menggunakan Buku Manual")}
 <p>Bacalah Bab II dan III sekali, lalu langsung menuju bagian peran Anda pada Bab IV.</p>
 {table(["Anda sebagai", "Bacalah", "Halaman"], [
     ["Peserta Magang", "Bab II, III, lalu Bab IV bagian A", "@@IV.A@@"],
@@ -164,7 +164,7 @@ P("body", f'''
     ["Industri", "Membuka lowongan, memproses pengajuan, dan memantau peserta di perusahaannya.", "Dashboard, Chat Publik, Lowongan, Pengajuan, Peserta, Absensi, Logbook, Mikro Skill, Laporan"],
 ], "sm")}
 {h2("E", "Cara Masuk dan Mendapat Bantuan")}
-{steps("Buka alamat SIMAGANG di peramban, lalu masuk dengan <b>email</b> dan <b>kata sandi</b> yang diberikan admin. Lupa kata sandi? Klik <b>Lupa Password?</b> pada halaman masuk.", "Aplikasi membuka <b>Dashboard</b> sesuai peran Anda. Menu lain ada di sisi kiri.", "Di setiap halaman, klik <b>Panduan penggunaan</b> di dasar menu kiri, lalu <b>Mulai tutorial halaman ini</b> untuk disorot langkah demi langkah. Klik <b>Petunjuk Teknis</b> untuk membaca atau mengunduh dokumen ini.", "Setelah selesai, klik <b>Logout</b>. Sesi masuk berakhir sendiri bila lama tidak aktif (saat ini 120 menit).")}
+{steps("Buka alamat SIMAGANG di peramban, lalu masuk dengan <b>email</b> dan <b>kata sandi</b> yang diberikan admin. Lupa kata sandi? Klik <b>Lupa Password?</b> pada halaman masuk.", "Aplikasi membuka <b>Dashboard</b> sesuai peran Anda. Menu lain ada di sisi kiri.", "Di setiap halaman, klik <b>Panduan penggunaan</b> di dasar menu kiri, lalu <b>Mulai tutorial halaman ini</b> untuk disorot langkah demi langkah. Klik <b>Buku Manual</b> untuk membaca atau mengunduh dokumen ini.", "Setelah selesai, klik <b>Logout</b>. Sesi masuk berakhir sendiri bila lama tidak aktif (saat ini 120 menit).")}
 <div class="note"><b>Chat Publik.</b> Seluruh pengguna yang sudah masuk dapat mengobrol di sini. Fitur ini masih dalam tahap pengembangan: sementara ini pesan belum disimpan di server pusat. Hormati etika pada Bab V bagian D.</div>
 ''')
 
@@ -394,7 +394,7 @@ P("body", f'''
 # ======================================================================
 P("body", f'''
 {chap(6, "Penutup")}
-<p class="dc">Petunjuk Teknis ini diharapkan membantu setiap pengguna memakai SIMAGANG dengan benar, tertib, dan efisien. Karena aplikasi terus dikembangkan, tampilan dan menu dapat berubah; tutorial di dalam aplikasi selalu menjadi rujukan terbaru untuk setiap halaman.</p>
+<p class="dc">Buku Manual ini diharapkan membantu setiap pengguna memakai SIMAGANG dengan benar, tertib, dan efisien. Karena aplikasi terus dikembangkan, tampilan dan menu dapat berubah; tutorial di dalam aplikasi selalu menjadi rujukan terbaru untuk setiap halaman.</p>
 <p>Kritik, saran, dan temuan kekeliruan dapat disampaikan kepada admin untuk perbaikan edisi berikutnya.</p>
 {h2("A", "Rangkuman Butir Penting")}
 {table(["Peran", "Tiga hal yang perlu diingat"], [
@@ -410,7 +410,7 @@ P("body", f'''
 
 P("back", f'''
 <div class="card"><img src="{LOGO}" alt="Komdigi"></div>
-<div class="tx">Petunjuk Teknis Penggunaan SIMAGANG<small>BBLSDM Komdigi Makassar<br>Kementerian Komunikasi dan Digital · Edisi 1 · November 2026</small></div>
+<div class="tx">Buku Manual Penggunaan SIMAGANG<small>BBLSDM Komdigi Makassar<br>Kementerian Komunikasi dan Digital · Edisi 1 · November 2026</small></div>
 <div class="blk"></div>
 ''')
 
@@ -467,10 +467,10 @@ for idx, pg in enumerate(pages):
         cls = {"cover": "cover", "inner": "inner", "back": "back"}[k]
         out.append(f'<section class="pg {cls} {parity}">{inner}</section>')
     else:
-        run = "Petunjuk Teknis SIMAGANG"
+        run = "Buku Manual SIMAGANG"
         out.append(f'<section class="pg {parity}"><div class="run">{run}</div><div class="body">{inner}</div><div class="tab">{pg["label"]}</div></section>')
 
-doc = f'''<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Petunjuk Teknis SIMAGANG</title>
+doc = f'''<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Buku Manual SIMAGANG</title>
 <link rel="stylesheet" href="juknis.css"></head><body>
 {"".join(out)}
 </body></html>'''

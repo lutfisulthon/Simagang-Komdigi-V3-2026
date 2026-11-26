@@ -8,12 +8,12 @@
                 <span class="sb-help__ico"><i class="fas fa-circle-question"></i></span>
                 <span>Panduan</span>
             </button>
-            {{-- Petunjuk Teknis (PDF A5): klik = pratinjau di dalam aplikasi (ada tombol Unduh). Tanpa JS, tautan membuka PDF-nya langsung.
-                 Berkas: public/unduhan/Petunjuk-Teknis-SIMAGANG.pdf; sumber: docs/juknis/; pratinjau: public/js/juknis-viewer.js. --}}
-            <a href="{{ asset('unduhan/Petunjuk-Teknis-SIMAGANG.pdf') }}" target="_blank" rel="noopener" class="sb-help sb-help--doc" title="Petunjuk Teknis (PDF): baca atau unduh"
+            {{-- Buku Manual (PDF A5): klik = pratinjau di dalam aplikasi (ada tombol Unduh). Tanpa JS, tautan membuka PDF-nya langsung.
+                 Berkas: public/unduhan/Buku-Manual-SIMAGANG.pdf; sumber: docs/juknis/; pratinjau: public/js/juknis-viewer.js. --}}
+            <a href="{{ asset('unduhan/Buku-Manual-SIMAGANG.pdf') }}" target="_blank" rel="noopener" class="sb-help sb-help--doc" title="Buku Manual (PDF): baca atau unduh"
                onclick="if (window.PageGuide) { event.preventDefault(); window.PageGuide.juknis(); }">
                 <span class="sb-help__ico"><i class="fas fa-file-pdf"></i></span>
-                <span>Juknis</span>
+                <span>Manual</span>
             </a>
         </div>
     @endauth

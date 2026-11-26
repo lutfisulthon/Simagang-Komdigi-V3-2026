@@ -3,6 +3,7 @@
 @section('title', 'Kelola Peserta Magang - Sistem Magang')
 
 @push('styles')
+    <link rel="stylesheet" href="{{ asset('css/live-filter-ajax.css') }}?v={{ @filemtime(public_path('css/live-filter-ajax.css')) }}">
     <style>
 
         * {
@@ -318,12 +319,138 @@
             box-shadow: 0 20px 60px rgba(30, 58, 138, 0.18);
             position: relative;
         }
+
+        /* ── Komposisi Peserta Magang (donut Aktif vs Alumni) ── */
+        .composition-chart-wrap {
+            position: relative;
+            height: 220px;
+            max-width: 220px;
+            margin: 0 auto;
+        }
+
+        .composition-chart-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .composition-chart-center__value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+        }
+
+        .composition-chart-center__label {
+            margin-top: 5px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        .composition-legend {
+            margin-top: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .composition-legend__item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.86rem;
+        }
+
+        .composition-legend__dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+
+        .composition-legend__text {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .composition-legend__value {
+            margin-left: auto;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .composition-legend__pct {
+            font-weight: 500;
+            color: #94a3b8;
+            margin-left: 2px;
+        }
+
+        .insight-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .insight-item__icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .insight-item__label {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .insight-item__value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.4;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .composition-chart-wrap {
+                height: 180px;
+                max-width: 180px;
+            }
+        }
     </style>
 @endpush
 
 @section('content')
+    {{-- Chart.js dimuat sekali di sini (di luar area yang di-swap AJAX) supaya tidak diunduh ulang tiap filter. --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <div class="dash-bg py-8 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6" id="intern-ajax" data-ajax-content>
 
             {{-- ── HERO STRIP ── --}}
             <div class="hero-strip mb-6">
@@ -341,6 +468,98 @@
                 </div>
             </div>
 
+            {{-- ── KOMPOSISI PESERTA MAGANG: Aktif vs Alumni ── --}}
+            <div class="panel mb-6">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fas fa-chart-pie mr-3"></i>Komposisi Peserta Magang
+                    </h2>
+                </div>
+                <div class="p-6">
+                    @if ($compositionTotal > 0)
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 items-center">
+
+                            {{-- Donut + legenda --}}
+                            <div class="lg:col-span-2">
+                                <div class="composition-chart-wrap">
+                                    <canvas id="compositionChart" role="img"
+                                        aria-label="Diagram komposisi {{ $compositionActive }} peserta aktif berbanding {{ $compositionAlumni }} alumni"></canvas>
+                                    <div class="composition-chart-center" aria-hidden="true">
+                                        <span class="composition-chart-center__value">{{ $compositionTotal }}</span>
+                                        <span class="composition-chart-center__label">Total Peserta</span>
+                                    </div>
+                                </div>
+                                <div class="composition-legend">
+                                    <div class="composition-legend__item">
+                                        <span class="composition-legend__dot" style="background:#10b981"></span>
+                                        <span class="composition-legend__text">Aktif</span>
+                                        <span class="composition-legend__value">
+                                            {{ $compositionActive }}
+                                            <span class="composition-legend__pct">({{ $compositionTotal ? round($compositionActive / $compositionTotal * 100) : 0 }}%)</span>
+                                        </span>
+                                    </div>
+                                    <div class="composition-legend__item">
+                                        <span class="composition-legend__dot" style="background:#64748b"></span>
+                                        <span class="composition-legend__text">Alumni</span>
+                                        <span class="composition-legend__value">
+                                            {{ $compositionAlumni }}
+                                            <span class="composition-legend__pct">({{ $compositionTotal ? round($compositionAlumni / $compositionTotal * 100) : 0 }}%)</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Wawasan --}}
+                            <div class="lg:col-span-3">
+                                <p class="section-label">Wawasan</p>
+                                <div class="insight-list">
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#eff6ff;color:#1d4ed8;"><i class="fas fa-percentage"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Rasio Aktif : Alumni</p>
+                                            <p class="insight-item__value">{{ $compositionActive }} : {{ $compositionAlumni }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#f0fdf4;color:#15803d;"><i class="fas fa-hourglass-half"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Rata-rata Lama Magang Alumni</p>
+                                            <p class="insight-item__value">
+                                                @if ($avgDurationDays)
+                                                    {{ round($avgDurationDays) }} hari <span class="text-sm text-gray-500 font-normal">(~{{ round($avgDurationDays / 30, 1) }} bulan)</span>
+                                                @else
+                                                    <span class="text-sm text-gray-400 font-normal">Belum ada alumni untuk dihitung</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-item__icon" style="background:#fff7ed;color:#c2410c;"><i class="fas fa-university"></i></span>
+                                        <div>
+                                            <p class="insight-item__label">Institusi dengan Alumni Terbanyak</p>
+                                            <p class="insight-item__value">
+                                                @if ($topAlumniInstitution)
+                                                    {{ $topAlumniInstitution->institution }}
+                                                    <span class="text-sm text-gray-500 font-normal">({{ $topAlumniInstitution->total }} orang)</span>
+                                                @else
+                                                    <span class="text-sm text-gray-400 font-normal">Belum ada alumni untuk dihitung</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    @else
+                        <div class="empty-state">
+                            <i class="fas fa-chart-pie"></i>
+                            <p>Belum ada peserta magang yang sesuai filter saat ini.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             {{-- ── FILTER PANEL ── --}}
             <div class="panel mb-6">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
@@ -349,8 +568,9 @@
                     </h2>
                 </div>
                 <form method="GET" action="{{ route('admin.intern.index') }}"
-                      class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
-                    <div>
+                      class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6"
+                      data-live-filter data-suggest-url="{{ route('admin.intern.search-suggest') }}">
+                    <div data-search-wrap>
                         <label class="block text-sm font-medium text-gray-600 mb-2">Cari Nama</label>
                         <input type="text" name="search" value="{{ request('search') }}"
                             class="input-main" placeholder="Ketik nama peserta..." />
@@ -379,11 +599,32 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">Kampus</label>
+                        <select name="institution" class="input-main">
+                            <option value="">Semua Kampus</option>
+                            @foreach($institutions as $inst)
+                                <option value="{{ $inst }}" {{ request('institution') === $inst ? 'selected' : '' }}>
+                                    {{ $inst }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-2">Urutkan</label>
+                        <select name="sort" class="input-main">
+                            <option value="">Terbaru Ditambahkan</option>
+                            <option value="created_asc" {{ $selectedSort === 'created_asc' ? 'selected' : '' }}>Terlama Ditambahkan</option>
+                            <option value="name_asc" {{ $selectedSort === 'name_asc' ? 'selected' : '' }}>Nama A-Z</option>
+                            <option value="start_desc" {{ $selectedSort === 'start_desc' ? 'selected' : '' }}>Tanggal Mulai Terbaru</option>
+                            <option value="start_asc" {{ $selectedSort === 'start_asc' ? 'selected' : '' }}>Tanggal Mulai Terlama</option>
+                        </select>
+                    </div>
                     <div class="flex items-end gap-2">
                         <button type="submit" class="action-mobile flex-1 btn-filter">
                             <i class="fas fa-filter"></i>Filter
                         </button>
-                        @if(request()->anyFilled(['search', 'team_id', 'mentor_id']))
+                        @if(request()->anyFilled(['search', 'team_id', 'mentor_id', 'institution', 'sort']))
                             <a href="{{ route('admin.intern.index') }}" class="btn-reset">
                                 <i class="fas fa-times"></i>
                             </a>
@@ -585,6 +826,45 @@
                 </div>
             </div>
 
+            {{-- Skrip chart ditaruh di DALAM area data-ajax-content supaya ikut dieksekusi ulang
+                 tiap konten diganti lewat AJAX (lihat public/js/live-filter-ajax.js: execScripts). --}}
+            @if ($compositionTotal > 0)
+                <script>
+                    (function () {
+                        const compCtx = document.getElementById('compositionChart').getContext('2d');
+                        new Chart(compCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Aktif', 'Alumni'],
+                                datasets: [{
+                                    data: [{{ $compositionActive }}, {{ $compositionAlumni }}],
+                                    backgroundColor: ['#10b981', '#64748b'],
+                                    borderWidth: 0,
+                                    hoverOffset: 6,
+                                }],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '72%',
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (ctx) => {
+                                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                                const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+                                                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        });
+                    })();
+                </script>
+            @endif
+
         </div>
     </div>
 
@@ -614,4 +894,8 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script src="{{ asset('js/live-filter-ajax.js') }}?v={{ @filemtime(public_path('js/live-filter-ajax.js')) }}"></script>
+    @endpush
 @endsection

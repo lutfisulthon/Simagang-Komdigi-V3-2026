@@ -1,6 +1,6 @@
 /*
- * Pratinjau Petunjuk Teknis (PDF) di dalam aplikasi, lengkap dengan tombol Unduh. Dimuat sesuai kebutuhan oleh PageGuide.juknis()
- * (public/js/page-guide.js). Berkas PDF: public/unduhan/Petunjuk-Teknis-SIMAGANG.pdf (sumber: docs/juknis/).
+ * Pratinjau Buku Manual (PDF) di dalam aplikasi, lengkap dengan tombol Unduh. Dimuat sesuai kebutuhan oleh PageGuide.juknis()
+ * (public/js/page-guide.js). Berkas PDF: public/unduhan/Buku-Manual-SIMAGANG.pdf (sumber: docs/juknis/).
  * Peramban tanpa penampil PDF bawaan (mis. sebagian HP) menampilkan pilihan Unduh / Buka di tab baru.
  */
 (function () {
@@ -8,8 +8,8 @@
     if (window.JuknisViewer) return;
 
     const SELF = document.currentScript ? document.currentScript.src : '';
-    const PDF = SELF ? new URL('../unduhan/Petunjuk-Teknis-SIMAGANG.pdf', SELF).href : '/unduhan/Petunjuk-Teknis-SIMAGANG.pdf';
-    const FILENAME = 'Petunjuk-Teknis-SIMAGANG.pdf';
+    const PDF = SELF ? new URL('../unduhan/Buku-Manual-SIMAGANG.pdf', SELF).href : '/unduhan/Buku-Manual-SIMAGANG.pdf';
+    const FILENAME = 'Buku-Manual-SIMAGANG.pdf';
 
     const CSS = `
 .jv-root { position: fixed; inset: 0; z-index: 1250; display: flex; align-items: stretch; justify-content: center; padding: 18px; background: rgba(15, 23, 42, .55); opacity: 0; transition: opacity .18s ease; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
@@ -73,7 +73,7 @@ html[data-theme="dark"] .jv-fallback { background: #1a1a1a; color: #d4d4d4; }
 
         const head = el('div', 'jv-head');
         head.appendChild(el('div', 'jv-ico', '<i class="fas fa-file-pdf"></i>'));
-        head.appendChild(el('div', 'jv-ttl', '<b id="jv-title">Petunjuk Teknis SIMAGANG</b><span>Panduan penggunaan untuk semua peran (PDF, ukuran A5)</span>'));
+        head.appendChild(el('div', 'jv-ttl', '<b id="jv-title">Buku Manual SIMAGANG</b><span>Panduan penggunaan untuk semua peran (PDF, ukuran A5)</span>'));
 
         const act = el('div', 'jv-act');
         const dl = el('a', 'jv-btn jv-btn--pri', '<i class="fas fa-download"></i><span>Unduh PDF</span>');
@@ -96,7 +96,7 @@ html[data-theme="dark"] .jv-fallback { background: #1a1a1a; color: #d4d4d4; }
         } else {
             body.appendChild(el('div', 'jv-load', 'Memuat dokumen…'));
             frame = el('iframe', 'jv-frame');
-            frame.title = 'Petunjuk Teknis SIMAGANG (PDF)';
+            frame.title = 'Buku Manual SIMAGANG (PDF)';
             body.appendChild(frame);
         }
 
