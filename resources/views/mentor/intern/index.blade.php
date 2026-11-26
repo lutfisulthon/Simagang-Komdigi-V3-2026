@@ -218,6 +218,12 @@
                                         @if ($wsGroups)
                                             {{-- HP: kolom Kelompok disembunyikan, isinya tampil di bawah nama --}}
                                             <div class="ws-font sm:hidden mt-1.5">
+                                                <template x-if="loaded && team({{ $intern->id }})">
+                                                    <a :href="team({{ $intern->id }}).url" class="ws-group-chip" style="display:flex;width:fit-content;margin-bottom:6px;" title="Tim/Bagian">
+                                                        <span class="ws-group-dot" :style="{ background: team({{ $intern->id }}).color }" aria-hidden="true"></span>
+                                                        <span class="truncate" x-text="team({{ $intern->id }}).name"></span>
+                                                    </a>
+                                                </template>
                                                 <template x-if="loaded && group({{ $intern->id }})">
                                                     <a :href="group({{ $intern->id }}).url" class="ws-group-chip">
                                                         <span class="ws-group-dot" :style="{ background: group({{ $intern->id }}).color }" aria-hidden="true"></span>
@@ -236,6 +242,12 @@
                                     @if ($wsGroups)
                                         <td class="ws-font hidden sm:table-cell">
                                             <span x-show="!loaded" class="text-xs text-slate-400">…</span>
+                                            <template x-if="loaded && team({{ $intern->id }})">
+                                                <a :href="team({{ $intern->id }}).url" class="ws-group-chip" style="display:flex;width:fit-content;margin-bottom:6px;" title="Tim/Bagian">
+                                                    <span class="ws-group-dot" :style="{ background: team({{ $intern->id }}).color }" aria-hidden="true"></span>
+                                                    <span class="truncate" x-text="team({{ $intern->id }}).name"></span>
+                                                </a>
+                                            </template>
                                             <template x-if="loaded && group({{ $intern->id }})">
                                                 <a :href="group({{ $intern->id }}).url" class="ws-group-chip">
                                                     <span class="ws-group-dot" :style="{ background: group({{ $intern->id }}).color }" aria-hidden="true"></span>
@@ -248,7 +260,7 @@
                                                     Masukkan ke kelompok
                                                 </button>
                                             </template>
-                                            <span x-show="loaded && !group({{ $intern->id }}) && !selectable({{ $intern->id }})" class="text-xs text-slate-400">—</span>
+                                            <span x-show="loaded && !team({{ $intern->id }}) && !group({{ $intern->id }}) && !selectable({{ $intern->id }})" class="text-xs text-slate-400">—</span>
                                         </td>
                                     @endif
                                     <td class="hidden sm:table-cell">

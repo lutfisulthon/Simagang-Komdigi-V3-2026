@@ -42,6 +42,11 @@
                 return this.byId[id] ? this.byId[id].group : null;
             },
 
+            // Workspace Tim/Bagian (otomatis dari data Tim), hanya ditampilkan.
+            team(id) {
+                return this.byId[id] ? this.byId[id].team || null : null;
+            },
+
             // Hanya anak bimbingan aktif yang belum punya kelompok yang bisa dicentang.
             selectable(id) {
                 return !!this.byId[id] && !this.byId[id].group;

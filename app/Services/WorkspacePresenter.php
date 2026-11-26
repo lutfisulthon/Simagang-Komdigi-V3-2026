@@ -114,7 +114,9 @@ class WorkspacePresenter
     /** Roster: anak bimbingan beserta kelompok aktifnya (null bila belum berkelompok). */
     public function roster($interns): array
     {
-        $groups = app(GroupService::class)->activeGroupsOf($interns->pluck('user_id')->filter()->all());
+        $userIds = $interns->pluck('user_id')->filter()->all();
+        $groups = app(GroupService::class)->activeGroupsOf($userIds);
+        $teams = app(GroupService::class)->activeTeamsOf($userIds);
 
         return $interns->map(fn (Intern $i) => [
             'id' => $i->id,
@@ -123,6 +125,7 @@ class WorkspacePresenter
             'avatar_url' => $this->avatar($i->photo_path),
             'end_date' => $i->end_date ? \Illuminate\Support\Carbon::parse($i->end_date)->toDateString() : null,
             'group' => $groups->has($i->user_id) ? $this->groupMini($groups[$i->user_id]) : null,
+            'team' => $teams->has($i->user_id) ? $this->groupMini($teams[$i->user_id]) : null,
         ])->values()->all();
     }
 

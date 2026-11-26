@@ -46,9 +46,27 @@ class GroupService
      */
     public function activeGroupsOf(array $userIds): Collection
     {
+        return $this->activeWorkspacesOf($userIds, 'group');
+    }
+
+    /**
+     * Workspace tim (Tim/Bagian, dibuat otomatis dari data Tim) per user (user_id => Workspace).
+     * Hanya untuk tampilan: tidak dihitung sebagai kelompok, jadi tidak menghalangi "Masukkan ke kelompok".
+     *
+     * @param  array<int, int>  $userIds
+     * @return Collection<int, Workspace>
+     */
+    public function activeTeamsOf(array $userIds): Collection
+    {
+        return $this->activeWorkspacesOf($userIds, 'team');
+    }
+
+    /** @return Collection<int, Workspace> */
+    private function activeWorkspacesOf(array $userIds, string $type): Collection
+    {
         $rows = DB::table('workspace_members')
             ->join('workspaces', 'workspaces.id', '=', 'workspace_members.workspace_id')
-            ->where('workspaces.type', 'group')
+            ->where('workspaces.type', $type)
             ->where('workspaces.is_archived', false)
             ->whereNull('workspace_members.left_at')
             ->where('workspace_members.role', 'member')
