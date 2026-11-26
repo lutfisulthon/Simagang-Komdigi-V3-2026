@@ -102,6 +102,14 @@ class MonitoringExport implements
             $query->where('institution', $this->filters['institution']);
         }
 
+        if (!empty($this->filters['team_id'])) {
+            $query->where('team_id', $this->filters['team_id']);
+        }
+
+        if (!empty($this->filters['search'])) {
+            $query->where('name', 'like', '%' . $this->filters['search'] . '%');
+        }
+
 
         return $query
             ->orderByRaw("

@@ -13,6 +13,7 @@ use App\Models\Institusi;
 use App\Models\Industri;
 use App\Models\PengajuanDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -43,6 +44,14 @@ class AdminInternController extends Controller
                 }
             });
 
+        // Daftar kampus untuk dropdown filter: diambil sebelum filter lain diterapkan,
+        // supaya pilihannya tetap lengkap walau sedang menyaring tim/mentor/kampus tertentu.
+        $institutions = (clone $baseQuery)
+            ->whereNotNull('institution')
+            ->distinct()
+            ->orderBy('institution')
+            ->pluck('institution');
+
         if ($request->filled('search')) {
             $baseQuery->where('name', 'like', '%' . $request->search . '%');
         }
@@ -55,24 +64,109 @@ class AdminInternController extends Controller
             $baseQuery->where('mentor_id', $request->mentor_id);
         }
 
-        // Active interns (is_active = true)
-        $activeInterns = (clone $baseQuery)
-            ->where('is_active', true)
-            ->orderByDesc('created_at')
-            ->paginate(15, ['*'], 'active_page')
-            ->withQueryString();
+        if ($request->filled('institution')) {
+            $baseQuery->where('institution', $request->institution);
+        }
 
+        $selectedSort = $request->input('sort', '');
+
+        // Active interns (is_active = true)
+        $activeInterns = (clone $baseQuery)->where('is_active', true);
         // Alumni / inactive interns (is_active = false)
-        $alumniInterns = (clone $baseQuery)
+        $alumniInterns = (clone $baseQuery)->where('is_active', false);
+
+        switch ($selectedSort) {
+            case 'name_asc':
+                $activeInterns->orderBy('name', 'asc');
+                $alumniInterns->orderBy('name', 'asc');
+                break;
+            case 'created_asc':
+                $activeInterns->orderBy('created_at', 'asc');
+                $alumniInterns->orderBy('created_at', 'asc');
+                break;
+            case 'start_desc':
+                $activeInterns->orderBy('start_date', 'desc')->orderBy('name', 'asc');
+                $alumniInterns->orderBy('start_date', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'start_asc':
+                $activeInterns->orderBy('start_date', 'asc')->orderBy('name', 'asc');
+                $alumniInterns->orderBy('start_date', 'asc')->orderBy('name', 'asc');
+                break;
+            default:
+                $activeInterns->orderByDesc('created_at');
+                $alumniInterns->orderByDesc('created_at');
+        }
+
+        $activeInterns = $activeInterns->paginate(15, ['*'], 'active_page')->withQueryString();
+        $alumniInterns = $alumniInterns->paginate(15, ['*'], 'alumni_page')->withQueryString();
+
+        // ── Komposisi Aktif vs Alumni (potret status apa adanya, ikut filter yang
+        // sedang dipakai: search/tim/mentor/kampus) untuk chart donut + wawasan.
+        $compositionActive = (clone $baseQuery)->where('is_active', true)->count();
+        $compositionAlumni = (clone $baseQuery)->where('is_active', false)->count();
+        $compositionTotal  = $compositionActive + $compositionAlumni;
+
+        $avgDurationDays = (clone $baseQuery)
             ->where('is_active', false)
-            ->orderByDesc('created_at')
-            ->paginate(15, ['*'], 'alumni_page')
-            ->withQueryString();
+            ->whereNotNull('start_date')
+            ->selectRaw('AVG(DATEDIFF(COALESCE(end_date, updated_at), start_date)) as avg_days')
+            ->value('avg_days');
+
+        $topAlumniInstitution = (clone $baseQuery)
+            ->where('is_active', false)
+            ->whereNotNull('institution')
+            ->select('institution', DB::raw('count(*) as total'))
+            ->groupBy('institution')
+            ->orderByDesc('total')
+            ->first();
 
         $mentors = Mentor::orderByDesc('created_at')->get();
         $teams = Team::orderBy('name')->get();
 
-        return view('admin.intern.index', compact('activeInterns', 'alumniInterns', 'mentors', 'teams'));
+        return view('admin.intern.index', compact(
+            'activeInterns',
+            'alumniInterns',
+            'mentors',
+            'teams',
+            'institutions',
+            'selectedSort',
+            'compositionActive',
+            'compositionAlumni',
+            'compositionTotal',
+            'avgDurationDays',
+            'topAlumniInstitution'
+        ));
+    }
+
+    /**
+     * Saran nama (autocomplete) untuk kotak pencarian: dipanggil lewat AJAX sambil
+     * mengetik, dipisah Aktif/Alumni supaya jelas sebelum diklik/di-submit.
+     */
+    public function searchSuggest(Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+        if ($q === '') {
+            return response()->json(['active' => [], 'alumni' => []]);
+        }
+
+        $komdigi = Industri::where('nama_industri', 'BBLSDM Komdigi Makassar')->first();
+
+        $base = Intern::where(function ($query) use ($komdigi) {
+                $query->whereNull('pengajuan_detail_id');
+                if ($komdigi) {
+                    $query->orWhereHas('pengajuanDetail.pengajuan.lowongan', function ($lq) use ($komdigi) {
+                        $lq->where('industri_id', $komdigi->id);
+                    });
+                }
+            })
+            ->where('name', 'like', '%' . $q . '%');
+
+        $map = fn ($rows) => $rows->map(fn ($i) => ['id' => $i->id, 'name' => $i->name, 'institution' => $i->institution])->values();
+
+        return response()->json([
+            'active' => $map((clone $base)->where('is_active', true)->orderBy('name')->limit(6)->get(['id', 'name', 'institution'])),
+            'alumni' => $map((clone $base)->where('is_active', false)->orderBy('name')->limit(6)->get(['id', 'name', 'institution'])),
+        ]);
     }
 
     public function create()

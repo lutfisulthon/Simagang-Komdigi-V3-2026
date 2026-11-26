@@ -89,6 +89,114 @@
     height: 320px;
 }
 
+/* ── Komposisi Peserta Magang (donut Aktif vs Alumni) ───────────────────── */
+.composition-chart-wrap {
+    position: relative;
+    height: 220px;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+.composition-chart-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.composition-chart-center__value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.composition-chart-center__label {
+    margin-top: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.composition-legend {
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.composition-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.86rem;
+}
+
+.composition-legend__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.composition-legend__text {
+    color: #475569;
+    font-weight: 600;
+}
+
+.composition-legend__value {
+    margin-left: auto;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.composition-legend__pct {
+    font-weight: 500;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+.insight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.insight-item__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.insight-item__label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.insight-item__value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+}
+
 @media (max-width: 768px) {
     .hero-title {
         font-size: 1.6rem;
@@ -116,6 +224,11 @@
 
     .chart-wrap {
         height: 260px;
+    }
+
+    .composition-chart-wrap {
+        height: 180px;
+        max-width: 180px;
     }
 }
 

@@ -572,6 +572,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/intern', [AdminInternController::class, 'index'])->name('intern.index');
     Route::get('/intern/create', [AdminInternController::class, 'create'])->name('intern.create');
     Route::post('/intern', [AdminInternController::class, 'store'])->name('intern.store');
+    Route::get('/intern/search-suggest', [AdminInternController::class, 'searchSuggest'])->name('intern.search-suggest');
     Route::get('/intern/{intern}', [AdminInternController::class, 'show'])->name('intern.show');
     Route::get('/intern/{intern}/edit', [AdminInternController::class, 'edit'])->name('intern.edit');
     Route::put('/intern/{intern}', [AdminInternController::class, 'update'])->name('intern.update');
@@ -625,6 +626,7 @@ Route::delete('/mitra/{jenis}/{id}', [AdminMitraController::class, 'destroy'])->
     Route::post('/monitoring/{intern}/mark-released', [AdminMonitoringController::class, 'markAsReleased'])->name('monitoring.mark-released');
     Route::post('/monitoring/{intern}/mark-active', [AdminMonitoringController::class, 'markAsActive'])->name('monitoring.mark-active');
     Route::get('/monitoring/export', [AdminMonitoringController::class, 'export'])->name('monitoring.export');
+    Route::get('/monitoring/search-suggest', [AdminMonitoringController::class, 'searchSuggest'])->name('monitoring.search-suggest');
 
     // Monitoring Industri (Admin)
     Route::get('monitoring/industri', [AdminMonitoringIndustriController::class, 'index'])->name('monitoring.industri.index');
@@ -678,6 +680,7 @@ Route::delete('/mitra/{jenis}/{id}', [AdminMitraController::class, 'destroy'])->
 Route::middleware(['auth', 'mentor'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/dashboard', [MentorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/interns', [MentorInternController::class, 'index'])->name('intern.index');
+    Route::get('/interns/search-suggest', [MentorInternController::class, 'searchSuggest'])->name('intern.search-suggest');
     Route::get('/interns/{intern}', [MentorInternController::class, 'show'])->name('intern.show');
     Route::get('/attendance', [MentorAttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/photo/{filename}', [MentorAttendanceController::class, 'servePhoto'])
